@@ -24,39 +24,12 @@ class AdminScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: EdgeInsets.zero,
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  final isWide = constraints.maxWidth >= 600;
-                  final stats = [
-                    StatCard(label: 'Utilisateurs', value: '3', icon: Icons.people_outline, color: ConfidiaColors.primary),
-                    StatCard(label: 'Documents', value: '6', icon: Icons.description_outlined, color: ConfidiaColors.accent),
-                    StatCard(label: 'Services', value: '3', icon: Icons.cloud_outlined, color: ConfidiaColors.secondary),
-                    StatCard(label: 'Uptime', value: '99.9%', icon: Icons.trending_up, color: ConfidiaColors.success),
-                  ];
-
-                  if (isWide) {
-                    return Row(
-                      children: stats
-                          .map((s) => Expanded(child: Padding(
-                                padding: const EdgeInsets.only(right: ConfidiaSpacing.md),
-                                child: s,
-                              )))
-                          .toList(),
-                    );
-                  }
-                  return Column(
-                    children: stats
-                        .map((s) => Padding(
-                              padding: const EdgeInsets.only(bottom: ConfidiaSpacing.md),
-                              child: s,
-                            ))
-                        .toList(),
-                  );
-                },
-              ),
-            ),
+            StatsRow(stats: const [
+              CompactStat(label: 'Utilisateurs', value: '3', icon: Icons.people_outline, color: ConfidiaColors.primary),
+              CompactStat(label: 'Documents', value: '6', icon: Icons.description_outlined, color: ConfidiaColors.accent),
+              CompactStat(label: 'Services', value: '3', icon: Icons.cloud_outlined, color: ConfidiaColors.secondary),
+              CompactStat(label: 'Uptime', value: '99.9%', icon: Icons.trending_up, color: ConfidiaColors.success),
+            ]),
             const SizedBox(height: ConfidiaSpacing.lg),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),

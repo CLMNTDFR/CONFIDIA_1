@@ -6,6 +6,7 @@ from application.dto.calendar_dto import (
     CalendarEventCreateDTO,
     CalendarEventDTO,
     CalendarEventListResponse,
+    CalendarEventUpdateDTO,
 )
 from application.services.calendar_service import CalendarService
 from core.security import TokenPayload, decode_token
@@ -40,3 +41,25 @@ async def create_event(
     token: TokenPayload = Depends(decode_token),
 ):
     return await _calendar_service.create_event(data)
+
+
+@router.patch("/events/{event_id}", response_model=CalendarEventDTO)
+async def update_event(
+    event_id: str,
+    data: CalendarEventUpdateDTO,
+    token: TokenPayload = Depends(decode_token),
+):
+    event = await _calendar_service.update_event(event_id, data)
+    if not event:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")
+    return event
+
+
+@router.delete("/events/{event_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_event(
+    event_id: str,
+    token: TokenPayload = Depends(decode_token),
+):
+    deleted = await _calendar_service.delete_event(event_id)
+    if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Event not found")

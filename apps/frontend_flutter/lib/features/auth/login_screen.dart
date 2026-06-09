@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/confidia_logo.dart';
+import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/logo_auth_transition.dart';
 import '../../shared/widgets/mesh_background.dart';
 import '../../shared/widgets/theme_toggle_button.dart';
 
@@ -22,6 +22,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _usernameController = TextEditingController(text: 'user');
   final _passwordController = TextEditingController(text: 'user');
   bool _obscurePassword = true;
+  bool _authenticating = false;
 
   @override
   void dispose() {
@@ -31,40 +32,56 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleLogin({bool demo = false}) async {
-    if (demo) {
-      await ref.read(authStateProvider.notifier).loginDemo();
-      if (mounted) context.go('/dashboard');
-      return;
+    setState(() => _authenticating = true);
+    try {
+      if (demo) {
+        await ref.read(authStateProvider.notifier).loginDemo();
+      } else {
+        if (!_formKey.currentState!.validate()) return;
+        await ref.read(authStateProvider.notifier).login(_usernameController.text, _passwordController.text);
+      }
+      // La redirection vers /welcome est gérée par le routeur (refreshListenable).
+    } finally {
+      if (mounted) setState(() => _authenticating = false);
     }
-    if (!_formKey.currentState!.validate()) return;
-    await ref.read(authStateProvider.notifier).login(_usernameController.text, _passwordController.text);
-    if (!mounted) return;
-    if (ref.read(authStateProvider).isAuthenticated) context.go('/dashboard');
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authStateProvider);
     final isWide = MediaQuery.of(context).size.width >= 900;
+    final showTransition = _authenticating || auth.isLoading;
 
     return MeshBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: SafeArea(
-          child: Stack(
-            children: [
-              Positioned(top: 16, right: 16, child: const ThemeToggleButton()),
-              Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(ConfidiaSpacing.lg),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(maxWidth: 1000),
-                    child: isWide ? _buildWide(auth) : _buildNarrow(auth),
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            SafeArea(
+              child: Stack(
+                children: [
+                  Positioned(top: 16, right: 16, child: const ThemeToggleButton()),
+                  Center(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1000),
+                        child: isWide ? _buildWide(auth) : _buildNarrow(auth),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
-            ],
-          ),
+            ),
+            if (showTransition)
+              LogoAuthTransition(
+                active: showTransition,
+                profile: LogoTransitionProfile.connection,
+                subtitle: 'Connexion sécurisée en cours…',
+                loopUntilInactive: true,
+              ),
+          ],
         ),
       ),
     );
@@ -118,6 +135,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Widget _loginCard(AuthState auth) {
+    final busy = auth.isLoading || _authenticating;
+
     return GlassCard(
       highlighted: true,
       child: Form(
@@ -131,12 +150,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(height: ConfidiaSpacing.xl),
             TextFormField(
               controller: _usernameController,
+              enabled: !busy,
               decoration: const InputDecoration(labelText: 'Identifiant', prefixIcon: Icon(Icons.person_outline_rounded)),
               validator: (v) => v?.isEmpty == true ? 'Requis' : null,
             ),
             const SizedBox(height: ConfidiaSpacing.md),
             TextFormField(
               controller: _passwordController,
+              enabled: !busy,
               obscureText: _obscurePassword,
               decoration: InputDecoration(
                 labelText: 'Mot de passe',
@@ -153,14 +174,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               Text(auth.error!, style: const TextStyle(color: ConfidiaColors.error)),
             ],
             const SizedBox(height: ConfidiaSpacing.lg),
-            ElevatedButton(
-              onPressed: auth.isLoading ? null : () => _handleLogin(),
-              child: auth.isLoading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                  : const Text('Se connecter'),
+            ConfidiaButton(
+              label: 'Se connecter',
+              loading: busy,
+              loadingLabel: 'Connexion…',
+              onPressed: busy ? null : () => _handleLogin(),
             ),
             const SizedBox(height: ConfidiaSpacing.sm),
-            OutlinedButton(onPressed: () => _handleLogin(demo: true), child: const Text('Mode démo')),
+            ConfidiaButton(
+              label: 'Mode démo',
+              outlined: true,
+              loading: busy,
+              loadingLabel: 'Connexion…',
+              onPressed: busy ? null : () => _handleLogin(demo: true),
+            ),
             const SizedBox(height: ConfidiaSpacing.md),
             Text(
               'Comptes test · user/user · admin/admin · manager/manager',

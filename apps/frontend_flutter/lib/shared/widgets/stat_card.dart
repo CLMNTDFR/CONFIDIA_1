@@ -2,63 +2,82 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
-import 'glass_card.dart';
 
-class StatCard extends StatelessWidget {
+/// Statistique compacte · une ligne d'info dense.
+class CompactStat extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
-  final Color? color;
-  final String? trend;
+  final Color color;
 
-  const StatCard({
+  const CompactStat({
     super.key,
     required this.label,
     required this.value,
     required this.icon,
-    this.color,
-    this.trend,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cardColor = color ?? ConfidiaColors.primary;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return GlassCard(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: ConfidiaColors.border(isDark)),
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [cardColor.withValues(alpha: 0.2), cardColor.withValues(alpha: 0.05)],
-                  ),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: cardColor, size: 20),
-              ),
-              const Spacer(),
-              if (trend != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: ConfidiaColors.success.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(trend!, style: const TextStyle(color: ConfidiaColors.success, fontSize: 11, fontWeight: FontWeight.w600)),
-                ),
-            ],
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 16, color: color),
           ),
-          const SizedBox(height: ConfidiaSpacing.lg),
-          Text(value, style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700)),
-          const SizedBox(height: ConfidiaSpacing.xs),
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                Text(label, style: Theme.of(context).textTheme.labelSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+              ],
+            ),
+          ),
         ],
       ),
+    );
+  }
+}
+
+class StatsRow extends StatelessWidget {
+  final List<CompactStat> stats;
+
+  const StatsRow({super.key, required this.stats});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, c) {
+        final isWide = c.maxWidth >= 700;
+        if (isWide) {
+          return Row(
+            children: stats
+                .map((s) => Expanded(child: Padding(padding: const EdgeInsets.only(right: ConfidiaSpacing.sm), child: s)))
+                .toList(),
+          );
+        }
+        return Wrap(
+          spacing: ConfidiaSpacing.sm,
+          runSpacing: ConfidiaSpacing.sm,
+          children: stats.map((s) => SizedBox(width: (c.maxWidth - ConfidiaSpacing.sm) / 2, child: s)).toList(),
+        );
+      },
     );
   }
 }

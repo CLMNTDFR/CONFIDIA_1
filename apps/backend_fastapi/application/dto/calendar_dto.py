@@ -35,6 +35,17 @@ class CalendarEventCreateDTO(BaseModel):
     document_id: int | None = None
 
 
+class CalendarEventUpdateDTO(BaseModel):
+    title: str | None = None
+    description: str | None = None
+    start: datetime | None = None
+    end: datetime | None = None
+    event_type: EventType | None = None
+    location: str | None = None
+    all_day: bool | None = None
+    document_id: int | None = None
+
+
 class CalendarEventListResponse(BaseModel):
     items: list[CalendarEventDTO]
     total: int

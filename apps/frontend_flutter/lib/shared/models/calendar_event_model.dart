@@ -3,6 +3,26 @@ import 'package:flutter/material.dart';
 
 enum EventType { deadline, meeting, reminder, appointment }
 
+enum CalendarSource { confidia, google, outlook, apple, microsoft365 }
+
+extension CalendarSourceX on CalendarSource {
+  String get label => switch (this) {
+        CalendarSource.confidia => 'CONFIDIA',
+        CalendarSource.google => 'Google',
+        CalendarSource.outlook => 'Outlook',
+        CalendarSource.apple => 'Apple',
+        CalendarSource.microsoft365 => 'Microsoft 365',
+      };
+
+  Color get color => switch (this) {
+        CalendarSource.confidia => const Color(0xFFD20050),
+        CalendarSource.google => const Color(0xFF4285F4),
+        CalendarSource.outlook => const Color(0xFF0078D4),
+        CalendarSource.apple => const Color(0xFF555555),
+        CalendarSource.microsoft365 => const Color(0xFF7B83EB),
+      };
+}
+
 class CalendarEventModel extends Equatable {
   final String id;
   final String title;
@@ -14,6 +34,9 @@ class CalendarEventModel extends Equatable {
   final bool allDay;
   final Color? color;
   final int? documentId;
+  final CalendarSource source;
+  final String? paymentId;
+  final String? emailId;
 
   const CalendarEventModel({
     required this.id,
@@ -26,6 +49,9 @@ class CalendarEventModel extends Equatable {
     this.allDay = false,
     this.color,
     this.documentId,
+    this.source = CalendarSource.confidia,
+    this.paymentId,
+    this.emailId,
   });
 
   factory CalendarEventModel.fromJson(Map<String, dynamic> json) {
@@ -43,9 +69,63 @@ class CalendarEventModel extends Equatable {
       allDay: json['all_day'] as bool? ?? false,
       color: json['color'] != null ? Color(int.parse(json['color'].toString().replaceFirst('#', '0xFF'))) : null,
       documentId: json['document_id'] as int?,
+      source: CalendarSource.values.firstWhere(
+        (s) => s.name == json['source'],
+        orElse: () => CalendarSource.confidia,
+      ),
+      paymentId: json['payment_id'] as String?,
+      emailId: json['email_id'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'description': description,
+        'start': start.toIso8601String(),
+        'end': end.toIso8601String(),
+        'event_type': eventType.name,
+        'location': location,
+        'all_day': allDay,
+        'color': color != null ? '#${color!.toARGB32().toRadixString(16).substring(2)}' : null,
+        'document_id': documentId,
+        'source': source.name,
+        'payment_id': paymentId,
+        'email_id': emailId,
+      };
+
+  CalendarEventModel copyWith({
+    String? id,
+    String? title,
+    String? description,
+    DateTime? start,
+    DateTime? end,
+    EventType? eventType,
+    String? location,
+    bool? allDay,
+    Color? color,
+    int? documentId,
+    CalendarSource? source,
+    String? paymentId,
+    String? emailId,
+  }) {
+    return CalendarEventModel(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      start: start ?? this.start,
+      end: end ?? this.end,
+      eventType: eventType ?? this.eventType,
+      location: location ?? this.location,
+      allDay: allDay ?? this.allDay,
+      color: color ?? this.color,
+      documentId: documentId ?? this.documentId,
+      source: source ?? this.source,
+      paymentId: paymentId ?? this.paymentId,
+      emailId: emailId ?? this.emailId,
     );
   }
 
   @override
-  List<Object?> get props => [id, title, start];
+  List<Object?> get props => [id, title, start, end, eventType];
 }

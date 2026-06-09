@@ -4,6 +4,7 @@ from application.dto.calendar_dto import (
     CalendarEventCreateDTO,
     CalendarEventDTO,
     CalendarEventListResponse,
+    CalendarEventUpdateDTO,
     EventType,
 )
 
@@ -91,3 +92,17 @@ class CalendarService:
         )
         self._events.append(event)
         return event
+
+    async def update_event(self, event_id: str, data: CalendarEventUpdateDTO) -> CalendarEventDTO | None:
+        for i, event in enumerate(self._events):
+            if event.id != event_id:
+                continue
+            updated = event.model_copy(update=data.model_dump(exclude_unset=True))
+            self._events[i] = updated
+            return updated
+        return None
+
+    async def delete_event(self, event_id: str) -> bool:
+        before = len(self._events)
+        self._events = [e for e in self._events if e.id != event_id]
+        return len(self._events) < before

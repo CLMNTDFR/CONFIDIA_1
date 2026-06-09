@@ -6,7 +6,8 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/models/document_model.dart';
-import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/confidia_button.dart';
+import '../../shared/widgets/stagger_fade.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -37,160 +38,136 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   @override
   Widget build(BuildContext context) {
     final docs = _filteredDocs;
-    final isWide = MediaQuery.of(context).size.width >= 900;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, 0, ConfidiaSpacing.lg, ConfidiaSpacing.md),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  decoration: const InputDecoration(
-                    hintText: 'Rechercher un document, tag, correspondant...',
-                    prefixIcon: Icon(Icons.search_rounded),
+    return CustomScrollView(
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, 0, ConfidiaSpacing.lg, ConfidiaSpacing.md),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        decoration: const InputDecoration(
+                          hintText: 'Rechercher...',
+                          prefixIcon: Icon(Icons.search_rounded),
+                        ),
+                        onChanged: (v) => setState(() => _searchQuery = v),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: ConfidiaSpacing.sm),
+                Row(
+                  children: [
+                    Expanded(child: ConfidiaButton(label: 'Scanner', icon: Icons.document_scanner_rounded, compact: true, onPressed: () => context.go('/scan'))),
+                    const SizedBox(width: ConfidiaSpacing.sm),
+                    Expanded(child: ConfidiaButton(label: 'Importer', icon: Icons.upload_rounded, outlined: true, compact: true, onPressed: () => context.go('/upload'))),
+                  ],
+                ),
+                const SizedBox(height: ConfidiaSpacing.md),
+                SizedBox(
+                  height: 38,
+                  child: ListView(
+                    scrollDirection: Axis.horizontal,
+                    children: MockData.categories.map((cat) {
+                      final selected = _selectedCategory == cat;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: ConfidiaSpacing.sm),
+                        child: FilterChip(
+                          label: Text(cat),
+                          selected: selected,
+                          onSelected: (_) => setState(() => _selectedCategory = cat),
+                          selectedColor: ConfidiaColors.primary.withValues(alpha: 0.15),
+                        ),
+                      );
+                    }).toList(),
                   ),
-                  onChanged: (v) => setState(() => _searchQuery = v),
                 ),
-              ),
-              const SizedBox(width: ConfidiaSpacing.sm),
-              ElevatedButton.icon(
-                onPressed: () => context.go('/upload'),
-                icon: const Icon(Icons.upload_rounded, size: 18),
-                label: Text(isWide ? 'Importer' : ''),
-              ),
-            ],
+                const SizedBox(height: ConfidiaSpacing.sm),
+                Text('${docs.length} résultat${docs.length > 1 ? 's' : ''}', style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
           ),
         ),
-        SizedBox(
-          height: 40,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
+        if (docs.isEmpty)
+          const SliverFillRemaining(child: Center(child: Text('Aucun document trouvé')))
+        else
+          SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
-            children: MockData.categories.map((cat) {
-              final selected = _selectedCategory == cat;
-              return Padding(
-                padding: const EdgeInsets.only(right: ConfidiaSpacing.sm),
-                child: FilterChip(
-                  label: Text(cat),
-                  selected: selected,
-                  onSelected: (_) => setState(() => _selectedCategory = cat),
-                  selectedColor: ConfidiaColors.primary.withValues(alpha: 0.15),
-                  checkmarkColor: ConfidiaColors.primary,
-                ),
-              );
-            }).toList(),
+            sliver: SliverList.separated(
+              itemCount: docs.length,
+              separatorBuilder: (_, __) => const SizedBox(height: ConfidiaSpacing.sm),
+              itemBuilder: (context, index) => StaggerFade(
+                index: index,
+                child: _DocumentListTile(doc: docs[index], isDark: isDark),
+              ),
+            ),
           ),
-        ),
-        const SizedBox(height: ConfidiaSpacing.sm),
-        SizedBox(
-          height: 36,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
-            children: MockData.allTags.map((tag) {
-              final selected = _selectedTags.contains(tag);
-              return Padding(
-                padding: const EdgeInsets.only(right: ConfidiaSpacing.sm),
-                child: ActionChip(
-                  label: Text('#$tag'),
-                  backgroundColor: selected ? ConfidiaColors.secondary.withValues(alpha: 0.15) : null,
-                  onPressed: () => setState(() => selected ? _selectedTags.remove(tag) : _selectedTags.add(tag)),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.sm, ConfidiaSpacing.lg, 0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text('${docs.length} résultat${docs.length > 1 ? 's' : ''}', style: Theme.of(context).textTheme.bodySmall),
-          ),
-        ),
-        Expanded(
-          child: docs.isEmpty
-              ? const Center(child: Text('Aucun document trouvé'))
-              : isWide ? _buildGrid(docs) : _buildList(docs),
-        ),
+        const SliverToBoxAdapter(child: SizedBox(height: 80)),
       ],
-    );
-  }
-
-  Widget _buildGrid(List<DocumentModel> docs) {
-    return GridView.builder(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
-      gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-        maxCrossAxisExtent: 300,
-        childAspectRatio: 0.95,
-        crossAxisSpacing: ConfidiaSpacing.md,
-        mainAxisSpacing: ConfidiaSpacing.md,
-      ),
-      itemCount: docs.length,
-      itemBuilder: (_, i) => _DocumentCard(doc: docs[i]),
-    );
-  }
-
-  Widget _buildList(List<DocumentModel> docs) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
-      itemCount: docs.length,
-      itemBuilder: (_, i) => Padding(
-        padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
-        child: _DocumentCard(doc: docs[i]),
-      ),
     );
   }
 }
 
-class _DocumentCard extends StatelessWidget {
+class _DocumentListTile extends StatelessWidget {
   final DocumentModel doc;
-  const _DocumentCard({required this.doc});
+  final bool isDark;
+
+  const _DocumentListTile({required this.doc, required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      onTap: () => context.go('/documents/${doc.id}'),
-      padding: const EdgeInsets.all(ConfidiaSpacing.md),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return Material(
+      color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        onTap: () => context.go('/documents/${doc.id}'),
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: ConfidiaColors.border(isDark)),
+          ),
+          child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
                   color: ConfidiaColors.primary.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.picture_as_pdf_rounded, color: ConfidiaColors.primary, size: 20),
+                child: const Icon(Icons.picture_as_pdf_rounded, color: ConfidiaColors.primary, size: 22),
               ),
-              const Spacer(),
-              if (doc.isImportant) const Icon(Icons.star_rounded, color: ConfidiaColors.warning, size: 18),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(doc.title, style: Theme.of(context).textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${doc.category ?? 'Non classé'} · ${doc.correspondent ?? 'Sans correspondant'} · ${doc.fileSizeFormatted}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(DateFormat('d MMM yyyy', 'fr_FR').format(doc.modified), style: Theme.of(context).textTheme.labelSmall),
+                  ],
+                ),
+              ),
+              if (doc.isImportant) const Padding(padding: EdgeInsets.only(left: 8), child: Icon(Icons.star_rounded, color: ConfidiaColors.warning, size: 18)),
+              const Icon(Icons.chevron_right_rounded, color: ConfidiaColors.darkTextTertiary),
             ],
           ),
-          const SizedBox(height: ConfidiaSpacing.md),
-          Text(doc.title, style: Theme.of(context).textTheme.titleMedium, maxLines: 2, overflow: TextOverflow.ellipsis),
-          const Spacer(),
-          if (doc.category != null)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: ConfidiaColors.accent.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(doc.category!, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: ConfidiaColors.accent)),
-            ),
-          const SizedBox(height: ConfidiaSpacing.sm),
-          Row(
-            children: [
-              Text(DateFormat('d MMM yyyy', 'fr_FR').format(doc.modified), style: Theme.of(context).textTheme.bodySmall),
-              const Spacer(),
-              Text(doc.fileSizeFormatted, style: Theme.of(context).textTheme.bodySmall),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
