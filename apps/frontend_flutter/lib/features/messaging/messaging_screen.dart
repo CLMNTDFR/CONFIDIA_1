@@ -11,6 +11,7 @@ import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/brands/brand_assets.dart';
 import '../../shared/widgets/brand_icon.dart';
+import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/provider_chip.dart';
 import 'messaging_provider.dart';
@@ -66,7 +67,19 @@ class MessagingScreen extends ConsumerWidget {
                         padding: ConfidiaInsets.page(context),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 6),
-                        itemBuilder: (context, i) => _EmailTile(email: filtered[i]),
+                        itemBuilder: (context, i) {
+                          final stagger = ConfidiaPageRevealTiming.staggerCount(
+                            context,
+                            filtered.length,
+                            itemExtent: 78,
+                            overhead: 260,
+                          );
+                          return ConfidiaPageReveal(
+                            index: i,
+                            staggerCount: stagger,
+                            child: _EmailTile(email: filtered[i]),
+                          );
+                        },
                       ),
               ),
             ],

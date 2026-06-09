@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
+import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/stat_card.dart';
 
@@ -25,14 +26,21 @@ class AdminScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            StatsRow(stats: const [
-              CompactStat(label: 'Utilisateurs', value: '3', icon: Icons.people_outline, color: ConfidiaColors.primary),
-              CompactStat(label: 'Documents', value: '6', icon: Icons.description_outlined, color: ConfidiaColors.accent),
-              CompactStat(label: 'Services', value: '3', icon: Icons.cloud_outlined, color: ConfidiaColors.secondary),
-              CompactStat(label: 'Uptime', value: '99.9%', icon: Icons.trending_up, color: ConfidiaColors.success),
-            ]),
+            const ConfidiaPageReveal(
+              index: 0,
+              staggerCount: 3,
+              child: StatsRow(stats: [
+                CompactStat(label: 'Utilisateurs', value: '3', icon: Icons.people_outline, color: ConfidiaColors.primary),
+                CompactStat(label: 'Documents', value: '6', icon: Icons.description_outlined, color: ConfidiaColors.accent),
+                CompactStat(label: 'Services', value: '3', icon: Icons.cloud_outlined, color: ConfidiaColors.secondary),
+                CompactStat(label: 'Uptime', value: '99.9%', icon: Icons.trending_up, color: ConfidiaColors.success),
+              ]),
+            ),
             const SizedBox(height: ConfidiaSpacing.lg),
-            Padding(
+            ConfidiaPageReveal(
+              index: 1,
+              staggerCount: 3,
+              child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
               child: Card(
                 child: Column(
@@ -53,8 +61,12 @@ class AdminScreen extends ConsumerWidget {
                 ),
               ),
             ),
+            ),
             const SizedBox(height: ConfidiaSpacing.lg),
-            Padding(
+            ConfidiaPageReveal(
+              index: 2,
+              staggerCount: 3,
+              child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
               child: Card(
                 child: Column(
@@ -72,6 +84,7 @@ class AdminScreen extends ConsumerWidget {
                   ],
                 ),
               ),
+            ),
             ),
             const SizedBox(height: ConfidiaSpacing.xxl),
           ],

@@ -10,6 +10,7 @@ import '../../shared/models/document_model.dart';
 import '../../shared/services/mock_ai_service.dart';
 import '../../shared/widgets/ai_streaming_text.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/status_badge.dart';
 
@@ -39,18 +40,22 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _DocumentHeader(doc: doc),
+          ConfidiaPageReveal(index: 0, staggerCount: 4, child: _DocumentHeader(doc: doc)),
           const SizedBox(height: ConfidiaSpacing.lg),
-          _AiAnalysisSection(
-            insight: insight,
-            analysisText: analysisText,
-            analysisComplete: _analysisComplete,
-            onAnalysisComplete: () => setState(() => _analysisComplete = true),
+          ConfidiaPageReveal(
+            index: 1,
+            staggerCount: 4,
+            child: _AiAnalysisSection(
+              insight: insight,
+              analysisText: analysisText,
+              analysisComplete: _analysisComplete,
+              onAnalysisComplete: () => setState(() => _analysisComplete = true),
+            ),
           ),
           const SizedBox(height: ConfidiaSpacing.lg),
-          _DocumentPreview(),
+          ConfidiaPageReveal(index: 2, staggerCount: 4, child: _DocumentPreview()),
           const SizedBox(height: ConfidiaSpacing.lg),
-          _DocumentMetadata(doc: doc),
+          ConfidiaPageReveal(index: 3, staggerCount: 4, child: _DocumentMetadata(doc: doc)),
         ],
       ),
     );

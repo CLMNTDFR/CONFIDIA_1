@@ -7,6 +7,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/payment_model.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/status_badge.dart';
 import 'payments_provider.dart';
@@ -41,9 +42,13 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> with SingleTick
 
     return Column(
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.lg, ConfidiaSpacing.lg, 0),
-          child: _SummaryBanner(total: notifier.totalPending, count: pending.length, next: notifier.nextDue),
+        ConfidiaPageReveal(
+          index: 0,
+          staggerCount: 1,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.lg, ConfidiaSpacing.lg, 0),
+            child: _SummaryBanner(total: notifier.totalPending, count: pending.length, next: notifier.nextDue),
+          ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),
         TabBar(
@@ -130,7 +135,19 @@ class _PaymentList extends StatelessWidget {
       padding: ConfidiaInsets.page(context),
       itemCount: payments.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
-      itemBuilder: (context, i) => _PaymentCard(payment: payments[i]),
+      itemBuilder: (context, i) {
+        final stagger = ConfidiaPageRevealTiming.staggerCount(
+          context,
+          payments.length,
+          itemExtent: 100,
+          overhead: 360,
+        );
+        return ConfidiaPageReveal(
+          index: i,
+          staggerCount: stagger,
+          child: _PaymentCard(payment: payments[i]),
+        );
+      },
     );
   }
 }

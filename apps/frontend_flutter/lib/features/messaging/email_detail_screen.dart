@@ -9,6 +9,7 @@ import '../../shared/models/ai_insight_model.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/provider_chip.dart';
+import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/status_badge.dart';
 import 'messaging_provider.dart';
@@ -53,49 +54,66 @@ class EmailDetailScreen extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: ConfidiaSpacing.lg),
-          _AiInsightCard(insight: insight),
+          ConfidiaPageReveal(
+            index: 0,
+            staggerCount: 3,
+            child: _AiInsightCard(insight: insight),
+          ),
           const SizedBox(height: ConfidiaSpacing.md),
-          GlassCard(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('De : ${email.sender}', style: Theme.of(context).textTheme.titleSmall),
-                const SizedBox(height: 16),
-                Text(email.body, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6)),
-              ],
+          ConfidiaPageReveal(
+            index: 1,
+            staggerCount: 3,
+            child: GlassCard(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('De : ${email.sender}', style: Theme.of(context).textTheme.titleSmall),
+                  const SizedBox(height: 16),
+                  Text(email.body, style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.6)),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: ConfidiaSpacing.lg),
-          Text('Actions rapides', style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: ConfidiaSpacing.sm),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              if (email.documentId != null)
-                _ActionChip(icon: Icons.description_rounded, label: 'Fiche documentaire', onTap: () => context.go('/documents/${email.documentId}')),
-              _ActionChip(icon: Icons.auto_awesome_rounded, label: 'Analyser avec l\'IA', onTap: () => _showSnack(context, 'Analyse IA terminée')),
-              _ActionChip(icon: Icons.archive_rounded, label: 'Archiver', onTap: () => _showSnack(context, 'Email archivé')),
-              _ActionChip(icon: Icons.notifications_active_rounded, label: 'Créer un rappel', onTap: () => _showSnack(context, 'Rappel créé')),
-              if (email.eventId != null)
-                _ActionChip(icon: Icons.calendar_month_rounded, label: 'Voir au calendrier', onTap: () => context.go('/calendar')),
-              if (email.paymentId != null)
-                _ActionChip(icon: Icons.payment_rounded, label: 'Payer', onTap: () => context.go('/payments/${email.paymentId}')),
-              _ActionChip(
-                icon: Icons.check_circle_outline_rounded,
-                label: 'Marquer traité',
-                onTap: () {
-                  ref.read(messagingProvider.notifier).markProcessed(email.id);
-                  _showSnack(context, 'Email marqué comme traité');
-                },
-              ),
-            ],
+          ConfidiaPageReveal(
+            index: 2,
+            staggerCount: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Actions rapides', style: Theme.of(context).textTheme.titleSmall),
+                const SizedBox(height: ConfidiaSpacing.sm),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    if (email.documentId != null)
+                      _ActionChip(icon: Icons.description_rounded, label: 'Fiche documentaire', onTap: () => context.go('/documents/${email.documentId}')),
+                    _ActionChip(icon: Icons.auto_awesome_rounded, label: 'Analyser avec l\'IA', onTap: () => _showSnack(context, 'Analyse IA terminée')),
+                    _ActionChip(icon: Icons.archive_rounded, label: 'Archiver', onTap: () => _showSnack(context, 'Email archivé')),
+                    _ActionChip(icon: Icons.notifications_active_rounded, label: 'Créer un rappel', onTap: () => _showSnack(context, 'Rappel créé')),
+                    if (email.eventId != null)
+                      _ActionChip(icon: Icons.calendar_month_rounded, label: 'Voir au calendrier', onTap: () => context.go('/calendar')),
+                    if (email.paymentId != null)
+                      _ActionChip(icon: Icons.payment_rounded, label: 'Payer', onTap: () => context.go('/payments/${email.paymentId}')),
+                    _ActionChip(
+                      icon: Icons.check_circle_outline_rounded,
+                      label: 'Marquer traité',
+                      onTap: () {
+                        ref.read(messagingProvider.notifier).markProcessed(email.id);
+                        _showSnack(context, 'Email marqué comme traité');
+                      },
+                    ),
+                  ],
+                ),
+                if (!email.isProcessed && email.paymentId != null) ...[
+                  const SizedBox(height: ConfidiaSpacing.lg),
+                  ConfidiaButton(label: 'Payer maintenant', icon: Icons.payment_rounded, onPressed: () => context.go('/payments/${email.paymentId}')),
+                ],
+              ],
+            ),
           ),
-          if (!email.isProcessed && email.paymentId != null) ...[
-            const SizedBox(height: ConfidiaSpacing.lg),
-            ConfidiaButton(label: 'Payer maintenant', icon: Icons.payment_rounded, onPressed: () => context.go('/payments/${email.paymentId}')),
-          ],
         ],
       ),
     );

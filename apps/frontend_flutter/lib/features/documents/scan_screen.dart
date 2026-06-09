@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -71,7 +72,10 @@ class _ScanScreenState extends State<ScanScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              GlassCard(
+              ConfidiaPageReveal(
+                index: 0,
+                staggerCount: 2,
+                child: GlassCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -150,9 +154,13 @@ class _ScanScreenState extends State<ScanScreen> {
                   ],
                 ),
               ),
+              ),
               const SizedBox(height: ConfidiaSpacing.md),
               if (_captured != null) ...[
-                GlassCard(
+                ConfidiaPageReveal(
+                  index: 1,
+                  staggerCount: 2,
+                  child: GlassCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -192,6 +200,7 @@ class _ScanScreenState extends State<ScanScreen> {
                       ),
                     ],
                   ),
+                ),
                 ),
               ],
               if (kIsWeb)

@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 
 class UploadScreen extends StatefulWidget {
@@ -51,7 +52,10 @@ class _UploadScreenState extends State<UploadScreen> {
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),
-          child: GlassCard(
+          child: ConfidiaPageReveal(
+            index: 0,
+            staggerCount: 1,
+            child: GlassCard(
             child: Column(
               children: [
                   InkWell(
@@ -137,6 +141,7 @@ class _UploadScreenState extends State<UploadScreen> {
                   ),
               ],
             ),
+          ),
           ),
         ),
       ),

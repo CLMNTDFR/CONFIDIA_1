@@ -10,7 +10,7 @@ import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/premium_search_field.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
-import '../../shared/widgets/stagger_fade.dart';
+import '../../shared/widgets/confidia_page_reveal.dart';
 
 class DocumentsScreen extends StatefulWidget {
   const DocumentsScreen({super.key});
@@ -103,10 +103,19 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             sliver: SliverList.separated(
               itemCount: docs.length,
               separatorBuilder: (_, __) => const SizedBox(height: ConfidiaSpacing.sm),
-              itemBuilder: (context, index) => StaggerFade(
-                index: index,
-                child: _DocumentListTile(doc: docs[index], isDark: isDark),
-              ),
+              itemBuilder: (context, index) {
+                final stagger = ConfidiaPageRevealTiming.staggerCount(
+                  context,
+                  docs.length,
+                  itemExtent: 88,
+                  overhead: 340,
+                );
+                return ConfidiaPageReveal(
+                  index: index,
+                  staggerCount: stagger,
+                  child: _DocumentListTile(doc: docs[index], isDark: isDark),
+                );
+              },
             ),
           ),
         SliverToBoxAdapter(child: SizedBox(height: ConfidiaInsets.scrollTail(context))),

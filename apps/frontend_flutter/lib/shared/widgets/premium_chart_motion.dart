@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 /// Durées et courbes des graphiques premium (hors donut).
 abstract final class PremiumChartMotion {
-  static const entryDuration = Duration(milliseconds: 5000);
+  static const entryDuration = Duration(milliseconds: 2500);
   static const focusDuration = Duration(milliseconds: 1100);
   static const curve = Curves.easeOutCubic;
 }

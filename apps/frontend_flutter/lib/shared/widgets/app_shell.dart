@@ -54,7 +54,12 @@ class _AppShellState extends ConsumerState<AppShell> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 MobilePageHeader(title: routeMeta.$1, subtitle: routeMeta.$2),
-                Expanded(child: widget.child),
+                Expanded(
+                  child: KeyedSubtree(
+                    key: ValueKey<String>(currentPath),
+                    child: widget.child,
+                  ),
+                ),
               ],
             ),
           ),
@@ -84,7 +89,12 @@ class _AppShellState extends ConsumerState<AppShell> {
               child: Column(
                 children: [
                   topBar,
-                  Expanded(child: widget.child),
+                  Expanded(
+                  child: KeyedSubtree(
+                    key: ValueKey<String>(currentPath),
+                    child: widget.child,
+                  ),
+                ),
                 ],
               ),
             ),

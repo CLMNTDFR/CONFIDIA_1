@@ -9,7 +9,6 @@ import '../../shared/data/mock_data.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/logout_button.dart';
-import '../../shared/widgets/stagger_fade.dart';
 import '../../shared/widgets/user_avatar.dart';
 import 'profile_avatar_provider.dart';
 
@@ -34,9 +33,7 @@ class ProfileScreen extends ConsumerWidget {
           constraints: const BoxConstraints(maxWidth: 720),
           child: Column(
             children: [
-              StaggerFade(
-                index: 0,
-                child: GlassCard(
+              GlassCard(
                   highlighted: true,
                   child: Column(
                     children: [
@@ -84,11 +81,8 @@ class ProfileScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-              ),
               const SizedBox(height: ConfidiaSpacing.md),
-              StaggerFade(
-                index: 1,
-                child: Row(
+              Row(
                   children: [
                     Expanded(child: _MetricTile(label: 'Documents', value: '$docCount', icon: Icons.folder_copy_rounded, color: ConfidiaColors.primary)),
                     const SizedBox(width: ConfidiaSpacing.sm),
@@ -97,11 +91,8 @@ class ProfileScreen extends ConsumerWidget {
                     Expanded(child: _MetricTile(label: 'Alertes', value: '$unread', icon: Icons.notifications_rounded, color: ConfidiaColors.secondary)),
                   ],
                 ),
-              ),
               const SizedBox(height: ConfidiaSpacing.md),
-              StaggerFade(
-                index: 2,
-                child: GlassCard(
+              GlassCard(
                   padding: EdgeInsets.zero,
                   child: Column(
                     children: [
@@ -115,12 +106,8 @@ class ProfileScreen extends ConsumerWidget {
                     ],
                   ),
                 ),
-              ),
               const SizedBox(height: ConfidiaSpacing.lg),
-              StaggerFade(
-                index: 3,
-                child: const LogoutButton(),
-              ),
+              const LogoutButton(),
               if (isWide) const SizedBox(height: ConfidiaSpacing.md),
             ],
           ),
