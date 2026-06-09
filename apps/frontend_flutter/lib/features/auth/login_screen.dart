@@ -6,7 +6,6 @@ import '../../core/theme/spacing.dart';
 import '../../shared/widgets/confidia_logo.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/glass_card.dart';
-import '../../shared/widgets/logo_auth_transition.dart';
 import '../../shared/widgets/mesh_background.dart';
 import '../../shared/widgets/theme_toggle_button.dart';
 
@@ -50,38 +49,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final auth = ref.watch(authStateProvider);
     final isWide = MediaQuery.of(context).size.width >= 900;
-    final showTransition = _authenticating || auth.isLoading;
-
     return MeshBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Stack(
-          fit: StackFit.expand,
-          children: [
-            SafeArea(
-              child: Stack(
-                children: [
-                  Positioned(top: 16, right: 16, child: const ThemeToggleButton()),
-                  Center(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1000),
-                        child: isWide ? _buildWide(auth) : _buildNarrow(auth),
-                      ),
-                    ),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              Positioned(top: 16, right: 16, child: const ThemeToggleButton()),
+              Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1000),
+                    child: isWide ? _buildWide(auth) : _buildNarrow(auth),
                   ),
-                ],
+                ),
               ),
-            ),
-            if (showTransition)
-              LogoAuthTransition(
-                active: showTransition,
-                profile: LogoTransitionProfile.connection,
-                subtitle: 'Connexion sécurisée en cours…',
-                loopUntilInactive: true,
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -107,7 +92,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: ConfidiaSpacing.lg),
                 Text(
-                  'Centralisez documents, échéances et identité numérique dans un espace sécurisé et élégant.',
+                  'Centralisez documents, échéances et identité numérique dans un espace sécurisé et intelligent.',
                   style: Theme.of(context).textTheme.bodyLarge,
                 ),
                 const SizedBox(height: ConfidiaSpacing.xl),

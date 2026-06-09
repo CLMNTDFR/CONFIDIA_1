@@ -39,3 +39,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - brands/gmail.png
+    - brands/googlecalendar.png
+    - brands/googledocs.png
+    - brands/googlepay.png
+    - brands/nextcloud.png
+    - brands/paperlessngx.png
+    - brands/proton.png

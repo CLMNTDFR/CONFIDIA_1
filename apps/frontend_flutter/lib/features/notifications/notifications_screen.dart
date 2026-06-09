@@ -6,6 +6,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/models/notification_model.dart';
+import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/glass_card.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -48,10 +49,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       children: [
         if (unread > 0)
           Padding(
-            padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, 0, ConfidiaSpacing.lg, ConfidiaSpacing.sm),
+            padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.md, ConfidiaSpacing.lg, ConfidiaSpacing.sm),
             child: Align(
               alignment: Alignment.centerRight,
-              child: TextButton(onPressed: _markAllRead, child: const Text('Tout marquer comme lu')),
+              child: ConfidiaGlowButton(
+                label: 'Tout marquer comme lu',
+                icon: Icons.done_all_rounded,
+                primary: false,
+                onPressed: _markAllRead,
+              ),
             ),
           ),
         Expanded(

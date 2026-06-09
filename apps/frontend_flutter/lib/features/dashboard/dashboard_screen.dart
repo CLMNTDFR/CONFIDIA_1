@@ -17,6 +17,8 @@ import '../../shared/widgets/status_badge.dart';
 import '../payments/payments_provider.dart';
 import '../../shared/models/document_model.dart';
 import '../../shared/widgets/confidia_button.dart';
+import '../../shared/widgets/confidia_glow_button.dart';
+import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/stat_card.dart';
 import '../../shared/widgets/stagger_fade.dart';
@@ -101,7 +103,7 @@ class DashboardScreen extends ConsumerWidget {
     final nextPayment = paymentsNotifier.nextDue;
 
     final content = switch (type) {
-      DashboardWidgetType.greeting => _GreetingWidget(name: name, dateStr: dateStr),
+      DashboardWidgetType.greeting => _GreetingWidget(name: name),
       DashboardWidgetType.stats => _StatsWidget(docs: docs, events: events, notifications: notifications, pendingCount: pendingPayments.length),
       DashboardWidgetType.quickActions => const _QuickActionsWidget(),
       DashboardWidgetType.pendingPayments => _PendingPaymentsWidget(payments: pendingPayments, total: totalPending, next: nextPayment),
@@ -361,25 +363,95 @@ class _CustomizeFab extends StatelessWidget {
 
 class _GreetingWidget extends StatelessWidget {
   final String name;
-  final String dateStr;
-  const _GreetingWidget({required this.name, required this.dateStr});
+  const _GreetingWidget({required this.name});
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final now = DateTime.now();
+    final weekdayRaw = DateFormat('EEEE', 'fr_FR').format(now);
+    final weekday = weekdayRaw.isNotEmpty ? '${weekdayRaw[0].toUpperCase()}${weekdayRaw.substring(1)}' : weekdayRaw;
+    final monthRaw = DateFormat('MMMM', 'fr_FR').format(now);
+    final month = monthRaw.isNotEmpty ? '${monthRaw[0].toUpperCase()}${monthRaw.substring(1)}' : monthRaw;
+    final day = DateFormat('d', 'fr_FR').format(now);
+
     return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      highlighted: true,
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: [
-                Text('Bonjour, $name', style: Theme.of(context).textTheme.titleLarge),
-                Text('$dateStr · Recevoir · Comprendre · Organiser · Agir · Payer · Archiver', style: Theme.of(context).textTheme.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                Text(
+                  'Bonjour ',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: ConfidiaColors.textSecondary(isDark),
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                ShaderMask(
+                  shaderCallback: (b) => ConfidiaColors.brandGradient.createShader(b),
+                  child: Text(
+                    name,
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                ),
               ],
             ),
           ),
-          const Icon(Icons.auto_awesome_rounded, color: ConfidiaColors.secondary, size: 22),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  ConfidiaColors.primary.withValues(alpha: isDark ? 0.22 : 0.1),
+                  ConfidiaColors.secondary.withValues(alpha: isDark ? 0.18 : 0.08),
+                ],
+              ),
+              border: Border.all(color: ConfidiaColors.secondary.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  weekday,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: ConfidiaColors.textSecondary(isDark),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.2,
+                      ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  child: Text(
+                    day,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          height: 1,
+                          color: isDark ? Colors.white : ConfidiaColors.primary,
+                        ),
+                  ),
+                ),
+                Text(
+                  month,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: ConfidiaColors.secondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -409,13 +481,27 @@ class _QuickActionsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    return ConfidiaGlowChipBar(
+      centered: true,
       children: [
-        Expanded(child: ConfidiaButton(label: 'Messagerie', icon: Icons.mail_rounded, compact: true, onPressed: () => context.go('/messaging'))),
-        const SizedBox(width: ConfidiaSpacing.sm),
-        Expanded(child: ConfidiaButton(label: 'Paiements', icon: Icons.payments_rounded, outlined: true, compact: true, onPressed: () => context.go('/payments'))),
-        const SizedBox(width: ConfidiaSpacing.sm),
-        Expanded(child: ConfidiaButton(label: 'Scanner', icon: Icons.document_scanner_rounded, outlined: true, compact: true, onPressed: () => context.go('/scan'))),
+        ConfidiaGlowChip(
+          label: 'Messagerie',
+          icon: Icons.mail_rounded,
+          selected: false,
+          onTap: () => context.go('/messaging'),
+        ),
+        ConfidiaGlowChip(
+          label: 'Paiements',
+          icon: Icons.payments_rounded,
+          selected: false,
+          onTap: () => context.go('/payments'),
+        ),
+        ConfidiaGlowChip(
+          label: 'Scanner',
+          icon: Icons.document_scanner_rounded,
+          selected: false,
+          onTap: () => context.go('/scan'),
+        ),
       ],
     );
   }
@@ -449,7 +535,11 @@ class _PendingPaymentsWidget extends StatelessWidget {
                 ),
               ),
               if (next != null)
-                ConfidiaButton(label: 'Payer', icon: Icons.payment_rounded, compact: true, onPressed: () => context.go('/payments/${next!.id}')),
+                ConfidiaGlowButton(
+                  label: 'Payer',
+                  icon: Icons.payment_rounded,
+                  onPressed: () => context.go('/payments/${next!.id}'),
+                ),
             ],
           ),
           const SizedBox(height: 12),
@@ -640,7 +730,7 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Text(title, style: Theme.of(context).textTheme.titleSmall),
           const Spacer(),
-          GestureDetector(onTap: onTap, child: Text('Voir tout', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: ConfidiaColors.primary))),
+          ConfidiaGlowLink(label: 'Voir tout', onTap: onTap),
         ],
       ),
     );

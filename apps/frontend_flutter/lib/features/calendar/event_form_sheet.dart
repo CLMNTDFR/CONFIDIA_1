@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/calendar_event_model.dart';
-import '../../shared/widgets/confidia_button.dart';
+import '../../shared/widgets/confidia_glow_button.dart';
+import '../../shared/widgets/confidia_glow_chip.dart';
+import '../../shared/widgets/confidia_modal_sheet.dart';
+import '../../shared/widgets/confidia_switch.dart';
 import 'calendar_provider.dart';
 import 'event_type_config.dart';
 
@@ -14,25 +17,25 @@ Future<void> showEventFormSheet(
   CalendarEventModel? event,
   DateTime? initialDay,
 }) {
-  return showModalBottomSheet<void>(
+  return showConfidiaSheet<void>(
     context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (ctx) => _EventFormSheet(event: event, initialDay: initialDay),
+    title: event != null ? 'Modifier l\'événement' : 'Nouvel événement',
+    child: _EventFormContent(event: event, initialDay: initialDay),
+    actions: null,
   );
 }
 
-class _EventFormSheet extends ConsumerStatefulWidget {
+class _EventFormContent extends ConsumerStatefulWidget {
   final CalendarEventModel? event;
   final DateTime? initialDay;
 
-  const _EventFormSheet({this.event, this.initialDay});
+  const _EventFormContent({this.event, this.initialDay});
 
   @override
-  ConsumerState<_EventFormSheet> createState() => _EventFormSheetState();
+  ConsumerState<_EventFormContent> createState() => _EventFormContentState();
 }
 
-class _EventFormSheetState extends ConsumerState<_EventFormSheet> {
+class _EventFormContentState extends ConsumerState<_EventFormContent> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _titleCtrl;
   late final TextEditingController _descCtrl;
@@ -81,7 +84,7 @@ class _EventFormSheetState extends ConsumerState<_EventFormSheet> {
       setState(() {
         if (isStart) {
           _start = DateTime(date.year, date.month, date.day);
-          _end = DateTime(date.year, date.month, date.day, 23, 59);
+          if (_end.isBefore(_start)) _end = _start;
         } else {
           _end = DateTime(date.year, date.month, date.day, 23, 59);
         }
@@ -91,11 +94,12 @@ class _EventFormSheetState extends ConsumerState<_EventFormSheet> {
 
     final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(initial));
     if (time == null || !mounted) return;
-    final dt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
+
     setState(() {
+      final dt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
       if (isStart) {
         _start = dt;
-        if (!_end.isAfter(_start)) _end = _start.add(const Duration(hours: 1));
+        if (_end.isBefore(_start)) _end = _start.add(const Duration(hours: 1));
       } else {
         _end = dt;
       }
@@ -109,13 +113,13 @@ class _EventFormSheetState extends ConsumerState<_EventFormSheet> {
       id: widget.event?.id,
       title: _titleCtrl.text.trim(),
       description: _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
-      start: _start,
-      end: _allDay ? DateTime(_end.year, _end.month, _end.day, 23, 59) : _end,
-      eventType: _type,
       location: _locationCtrl.text.trim().isEmpty ? null : _locationCtrl.text.trim(),
+      start: _start,
+      end: _end,
       allDay: _allDay,
-      documentId: widget.event?.documentId,
+      eventType: _type,
     );
+
     if (_isEdit) {
       notifier.update(model);
     } else {
@@ -148,112 +152,91 @@ class _EventFormSheetState extends ConsumerState<_EventFormSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Padding(
-      padding: EdgeInsets.only(bottom: bottom),
-      child: Container(
-        margin: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF14141E) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: ConfidiaColors.border(isDark)),
-          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 24, offset: const Offset(0, 8))],
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(ConfidiaSpacing.lg),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Row(
-                  children: [
-                    Text(_isEdit ? 'Modifier l\'événement' : 'Nouvel événement', style: Theme.of(context).textTheme.titleLarge),
-                    const Spacer(),
-                    IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.close_rounded)),
-                  ],
-                ),
-                const SizedBox(height: ConfidiaSpacing.md),
-                Text('Type d\'événement', style: Theme.of(context).textTheme.labelLarge),
-                const SizedBox(height: 8),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: eventTypeConfigs.map((cfg) {
-                    final selected = _type == cfg.type;
-                    return FilterChip(
-                      selected: selected,
-                      showCheckmark: false,
-                      avatar: Icon(cfg.icon, size: 16, color: selected ? Colors.white : cfg.color),
-                      label: Text(cfg.label),
-                      selectedColor: cfg.color,
-                      labelStyle: TextStyle(color: selected ? Colors.white : null, fontWeight: selected ? FontWeight.w600 : null),
-                      onSelected: (_) => setState(() => _type = cfg.type),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: ConfidiaSpacing.md),
-                TextFormField(
-                  controller: _titleCtrl,
-                  decoration: const InputDecoration(labelText: 'Titre', prefixIcon: Icon(Icons.title_rounded)),
-                  validator: (v) => v?.trim().isEmpty == true ? 'Requis' : null,
-                ),
-                const SizedBox(height: ConfidiaSpacing.sm),
-                TextFormField(
-                  controller: _descCtrl,
-                  decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.notes_rounded)),
-                  maxLines: 2,
-                ),
-                const SizedBox(height: ConfidiaSpacing.sm),
-                TextFormField(
-                  controller: _locationCtrl,
-                  decoration: const InputDecoration(labelText: 'Lieu (optionnel)', prefixIcon: Icon(Icons.place_outlined)),
-                ),
-                const SizedBox(height: ConfidiaSpacing.sm),
-                SwitchListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Toute la journée'),
-                  value: _allDay,
-                  onChanged: (v) => setState(() => _allDay = v),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.play_arrow_rounded),
-                  title: const Text('Début'),
-                  subtitle: Text(_allDay
-                      ? DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(_start)
-                      : DateFormat('EEEE d MMM yyyy · HH:mm', 'fr_FR').format(_start)),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => _pickDateTime(isStart: true),
-                ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.stop_rounded),
-                  title: const Text('Fin'),
-                  subtitle: Text(_allDay
-                      ? DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(_end)
-                      : DateFormat('EEEE d MMM yyyy · HH:mm', 'fr_FR').format(_end)),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => _pickDateTime(isStart: false),
-                ),
-                const SizedBox(height: ConfidiaSpacing.lg),
-                ConfidiaButton(label: _isEdit ? 'Enregistrer' : 'Créer l\'événement', icon: Icons.check_rounded, onPressed: _save),
-                if (_isEdit) ...[
-                  const SizedBox(height: ConfidiaSpacing.sm),
-                  ConfidiaButton(
-                    label: 'Supprimer',
-                    icon: Icons.delete_outline_rounded,
-                    outlined: true,
-                    onPressed: _confirmDelete,
-                  ),
-                ],
-              ],
-            ),
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text('Type d\'événement', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: eventTypeConfigs.map((cfg) {
+              return ConfidiaGlowChip(
+                label: cfg.label,
+                icon: cfg.icon,
+                accentColor: cfg.color,
+                selected: _type == cfg.type,
+                onTap: () => setState(() => _type = cfg.type),
+              );
+            }).toList(),
           ),
-        ),
+          const SizedBox(height: ConfidiaSpacing.md),
+          TextFormField(
+            controller: _titleCtrl,
+            decoration: const InputDecoration(labelText: 'Titre', prefixIcon: Icon(Icons.title_rounded)),
+            validator: (v) => v?.trim().isEmpty == true ? 'Requis' : null,
+          ),
+          const SizedBox(height: ConfidiaSpacing.sm),
+          TextFormField(
+            controller: _descCtrl,
+            decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.notes_rounded)),
+            maxLines: 2,
+          ),
+          const SizedBox(height: ConfidiaSpacing.sm),
+          TextFormField(
+            controller: _locationCtrl,
+            decoration: const InputDecoration(labelText: 'Lieu (optionnel)', prefixIcon: Icon(Icons.place_outlined)),
+          ),
+          const SizedBox(height: ConfidiaSpacing.sm),
+          ConfidiaSwitchTile(
+            contentPadding: EdgeInsets.zero,
+            title: 'Toute la journée',
+            value: _allDay,
+            onChanged: (v) => setState(() => _allDay = v),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            leading: const Icon(Icons.play_arrow_rounded, size: 20),
+            title: const Text('Début'),
+            subtitle: Text(_allDay
+                ? DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(_start)
+                : DateFormat('EEEE d MMM yyyy · HH:mm', 'fr_FR').format(_start)),
+            trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+            onTap: () => _pickDateTime(isStart: true),
+          ),
+          ListTile(
+            contentPadding: EdgeInsets.zero,
+            dense: true,
+            leading: const Icon(Icons.stop_rounded, size: 20),
+            title: const Text('Fin'),
+            subtitle: Text(_allDay
+                ? DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(_end)
+                : DateFormat('EEEE d MMM yyyy · HH:mm', 'fr_FR').format(_end)),
+            trailing: const Icon(Icons.chevron_right_rounded, size: 18),
+            onTap: () => _pickDateTime(isStart: false),
+          ),
+          const SizedBox(height: ConfidiaSpacing.lg),
+          ConfidiaGlowButton(
+            label: _isEdit ? 'Enregistrer' : 'Créer l\'événement',
+            icon: Icons.check_rounded,
+            onPressed: _save,
+          ),
+          if (_isEdit) ...[
+            const SizedBox(height: ConfidiaSpacing.sm),
+            Center(
+              child: ConfidiaGlowButton(
+                label: 'Supprimer',
+                icon: Icons.delete_outline_rounded,
+                primary: false,
+                onPressed: _confirmDelete,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

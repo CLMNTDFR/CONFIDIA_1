@@ -6,9 +6,12 @@ import '../../core/auth/auth_provider.dart';
 import '../../shared/models/user_model.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
+import '../../features/profile/profile_avatar_provider.dart';
 import '../../shared/data/mock_data.dart';
+import 'confidia_animated_logo.dart';
 import 'confidia_button.dart';
 import 'theme_toggle_button.dart';
+import 'user_avatar.dart';
 
 class AppTopBar extends ConsumerWidget {
   final String title;
@@ -24,11 +27,11 @@ class AppTopBar extends ConsumerWidget {
 
   static AppTopBar fromRoute(BuildContext context, {bool showNotifications = true}) {
     final path = GoRouterState.of(context).matchedLocation;
-    final meta = _routeMeta(path);
+    final meta = routeMeta(path);
     return AppTopBar(title: meta.$1, subtitle: meta.$2, showNotifications: showNotifications);
   }
 
-  static (String, String?) _routeMeta(String path) {
+  static (String, String?) routeMeta(String path) {
     if (path.startsWith('/dashboard')) return ('Accueil', 'Widgets personnalisables');
     if (path.startsWith('/documents/')) return ('Document', 'Détail et analyse');
     if (path.startsWith('/documents')) return ('Documents', 'Bibliothèque');
@@ -50,6 +53,7 @@ class AppTopBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final auth = ref.watch(authStateProvider);
+    final avatarBase64 = ref.watch(profileAvatarProvider);
     final unread = MockData.notifications.where((n) => !n.read).length;
     final isWide = MediaQuery.of(context).size.width >= 900;
 
@@ -63,31 +67,21 @@ class AppTopBar extends ConsumerWidget {
       child: Row(
         children: [
           Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
-                if (subtitle != null) Text(subtitle!, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
-              ],
-            ),
+            child: isWide
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: Theme.of(context).textTheme.titleLarge),
+                      if (subtitle != null)
+                        Text(subtitle!, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ],
+                  )
+                : const Align(
+                    alignment: Alignment.centerLeft,
+                    child: ConfidiaAnimatedLogo(layout: ConfidiaAnimatedLogoLayout.topBar),
+                  ),
           ),
-          if (isWide)
-            SizedBox(
-              width: 260,
-              child: TextField(
-                decoration: InputDecoration(
-                  hintText: 'Rechercher...',
-                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                  isDense: true,
-                  filled: true,
-                  fillColor: isDark ? ConfidiaColors.darkSurfaceVariant : ConfidiaColors.lightSurfaceVariant,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-                ),
-                onSubmitted: (q) { if (q.isNotEmpty) context.go('/documents'); },
-              ),
-            ),
-          const SizedBox(width: ConfidiaSpacing.sm),
           if (showNotifications)
             ConfidiaIconButton(
               icon: Icons.notifications_none_rounded,
@@ -99,7 +93,7 @@ class AppTopBar extends ConsumerWidget {
           const ThemeToggleButton(compact: true),
           const SizedBox(width: 6),
           if (auth.user != null)
-            _ProfileChip(user: auth.user!, onTap: () => context.go('/profile')),
+            _ProfileChip(user: auth.user!, imageBase64: avatarBase64, onTap: () => context.go('/profile')),
         ],
       ),
     );
@@ -108,9 +102,10 @@ class AppTopBar extends ConsumerWidget {
 
 class _ProfileChip extends StatelessWidget {
   final UserModel user;
+  final String? imageBase64;
   final VoidCallback onTap;
 
-  const _ProfileChip({required this.user, required this.onTap});
+  const _ProfileChip({required this.user, this.imageBase64, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -124,11 +119,7 @@ class _ProfileChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: ConfidiaColors.primary.withValues(alpha: 0.15),
-                child: Text(user.initials, style: const TextStyle(color: ConfidiaColors.primary, fontWeight: FontWeight.w700, fontSize: 11)),
-              ),
+              UserAvatar(user: user, radius: 16, imageBase64: imageBase64),
               if (MediaQuery.of(context).size.width >= 1100) ...[
                 const SizedBox(width: 8),
                 Text(user.firstName, style: Theme.of(context).textTheme.labelLarge),

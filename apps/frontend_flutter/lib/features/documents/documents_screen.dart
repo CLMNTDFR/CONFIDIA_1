@@ -6,7 +6,9 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/models/document_model.dart';
-import '../../shared/widgets/confidia_button.dart';
+import '../../shared/widgets/confidia_glow_button.dart';
+import '../../shared/widgets/confidia_glow_chip.dart';
+import '../../shared/widgets/premium_search_field.dart';
 import '../../shared/widgets/stagger_fade.dart';
 
 class DocumentsScreen extends StatefulWidget {
@@ -44,49 +46,47 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
       slivers: [
         SliverToBoxAdapter(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, 0, ConfidiaSpacing.lg, ConfidiaSpacing.md),
+            padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.md, ConfidiaSpacing.sm, ConfidiaSpacing.md, ConfidiaSpacing.sm),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                PremiumSearchField(
+                  hintText: 'Rechercher un document, tag, correspondant…',
+                  onChanged: (v) => setState(() => _searchQuery = v),
+                ),
+                const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
-                      child: TextField(
-                        decoration: const InputDecoration(
-                          hintText: 'Rechercher...',
-                          prefixIcon: Icon(Icons.search_rounded),
-                        ),
-                        onChanged: (v) => setState(() => _searchQuery = v),
+                      child: ConfidiaGlowButton(
+                        label: 'Scanner',
+                        icon: Icons.document_scanner_rounded,
+                        onPressed: () => context.go('/scan'),
+                      ),
+                    ),
+                    const SizedBox(width: ConfidiaSpacing.sm),
+                    Expanded(
+                      child: ConfidiaGlowButton(
+                        label: 'Importer',
+                        icon: Icons.upload_rounded,
+                        primary: false,
+                        onPressed: () => context.go('/upload'),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: ConfidiaSpacing.sm),
-                Row(
-                  children: [
-                    Expanded(child: ConfidiaButton(label: 'Scanner', icon: Icons.document_scanner_rounded, compact: true, onPressed: () => context.go('/scan'))),
-                    const SizedBox(width: ConfidiaSpacing.sm),
-                    Expanded(child: ConfidiaButton(label: 'Importer', icon: Icons.upload_rounded, outlined: true, compact: true, onPressed: () => context.go('/upload'))),
-                  ],
-                ),
                 const SizedBox(height: ConfidiaSpacing.md),
-                SizedBox(
-                  height: 38,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: MockData.categories.map((cat) {
-                      final selected = _selectedCategory == cat;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: ConfidiaSpacing.sm),
-                        child: FilterChip(
-                          label: Text(cat),
-                          selected: selected,
-                          onSelected: (_) => setState(() => _selectedCategory = cat),
-                          selectedColor: ConfidiaColors.primary.withValues(alpha: 0.15),
-                        ),
-                      );
-                    }).toList(),
-                  ),
+                ConfidiaGlowChipScroll(
+                  padding: EdgeInsets.zero,
+                  children: MockData.categories.map((cat) {
+                    final selected = _selectedCategory == cat;
+                    return ConfidiaGlowChip(
+                      label: cat,
+                      selected: selected,
+                      compact: true,
+                      onTap: () => setState(() => _selectedCategory = cat),
+                    );
+                  }).toList(),
                 ),
                 const SizedBox(height: ConfidiaSpacing.sm),
                 Text('${docs.length} résultat${docs.length > 1 ? 's' : ''}', style: Theme.of(context).textTheme.bodySmall),

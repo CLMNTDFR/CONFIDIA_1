@@ -7,7 +7,10 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/email_model.dart';
+import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/brands/brand_assets.dart';
+import '../../shared/widgets/brand_icon.dart';
 import '../../shared/widgets/provider_chip.dart';
 import 'messaging_provider.dart';
 
@@ -29,23 +32,31 @@ class MessagingScreen extends ConsumerWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              if (MediaQuery.of(context).size.width < 900)
-                SizedBox(
-                  height: 44,
-                  child: ListView(
-                    scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
-                    children: [
-                      _FilterChip(label: 'Tous', selected: filter == null, onTap: () => ref.read(mailFilterProvider.notifier).state = null),
-                      ...MailProvider.values.map((p) => _FilterChip(
-                            label: p.label,
-                            selected: filter == p,
-                            color: p.brandColor,
-                            onTap: () => ref.read(mailFilterProvider.notifier).state = p,
-                          )),
-                    ],
+              ConfidiaGlowChipScroll(
+                children: [
+                  ConfidiaGlowChip(
+                    label: 'Tous',
+                    icon: Icons.inbox_rounded,
+                    selected: filter == null,
+                    onTap: () => ref.read(mailFilterProvider.notifier).state = null,
                   ),
-                ),
+                  ...MailProvider.values.map(
+                    (p) => ConfidiaGlowChip(
+                      label: p.label,
+                      selected: filter == p,
+                      accentColor: p.brandColor,
+                      leading: BrandIcon(
+                        assetPath: p.logoAsset,
+                        fallbackIcon: p.icon,
+                        fallbackColor: p.brandColor,
+                        size: 14,
+                      ),
+                      onTap: () => ref.read(mailFilterProvider.notifier).state = p,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
               Expanded(
                 child: filtered.isEmpty
                     ? const Center(child: Text('Aucun message'))
@@ -137,28 +148,6 @@ class _AccountTile extends StatelessWidget {
   }
 }
 
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final Color? color;
-  final VoidCallback onTap;
-
-  const _FilterChip({required this.label, required this.selected, required this.onTap, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 6),
-      child: FilterChip(
-        label: Text(label),
-        selected: selected,
-        selectedColor: (color ?? ConfidiaColors.primary).withValues(alpha: 0.15),
-        onSelected: (_) => onTap(),
-      ),
-    );
-  }
-}
-
 class _EmailTile extends ConsumerWidget {
   final EmailModel email;
 
@@ -188,8 +177,14 @@ class _EmailTile extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: email.provider.brandColor.withValues(alpha: 0.15),
-                child: Text(email.sender[0].toUpperCase(), style: TextStyle(color: email.provider.brandColor, fontWeight: FontWeight.w700)),
+                backgroundColor: email.provider.brandColor.withValues(alpha: 0.12),
+                child: BrandIcon(
+                  assetPath: email.provider.logoAsset,
+                  fallbackIcon: email.provider.icon,
+                  fallbackColor: email.provider.brandColor,
+                  size: 22,
+                  borderRadius: 10,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(

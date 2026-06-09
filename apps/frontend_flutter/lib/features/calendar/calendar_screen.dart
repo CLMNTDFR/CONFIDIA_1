@@ -7,6 +7,9 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/calendar_event_model.dart';
+import '../../shared/widgets/confidia_glow_button.dart';
+import '../../shared/widgets/confidia_glow_chip.dart';
+import '../../shared/widgets/confidia_glow_segmented.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/provider_chip.dart';
 import 'calendar_provider.dart';
@@ -26,6 +29,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   CalendarView _view = CalendarView.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay = DateTime.now();
+
+  void _shiftDay(int delta) {
+    setState(() {
+      final base = _selectedDay ?? DateTime.now();
+      final next = DateTime(base.year, base.month, base.day + delta);
+      _selectedDay = next;
+      _focusedDay = next;
+    });
+  }
 
   List<CalendarEventModel> _eventsForDay(DateTime day, List<CalendarEventModel> events) {
     return events
@@ -63,23 +75,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   ),
                   const SizedBox(height: ConfidiaSpacing.md),
                   if (isWide)
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Expanded(flex: 3, child: _buildCalendarWidget()),
-                          const SizedBox(width: ConfidiaSpacing.md),
-                          Expanded(
-                            flex: 2,
-                            child: _EventList(
-                              events: selectedEvents,
-                              title: 'Événements',
-                              onEdit: (e) => showEventFormSheet(context, event: e),
-                              onDelete: (e) => _confirmDelete(e),
-                            ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(flex: 3, child: _buildCalendarWidget()),
+                        const SizedBox(width: ConfidiaSpacing.md),
+                        Expanded(
+                          flex: 2,
+                          child: _EventList(
+                            events: selectedEvents,
+                            title: 'Événements',
+                            onEdit: (e) => showEventFormSheet(context, event: e),
+                            onDelete: (e) => _confirmDelete(e),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     )
                   else ...[
                     _buildCalendarWidget(),
@@ -107,11 +117,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         Positioned(
           right: ConfidiaSpacing.lg,
           bottom: ConfidiaSpacing.lg,
-          child: FloatingActionButton.extended(
+          child: ConfidiaGlowButton(
+            label: 'Événement',
+            icon: Icons.add_rounded,
             onPressed: () => showEventFormSheet(context, initialDay: _selectedDay),
-            backgroundColor: ConfidiaColors.primary,
-            icon: const Icon(Icons.add_rounded, color: Colors.white),
-            label: const Text('Événement', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
           ),
         ),
       ],
@@ -304,8 +313,28 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(day), style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: ConfidiaSpacing.lg),
+          Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left_rounded),
+                onPressed: () => _shiftDay(-1),
+                tooltip: 'Jour précédent',
+              ),
+              Expanded(
+                child: Text(
+                  DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(day),
+                  style: Theme.of(context).textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right_rounded),
+                onPressed: () => _shiftDay(1),
+                tooltip: 'Jour suivant',
+              ),
+            ],
+          ),
+          const SizedBox(height: ConfidiaSpacing.md),
           if (dayEvents.isEmpty)
             const Padding(padding: EdgeInsets.all(24), child: Center(child: Text('Aucun événement ce jour')))
           else
@@ -327,18 +356,37 @@ class _ConnectedCalendarsBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return GlassCard(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Icon(Icons.sync_rounded, size: 16, color: ConfidiaColors.secondary),
-          const SizedBox(width: 8),
-          Text('Calendriers connectés', style: Theme.of(context).textTheme.labelLarge),
-          const SizedBox(width: 12),
-          ...MockEcosystem.connectedCalendars.map((c) => Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: CalendarSourceChip(source: c.$1, compact: true),
-              )),
-          const Spacer(),
-          Text('Vue fusionnée', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: ConfidiaColors.primary, fontWeight: FontWeight.w600)),
+          Row(
+            children: [
+              const Icon(Icons.sync_rounded, size: 16, color: ConfidiaColors.secondary),
+              const SizedBox(width: 8),
+              Text('Calendriers connectés', style: Theme.of(context).textTheme.labelLarge),
+              const Spacer(),
+              Text(
+                'Vue fusionnée',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: ConfidiaColors.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            height: 28,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: MockEcosystem.connectedCalendars
+                  .map((c) => Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: CalendarSourceChip(source: c.$1, compact: true),
+                      ))
+                  .toList(),
+            ),
+          ),
         ],
       ),
     );
@@ -351,16 +399,18 @@ class _ViewSelector extends StatelessWidget {
 
   const _ViewSelector({required this.view, required this.onChanged});
 
+  static const _segments = [
+    ConfidiaGlowSegment(value: CalendarView.month, label: 'Mois', icon: Icons.calendar_view_month_rounded),
+    ConfidiaGlowSegment(value: CalendarView.week, label: 'Semaine', icon: Icons.calendar_view_week_rounded),
+    ConfidiaGlowSegment(value: CalendarView.day, label: 'Jour', icon: Icons.calendar_today_rounded),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return SegmentedButton<CalendarView>(
-      segments: const [
-        ButtonSegment(value: CalendarView.month, label: Text('Mois'), icon: Icon(Icons.calendar_view_month_rounded, size: 16)),
-        ButtonSegment(value: CalendarView.week, label: Text('Semaine'), icon: Icon(Icons.calendar_view_week_rounded, size: 16)),
-        ButtonSegment(value: CalendarView.day, label: Text('Jour'), icon: Icon(Icons.calendar_today_rounded, size: 16)),
-      ],
-      selected: {view},
-      onSelectionChanged: (s) => onChanged(s.first),
+    return ConfidiaGlowSegmentedControl<CalendarView>(
+      value: view,
+      segments: _segments,
+      onChanged: onChanged,
     );
   }
 }
@@ -373,33 +423,23 @@ class _TypeLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          FilterChip(
-            label: const Text('Tous'),
-            selected: selected == null,
-            onSelected: (_) => onSelected(null),
+    return ConfidiaGlowChipScroll(
+      children: [
+        ConfidiaGlowChip(
+          label: 'Tous',
+          selected: selected == null,
+          onTap: () => onSelected(null),
+        ),
+        ...eventTypeConfigs.map(
+          (cfg) => ConfidiaGlowChip(
+            label: cfg.label,
+            icon: cfg.icon,
+            accentColor: cfg.color,
+            selected: selected == cfg.type,
+            onTap: () => onSelected(cfg.type),
           ),
-          const SizedBox(width: 6),
-          ...eventTypeConfigs.map((cfg) => Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: FilterChip(
-                  avatar: Icon(cfg.icon, size: 14, color: selected == cfg.type ? Colors.white : cfg.color),
-                  label: Text(cfg.label),
-                  selected: selected == cfg.type,
-                  selectedColor: cfg.color,
-                  showCheckmark: false,
-                  labelStyle: TextStyle(
-                    color: selected == cfg.type ? Colors.white : null,
-                    fontWeight: selected == cfg.type ? FontWeight.w600 : null,
-                  ),
-                  onSelected: (_) => onSelected(cfg.type),
-                ),
-              )),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
