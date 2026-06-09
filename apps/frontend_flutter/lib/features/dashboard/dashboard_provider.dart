@@ -3,6 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 enum DashboardWidgetType {
   greeting,
   stats,
+  expensesTrend,
+  paymentsOverview,
+  documentsBreakdown,
+  hubActivity,
   quickActions,
   pendingPayments,
   recentDocs,
@@ -17,6 +21,10 @@ extension DashboardWidgetTypeX on DashboardWidgetType {
   String get label => switch (this) {
         DashboardWidgetType.greeting => 'Bienvenue',
         DashboardWidgetType.stats => 'Statistiques',
+        DashboardWidgetType.expensesTrend => 'Évolution des dépenses',
+        DashboardWidgetType.paymentsOverview => 'Vue des paiements',
+        DashboardWidgetType.documentsBreakdown => 'Répartition documentaire',
+        DashboardWidgetType.hubActivity => 'Activité du hub',
         DashboardWidgetType.quickActions => 'Actions rapides',
         DashboardWidgetType.pendingPayments => 'Paiements en attente',
         DashboardWidgetType.recentDocs => 'Documents récents',
@@ -27,9 +35,31 @@ extension DashboardWidgetTypeX on DashboardWidgetType {
         DashboardWidgetType.aiAnalyzed => 'Documents analysés par IA',
       };
 
+  bool get isHalfWidth => switch (this) {
+        DashboardWidgetType.connectedAccounts => true,
+        DashboardWidgetType.recentDocs => true,
+        DashboardWidgetType.importantDocs => true,
+        DashboardWidgetType.paymentsOverview => true,
+        DashboardWidgetType.expensesTrend => true,
+        _ => false,
+      };
+
+  double? get fixedHeight => switch (this) {
+        DashboardWidgetType.connectedAccounts => 228,
+        DashboardWidgetType.recentDocs => 228,
+        DashboardWidgetType.importantDocs => 228,
+        DashboardWidgetType.paymentsOverview => 292,
+        DashboardWidgetType.expensesTrend => 292,
+        _ => null,
+      };
+
   String get iconName => switch (this) {
         DashboardWidgetType.greeting => 'waving_hand',
         DashboardWidgetType.stats => 'analytics',
+        DashboardWidgetType.expensesTrend => 'trending_up',
+        DashboardWidgetType.paymentsOverview => 'bar_chart',
+        DashboardWidgetType.documentsBreakdown => 'pie_chart',
+        DashboardWidgetType.hubActivity => 'stacked_bar',
         DashboardWidgetType.quickActions => 'bolt',
         DashboardWidgetType.pendingPayments => 'payment',
         DashboardWidgetType.recentDocs => 'folder',
@@ -52,7 +82,8 @@ class DashboardLayout {
     this.editMode = false,
   });
 
-  List<DashboardWidgetType> get visible => order.where((w) => !hidden.contains(w)).toList();
+  List<DashboardWidgetType> get visible =>
+      order.where((w) => !hidden.contains(w) && w != DashboardWidgetType.greeting).toList();
 
   DashboardLayout copyWith({
     List<DashboardWidgetType>? order,
@@ -71,16 +102,19 @@ class DashboardLayoutNotifier extends StateNotifier<DashboardLayout> {
   DashboardLayoutNotifier()
       : super(const DashboardLayout(
           order: [
-            DashboardWidgetType.greeting,
             DashboardWidgetType.stats,
+            DashboardWidgetType.expensesTrend,
+            DashboardWidgetType.paymentsOverview,
+            DashboardWidgetType.documentsBreakdown,
+            DashboardWidgetType.hubActivity,
             DashboardWidgetType.pendingPayments,
             DashboardWidgetType.quickActions,
             DashboardWidgetType.recentDocs,
-            DashboardWidgetType.deadlines,
-            DashboardWidgetType.aiAnalyzed,
-            DashboardWidgetType.connectedAccounts,
-            DashboardWidgetType.activity,
             DashboardWidgetType.importantDocs,
+            DashboardWidgetType.deadlines,
+            DashboardWidgetType.connectedAccounts,
+            DashboardWidgetType.aiAnalyzed,
+            DashboardWidgetType.activity,
           ],
         ));
 
@@ -108,16 +142,19 @@ class DashboardLayoutNotifier extends StateNotifier<DashboardLayout> {
   void reset() {
     state = const DashboardLayout(
       order: [
-        DashboardWidgetType.greeting,
         DashboardWidgetType.stats,
+        DashboardWidgetType.expensesTrend,
+        DashboardWidgetType.paymentsOverview,
+        DashboardWidgetType.documentsBreakdown,
+        DashboardWidgetType.hubActivity,
         DashboardWidgetType.pendingPayments,
         DashboardWidgetType.quickActions,
         DashboardWidgetType.recentDocs,
-        DashboardWidgetType.deadlines,
-        DashboardWidgetType.aiAnalyzed,
-        DashboardWidgetType.connectedAccounts,
-        DashboardWidgetType.activity,
         DashboardWidgetType.importantDocs,
+        DashboardWidgetType.deadlines,
+        DashboardWidgetType.connectedAccounts,
+        DashboardWidgetType.aiAnalyzed,
+        DashboardWidgetType.activity,
       ],
     );
   }

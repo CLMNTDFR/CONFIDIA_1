@@ -45,12 +45,51 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
     super.dispose();
   }
 
+  bool get _isBrandChip => widget.accentColor != null;
+
+  Widget _buildLeading({required bool selected, required bool isDark, required double iconSize}) {
+    if (widget.leading != null) {
+      final logo = widget.leading!;
+      if (_isBrandChip) {
+        return Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: selected ? 0.1 : 0.06),
+                blurRadius: 2,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+          child: logo,
+        );
+      }
+      return logo;
+    }
+
+    if (widget.icon != null) {
+      return Icon(
+        widget.icon,
+        size: iconSize,
+        color: selected
+            ? (_isBrandChip ? widget.accentColor : Colors.white)
+            : ConfidiaColors.textSecondary(isDark),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final accent = widget.accentColor ?? ConfidiaColors.primary;
     final selected = widget.selected;
     final hovered = _hovered && !selected;
+    final brandSelected = _isBrandChip && selected;
     final fontSize = widget.compact ? 10.0 : 11.0;
     final iconSize = widget.compact ? 12.0 : 14.0;
     final hPad = widget.compact ? 8.0 : 12.0;
@@ -72,61 +111,65 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
             padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(9),
-              gradient: selected
+              gradient: selected && !brandSelected
                   ? LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: widget.accentColor != null
-                          ? [accent.withValues(alpha: 0.95), accent.withValues(alpha: 0.75)]
-                          : [
-                              ConfidiaColors.primary.withValues(alpha: 0.9),
-                              ConfidiaColors.secondary.withValues(alpha: 0.75),
-                            ],
+                      colors: [
+                        ConfidiaColors.primary.withValues(alpha: 0.9),
+                        ConfidiaColors.secondary.withValues(alpha: 0.75),
+                      ],
                     )
                   : null,
-              color: selected
-                  ? null
-                  : hovered
-                      ? ConfidiaColors.primary.withValues(alpha: isDark ? 0.1 : 0.06)
-                      : Colors.transparent,
+              color: brandSelected
+                  ? accent.withValues(alpha: isDark ? 0.18 : 0.1)
+                  : selected
+                      ? null
+                      : hovered
+                          ? (_isBrandChip ? accent.withValues(alpha: 0.08) : ConfidiaColors.primary.withValues(alpha: isDark ? 0.1 : 0.06))
+                          : Colors.transparent,
               border: Border.all(
-                color: selected
-                    ? Colors.white.withValues(alpha: 0.15)
-                    : hovered
-                        ? ConfidiaColors.secondary.withValues(alpha: 0.35)
-                        : ConfidiaColors.border(isDark).withValues(alpha: 0.5),
+                color: brandSelected
+                    ? accent.withValues(alpha: 0.55)
+                    : selected
+                        ? Colors.white.withValues(alpha: 0.15)
+                        : hovered
+                            ? (_isBrandChip ? accent.withValues(alpha: 0.35) : ConfidiaColors.secondary.withValues(alpha: 0.35))
+                            : ConfidiaColors.border(isDark).withValues(alpha: 0.5),
               ),
-              boxShadow: selected
+              boxShadow: brandSelected
                   ? [
                       BoxShadow(
-                        color: accent.withValues(alpha: 0.28),
-                        blurRadius: 10,
+                        color: accent.withValues(alpha: 0.16),
+                        blurRadius: 8,
                         spreadRadius: -3,
                         offset: const Offset(0, 2),
                       ),
                     ]
-                  : hovered
+                  : selected
                       ? [
                           BoxShadow(
-                            color: ConfidiaColors.secondary.withValues(alpha: 0.12),
-                            blurRadius: 8,
-                            spreadRadius: -2,
+                            color: accent.withValues(alpha: 0.28),
+                            blurRadius: 10,
+                            spreadRadius: -3,
+                            offset: const Offset(0, 2),
                           ),
                         ]
-                      : null,
+                      : hovered
+                          ? [
+                              BoxShadow(
+                                color: (_isBrandChip ? accent : ConfidiaColors.secondary).withValues(alpha: 0.12),
+                                blurRadius: 8,
+                                spreadRadius: -2,
+                              ),
+                            ]
+                          : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.leading != null) ...[
-                  widget.leading!,
-                  const SizedBox(width: 5),
-                ] else if (widget.icon != null) ...[
-                  Icon(
-                    widget.icon,
-                    size: iconSize,
-                    color: selected ? Colors.white : ConfidiaColors.textSecondary(isDark),
-                  ),
+                if (widget.leading != null || widget.icon != null) ...[
+                  _buildLeading(selected: selected, isDark: isDark, iconSize: iconSize),
                   const SizedBox(width: 5),
                 ],
                 Text(
@@ -135,7 +178,11 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
                     fontSize: fontSize,
                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                     letterSpacing: 0.2,
-                    color: selected ? Colors.white : ConfidiaColors.textSecondary(isDark),
+                    color: brandSelected
+                        ? accent
+                        : selected
+                            ? Colors.white
+                            : ConfidiaColors.textSecondary(isDark),
                   ),
                 ),
               ],

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
+import '../navigation/confidia_route_labels.dart';
+import 'confidia_tooltip.dart';
 
 /// Entrée de navigation partagée (sidebar + bottom bar).
 class ConfidiaNavDestination {
@@ -27,7 +29,7 @@ bool confidiaNavIsActive(String path, String currentPath) {
   return currentPath == path || currentPath.startsWith('$path/');
 }
 
-/// Item de sidebar desktop — glow sobre, animation au tap.
+/// Item de sidebar desktop — sobre, typographie comme signal d'état.
 class ConfidiaSidebarNavItem extends StatefulWidget {
   final ConfidiaNavDestination destination;
   final bool isActive;
@@ -44,23 +46,8 @@ class ConfidiaSidebarNavItem extends StatefulWidget {
   State<ConfidiaSidebarNavItem> createState() => _ConfidiaSidebarNavItemState();
 }
 
-class _ConfidiaSidebarNavItemState extends State<ConfidiaSidebarNavItem> with SingleTickerProviderStateMixin {
-  late final AnimationController _press;
-  late final Animation<double> _scale;
+class _ConfidiaSidebarNavItemState extends State<ConfidiaSidebarNavItem> {
   bool _hovered = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _press = AnimationController(vsync: this, duration: const Duration(milliseconds: 90));
-    _scale = Tween<double>(begin: 1, end: 0.96).animate(CurvedAnimation(parent: _press, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _press.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -69,144 +56,54 @@ class _ConfidiaSidebarNavItemState extends State<ConfidiaSidebarNavItem> with Si
     final active = widget.isActive;
     final hovered = _hovered && !active;
 
-    return Padding(
+    final item = Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Tooltip(
-        message: widget.collapsed ? d.label : '',
-        child: MouseRegion(
-          onEnter: (_) => setState(() => _hovered = true),
-          onExit: (_) => setState(() => _hovered = false),
-          child: GestureDetector(
-            onTapDown: (_) => _press.forward(),
-            onTapUp: (_) => _press.reverse(),
-            onTapCancel: () => _press.reverse(),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _hovered = true),
+        onExit: (_) => setState(() => _hovered = false),
+        child: Material(
+          color: hovered ? (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04) : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          child: InkWell(
             onTap: () => context.go(d.path),
-            child: ScaleTransition(
-              scale: _scale,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 220),
-                curve: Curves.easeOutCubic,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  gradient: active
-                      ? LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
-                          colors: [
-                            ConfidiaColors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
-                            ConfidiaColors.secondary.withValues(alpha: isDark ? 0.14 : 0.06),
-                          ],
-                        )
-                      : null,
-                  color: active
-                      ? null
-                      : hovered
-                          ? ConfidiaColors.primary.withValues(alpha: isDark ? 0.08 : 0.05)
-                          : Colors.transparent,
-                  border: Border.all(
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: widget.collapsed ? 0 : 12, vertical: 10),
+              child: Row(
+                mainAxisAlignment: widget.collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+                children: [
+                  Icon(
+                    active ? d.iconFilled : d.iconOutlined,
+                    size: 20,
                     color: active
-                        ? ConfidiaColors.secondary.withValues(alpha: 0.25)
-                        : hovered
-                            ? ConfidiaColors.secondary.withValues(alpha: 0.22)
-                            : Colors.transparent,
+                        ? ConfidiaColors.primary
+                        : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.75),
                   ),
-                  boxShadow: active
-                      ? [
-                          BoxShadow(
-                            color: ConfidiaColors.primary.withValues(alpha: 0.12),
-                            blurRadius: 12,
-                            spreadRadius: -4,
-                          ),
-                        ]
-                      : hovered
-                          ? [
-                              BoxShadow(
-                                color: ConfidiaColors.secondary.withValues(alpha: 0.1),
-                                blurRadius: 10,
-                                spreadRadius: -4,
-                              ),
-                            ]
-                          : null,
-                ),
-                child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: widget.collapsed ? 0 : 12, vertical: 10),
-                  child: Row(
-                    mainAxisAlignment: widget.collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
-                    children: [
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 220),
-                        width: 32,
-                        height: 32,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(9),
-                          gradient: active
-                              ? LinearGradient(
-                                  colors: [
-                                    ConfidiaColors.primary.withValues(alpha: 0.85),
-                                    ConfidiaColors.secondary.withValues(alpha: 0.7),
-                                  ],
-                                )
-                              : hovered
-                                  ? LinearGradient(
-                                      colors: [
-                                        ConfidiaColors.primary.withValues(alpha: 0.2),
-                                        ConfidiaColors.secondary.withValues(alpha: 0.12),
-                                      ],
-                                    )
-                                  : null,
-                          color: active || hovered
-                              ? null
-                              : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-                          boxShadow: active
-                              ? [
-                                  BoxShadow(
-                                    color: ConfidiaColors.secondary.withValues(alpha: 0.35),
-                                    blurRadius: 8,
-                                    spreadRadius: -2,
-                                  ),
-                                ]
-                              : hovered
-                                  ? [
-                                      BoxShadow(
-                                        color: ConfidiaColors.primary.withValues(alpha: 0.15),
-                                        blurRadius: 6,
-                                        spreadRadius: -2,
-                                      ),
-                                    ]
-                                  : null,
-                        ),
-                        child: Icon(
-                          active || hovered ? d.iconFilled : d.iconOutlined,
-                          size: 17,
-                          color: active
-                              ? Colors.white
-                              : hovered
+                  if (!widget.collapsed) ...[
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        d.label,
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: active
                                   ? ConfidiaColors.primary
-                                  : ConfidiaColors.textSecondary(isDark),
-                        ),
+                                  : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.8),
+                              fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                            ),
                       ),
-                    if (!widget.collapsed) ...[
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          d.label,
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: active ? ConfidiaColors.primary : ConfidiaColors.textSecondary(isDark),
-                                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                              ),
-                        ),
-                      ),
-                      if (d.badge != null) _NavBadge(count: d.badge!),
-                    ],
+                    ),
+                    if (d.badge != null) _NavBadge(count: d.badge!),
                   ],
-                ),
+                ],
               ),
             ),
           ),
         ),
-        ),
       ),
     );
+
+    if (!widget.collapsed) return item;
+    return ConfidiaTooltip(message: d.label, preferBelow: false, child: item);
   }
 }
 
@@ -220,22 +117,15 @@ class _NavBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        gradient: ConfidiaColors.primaryGradient,
-        borderRadius: BorderRadius.circular(8),
-        boxShadow: [
-          BoxShadow(
-            color: ConfidiaColors.primary.withValues(alpha: 0.35),
-            blurRadius: 6,
-            spreadRadius: -2,
-          ),
-        ],
+        color: ConfidiaColors.primary,
+        borderRadius: BorderRadius.circular(6),
       ),
-      child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w700)),
+      child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600)),
     );
   }
 }
 
-/// Bottom bar mobile premium — glass, glow, 6 destinations dont Paramètres.
+/// Bottom bar mobile — sobre, lisible.
 class ConfidiaMobileNavBar extends StatelessWidget {
   final String currentPath;
   final List<ConfidiaNavDestination> destinations;
@@ -258,27 +148,18 @@ class ConfidiaMobileNavBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final selected = _selectedIndex();
 
-    return ClipRRect(
+    return ClipRect(
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
           decoration: BoxDecoration(
-            color: (isDark ? ConfidiaColors.darkSurface : Colors.white).withValues(alpha: 0.92),
-            border: Border(
-              top: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.6)),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: ConfidiaColors.secondary.withValues(alpha: isDark ? 0.08 : 0.05),
-                blurRadius: 20,
-                offset: const Offset(0, -4),
-              ),
-            ],
+            color: (isDark ? ConfidiaColors.darkSurface : Colors.white).withValues(alpha: 0.72),
+            border: Border(top: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.45))),
           ),
           child: SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
               child: Row(
                 children: List.generate(destinations.length, (i) {
                   return Expanded(
@@ -297,43 +178,23 @@ class ConfidiaMobileNavBar extends StatelessWidget {
   }
 }
 
-class _MobileNavItem extends StatefulWidget {
+class _MobileNavItem extends StatelessWidget {
   final ConfidiaNavDestination destination;
   final bool isActive;
 
   const _MobileNavItem({required this.destination, required this.isActive});
 
   @override
-  State<_MobileNavItem> createState() => _MobileNavItemState();
-}
-
-class _MobileNavItemState extends State<_MobileNavItem> with SingleTickerProviderStateMixin {
-  late final AnimationController _press;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _press = AnimationController(vsync: this, duration: const Duration(milliseconds: 90));
-    _scale = Tween<double>(begin: 1, end: 0.9).animate(CurvedAnimation(parent: _press, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _press.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final d = widget.destination;
-    final active = widget.isActive;
+    final d = destination;
 
     Widget icon = Icon(
-      active ? d.iconFilled : d.iconOutlined,
-      size: 21,
-      color: active ? ConfidiaColors.primary : ConfidiaColors.textSecondary(isDark),
+      isActive ? d.iconFilled : d.iconOutlined,
+      size: 22,
+      color: isActive
+          ? ConfidiaColors.primary
+          : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.7),
     );
 
     if (d.badge != null && d.badge! > 0) {
@@ -345,66 +206,27 @@ class _MobileNavItemState extends State<_MobileNavItem> with SingleTickerProvide
       );
     }
 
-    return GestureDetector(
-      onTapDown: (_) => _press.forward(),
-      onTapUp: (_) => _press.reverse(),
-      onTapCancel: () => _press.reverse(),
-      onTap: () => context.go(d.path),
-      behavior: HitTestBehavior.opaque,
-      child: ScaleTransition(
-        scale: _scale,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.go(d.path),
+        child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
-            gradient: active
-                ? LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      ConfidiaColors.primary.withValues(alpha: isDark ? 0.18 : 0.1),
-                      Colors.transparent,
-                    ],
-                  )
-                : null,
-          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Stack(
-                clipBehavior: Clip.none,
-                alignment: Alignment.center,
-                children: [
-                  if (active)
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: ConfidiaColors.primary.withValues(alpha: 0.35),
-                            blurRadius: 14,
-                            spreadRadius: -4,
-                          ),
-                        ],
-                      ),
-                    ),
-                  icon,
-                ],
-              ),
-              const SizedBox(height: 2),
+              icon,
+              const SizedBox(height: 3),
               Text(
                 d.label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  fontSize: 9.5,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                  letterSpacing: 0.1,
-                  color: active ? ConfidiaColors.primary : ConfidiaColors.textSecondary(isDark),
+                  fontSize: 9,
+                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                  color: isActive
+                      ? ConfidiaColors.primary
+                      : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.75),
                 ),
               ),
             ],
@@ -420,14 +242,14 @@ abstract final class ConfidiaNavDestinations {
   static ConfidiaNavDestination home() => const ConfidiaNavDestination(
         iconOutlined: Icons.space_dashboard_outlined,
         iconFilled: Icons.space_dashboard_rounded,
-        label: 'Accueil',
+        label: ConfidiaRouteLabels.home,
         path: '/dashboard',
       );
 
   static ConfidiaNavDestination messaging({int? badge}) => ConfidiaNavDestination(
         iconOutlined: Icons.mail_outlined,
         iconFilled: Icons.mail_rounded,
-        label: 'Mails',
+        label: ConfidiaRouteLabels.messaging,
         path: '/messaging',
         badge: badge,
       );
@@ -435,35 +257,35 @@ abstract final class ConfidiaNavDestinations {
   static ConfidiaNavDestination payments() => const ConfidiaNavDestination(
         iconOutlined: Icons.payments_outlined,
         iconFilled: Icons.payments_rounded,
-        label: 'Payer',
+        label: ConfidiaRouteLabels.payments,
         path: '/payments',
       );
 
   static ConfidiaNavDestination documents() => const ConfidiaNavDestination(
         iconOutlined: Icons.folder_copy_outlined,
         iconFilled: Icons.folder_copy_rounded,
-        label: 'Docs',
+        label: ConfidiaRouteLabels.documents,
         path: '/documents',
       );
 
   static ConfidiaNavDestination calendar() => const ConfidiaNavDestination(
         iconOutlined: Icons.calendar_month_outlined,
         iconFilled: Icons.calendar_month_rounded,
-        label: 'Agenda',
+        label: ConfidiaRouteLabels.calendar,
         path: '/calendar',
       );
 
   static ConfidiaNavDestination settings() => const ConfidiaNavDestination(
         iconOutlined: Icons.tune_outlined,
         iconFilled: Icons.tune_rounded,
-        label: 'Réglages',
+        label: ConfidiaRouteLabels.settings,
         path: '/settings',
       );
 
   static ConfidiaNavDestination notifications({int? badge}) => ConfidiaNavDestination(
         iconOutlined: Icons.notifications_outlined,
         iconFilled: Icons.notifications_rounded,
-        label: 'Alertes',
+        label: ConfidiaRouteLabels.notifications,
         path: '/notifications',
         badge: badge,
       );

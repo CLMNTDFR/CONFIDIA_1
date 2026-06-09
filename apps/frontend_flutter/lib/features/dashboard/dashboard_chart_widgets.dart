@@ -1,0 +1,585 @@
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/theme/colors.dart';
+import '../../shared/data/mock_ecosystem.dart';
+import '../../shared/widgets/confidia_chart_card.dart';
+import '../../shared/widgets/confidia_chart_tooltips.dart';
+import '../../shared/widgets/premium_donut_chart.dart';
+import '../payments/payments_provider.dart';
+import 'dashboard_chart_data.dart';
+
+Widget _chartArea(Widget chart, {double fallback = 200}) {
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      final height = constraints.hasBoundedHeight && constraints.maxHeight.isFinite && constraints.maxHeight > 0
+          ? constraints.maxHeight
+          : fallback;
+      return SizedBox(height: height, child: chart);
+    },
+  );
+}
+
+class ExpensesTrendChartWidget extends StatelessWidget {
+  const ExpensesTrendChartWidget({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final points = DashboardChartData.expenseTrend();
+    final maxY = points.map((p) => p.value).reduce((a, b) => a > b ? a : b) * 1.15;
+    final peak = points.reduce((a, b) => a.value > b.value ? a : b);
+
+    return ConfidiaChartCard(
+      title: 'Évolution des dépenses',
+      subtitle: 'Pic · ${peak.value.toStringAsFixed(0)} € en ${peak.label}',
+      linkRoute: '/payments',
+      headerExtras: const [
+        ConfidiaChartMetricChip(label: 'Courbe mensuelle', color: ConfidiaColors.primary),
+      ],
+      chart: _chartArea(
+        LineChart(
+        duration: const Duration(milliseconds: 900),
+        curve: Curves.easeOutCubic,
+        LineChartData(
+          minY: 0,
+          maxY: maxY,
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            horizontalInterval: maxY / 4,
+            getDrawingHorizontalLine: (_) => FlLine(
+              color: ConfidiaColors.border(isDark).withValues(alpha: 0.45),
+              strokeWidth: 1,
+            ),
+          ),
+          borderData: FlBorderData(show: false),
+          titlesData: FlTitlesData(
+            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 38,
+                interval: maxY / 4,
+                getTitlesWidget: (value, _) => Text(
+                  '${value.round()}€',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontSize: 9,
+                        color: ConfidiaColors.textSecondary(isDark),
+                      ),
+                ),
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final i = value.toInt();
+                  if (i < 0 || i >= points.length) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      points[i].label,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            fontSize: 10,
+                            color: ConfidiaColors.textSecondary(isDark),
+                          ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          lineTouchData: LineTouchData(
+            touchTooltipData: ConfidiaChartTooltips.line(
+              context,
+              labelBuilder: (index, value) => '${points[index].label}\n${value.toStringAsFixed(0)} €',
+            ),
+          ),
+          lineBarsData: [
+            LineChartBarData(
+              spots: List.generate(points.length, (i) => FlSpot(i.toDouble(), points[i].value)),
+              isCurved: true,
+              curveSmoothness: 0.28,
+              barWidth: 3,
+              gradient: ConfidiaColors.primaryGradient,
+              belowBarData: BarAreaData(
+                show: true,
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    ConfidiaColors.primary.withValues(alpha: isDark ? 0.28 : 0.18),
+                    ConfidiaColors.secondary.withValues(alpha: 0.02),
+                  ],
+                ),
+              ),
+              dotData: FlDotData(
+                show: true,
+                getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
+                  radius: 3.5,
+                  color: Colors.white,
+                  strokeWidth: 2,
+                  strokeColor: ConfidiaColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      ),
+    );
+  }
+}
+
+class DocumentsCategoryChartWidget extends StatefulWidget {
+  const DocumentsCategoryChartWidget({super.key});
+
+  @override
+  State<DocumentsCategoryChartWidget> createState() => _DocumentsCategoryChartWidgetState();
+}
+
+class _DocumentsCategoryChartWidgetState extends State<DocumentsCategoryChartWidget> {
+  int? _touchedIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final slices = DashboardChartData.documentsByCategory(MockEcosystem.documents);
+    final total = slices.fold<double>(0, (sum, s) => sum + s.value);
+
+    return ConfidiaChartCard(
+      title: 'Répartition documentaire',
+      subtitle: '${total.toInt()} documents · ${slices.length} catégories',
+      linkRoute: '/documents',
+      chart: SizedBox(
+        height: 256,
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            Positioned(
+              left: -76,
+              top: -8,
+              bottom: -8,
+              width: 228,
+              child: PremiumDonutChart(
+                slices: slices,
+                size: 220,
+                strokeWidth: 7,
+                gapDegrees: 5.5,
+                activeIndex: _touchedIndex,
+                baseOpacity: _touchedIndex != null ? 0.22 : 0.38,
+                onSectionEnter: (index) => setState(() => _touchedIndex = index),
+                onSectionExit: () => setState(() => _touchedIndex = null),
+                center: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${total.toInt()}',
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: ConfidiaColors.textPrimary(isDark).withValues(alpha: 0.55),
+                            height: 1,
+                          ),
+                    ),
+                    Text(
+                      'docs',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.45),
+                            letterSpacing: 0.5,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Positioned(
+              left: 96,
+              top: 0,
+              right: 0,
+              bottom: 0,
+              child: _CategoryBreakdownList(
+                slices: slices,
+                total: total,
+                isDark: isDark,
+                highlightedIndex: _touchedIndex,
+                onHover: (index) => setState(() => _touchedIndex = index),
+                onExit: () => setState(() => _touchedIndex = null),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CategoryBreakdownList extends StatelessWidget {
+  final List<ChartSlice> slices;
+  final double total;
+  final bool isDark;
+  final int? highlightedIndex;
+  final ValueChanged<int> onHover;
+  final VoidCallback onExit;
+
+  const _CategoryBreakdownList({
+    required this.slices,
+    required this.total,
+    required this.isDark,
+    required this.highlightedIndex,
+    required this.onHover,
+    required this.onExit,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      padding: EdgeInsets.zero,
+      physics: const BouncingScrollPhysics(),
+      itemCount: slices.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, i) {
+        final slice = slices[i];
+        final pct = total == 0 ? 0.0 : slice.value / total;
+        final active = highlightedIndex == i;
+
+        return MouseRegion(
+          onEnter: (_) => onHover(i),
+          onExit: (_) => onExit(),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOut,
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              color: active
+                  ? slice.color.withValues(alpha: isDark ? 0.12 : 0.07)
+                  : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.02),
+              border: Border.all(
+                color: active ? slice.color.withValues(alpha: 0.35) : ConfidiaColors.border(isDark).withValues(alpha: 0.35),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          colors: [slice.color, slice.color.withValues(alpha: 0.65)],
+                        ),
+                        boxShadow: active
+                            ? [BoxShadow(color: slice.color.withValues(alpha: 0.5), blurRadius: 8, spreadRadius: 1)]
+                            : null,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        slice.label,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    Text(
+                      '${slice.value.toInt()}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: ConfidiaColors.textSecondary(isDark),
+                          ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      '${(pct * 100).round()}%',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            color: active ? slice.color : ConfidiaColors.textPrimary(isDark),
+                          ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 7),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(3),
+                  child: SizedBox(
+                    height: 3,
+                    child: Stack(
+                      children: [
+                        Container(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06)),
+                        FractionallySizedBox(
+                          alignment: Alignment.centerLeft,
+                          widthFactor: pct.clamp(0.04, 1.0),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [slice.color.withValues(alpha: 0.55), slice.color],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class HubActivityChartWidget extends StatelessWidget {
+  const HubActivityChartWidget({super.key});
+
+  static const _series = [
+    (label: 'Documents', color: ConfidiaColors.primary),
+    (label: 'Mails', color: ConfidiaColors.secondary),
+    (label: 'Paiements', color: ConfidiaColors.accent),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final months = DashboardChartData.hubActivity();
+    final maxY = months
+        .map((m) => [m.documents, m.emails, m.payments].reduce((a, b) => a > b ? a : b))
+        .reduce((a, b) => a > b ? a : b)
+        .toDouble();
+
+    BarChartRodData rod(double y, Color color) => BarChartRodData(
+          toY: y,
+          width: 7,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [color.withValues(alpha: 0.55), color],
+          ),
+        );
+
+    return ConfidiaChartCard(
+      title: 'Activité du hub',
+      subtitle: 'Documents, mails et paiements traités',
+      linkRoute: '/dashboard',
+      headerExtras: _series
+          .map((s) => ConfidiaChartMetricChip(label: s.label, color: s.color))
+          .toList(),
+      chart: SizedBox(
+        height: 210,
+        child: BarChart(
+          duration: const Duration(milliseconds: 900),
+          curve: Curves.easeOutCubic,
+          BarChartData(
+            maxY: maxY + 2,
+            gridData: FlGridData(
+              show: true,
+              drawVerticalLine: false,
+              horizontalInterval: 2,
+              getDrawingHorizontalLine: (_) => FlLine(
+                color: ConfidiaColors.border(isDark).withValues(alpha: 0.4),
+                strokeWidth: 1,
+              ),
+            ),
+            borderData: FlBorderData(show: false),
+            titlesData: FlTitlesData(
+              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+              leftTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  reservedSize: 24,
+                  interval: 2,
+                  getTitlesWidget: (value, _) => Text(
+                    value.toInt().toString(),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9, color: ConfidiaColors.textSecondary(isDark)),
+                  ),
+                ),
+              ),
+              bottomTitles: AxisTitles(
+                sideTitles: SideTitles(
+                  showTitles: true,
+                  getTitlesWidget: (value, _) {
+                    final i = value.toInt();
+                    if (i < 0 || i >= months.length) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 6),
+                      child: Text(
+                        months[i].label,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 10, color: ConfidiaColors.textSecondary(isDark)),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+            barTouchData: BarTouchData(
+              touchTooltipData: ConfidiaChartTooltips.bar(
+                context,
+                itemBuilder: (groupIndex, rodIndex) {
+                  if (rodIndex < 0 || rodIndex >= _series.length) return null;
+                  final month = months[groupIndex];
+                  final values = [month.documents, month.emails, month.payments];
+                  final series = _series[rodIndex];
+                  return BarTooltipItem(
+                    '${series.label} · ${values[rodIndex]}',
+                    ConfidiaChartTooltips.label(context, color: series.color, fontSize: 11),
+                    children: [
+                      TextSpan(
+                        text: '\n${month.label}',
+                        style: ConfidiaChartTooltips.caption(context),
+                      ),
+                    ],
+                  );
+                },
+              ),
+            ),
+            barGroups: List.generate(
+              months.length,
+              (i) => BarChartGroupData(
+                x: i,
+                barsSpace: 4,
+                barRods: [
+                  rod(months[i].documents.toDouble(), ConfidiaColors.primary),
+                  rod(months[i].emails.toDouble(), ConfidiaColors.secondary),
+                  rod(months[i].payments.toDouble(), ConfidiaColors.accent),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class PaymentsOverviewChartWidget extends ConsumerWidget {
+  const PaymentsOverviewChartWidget({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final payments = ref.watch(paymentsProvider);
+    final slices = DashboardChartData.paymentsByStatus(payments);
+    final total = slices.fold<double>(0, (sum, s) => sum + s.value);
+    final maxY = slices.isEmpty ? 1.0 : slices.map((s) => s.value).reduce((a, b) => a > b ? a : b) * 1.2;
+
+    return ConfidiaChartCard(
+      title: 'Vue des paiements',
+      subtitle: '${total.toStringAsFixed(0)} € au total',
+      linkRoute: '/payments',
+      headerExtras: slices
+          .map((s) => ConfidiaChartMetricChip(
+                label: s.label,
+                color: s.color,
+                value: '${s.value.toStringAsFixed(0)} €',
+              ))
+          .toList(),
+      chart: _chartArea(
+        BarChart(
+        duration: const Duration(milliseconds: 850),
+        curve: Curves.easeOutCubic,
+        BarChartData(
+          maxY: maxY,
+          gridData: FlGridData(
+            show: true,
+            drawVerticalLine: false,
+            getDrawingHorizontalLine: (_) => FlLine(color: ConfidiaColors.border(isDark).withValues(alpha: 0.4)),
+          ),
+          borderData: FlBorderData(show: false),
+          titlesData: FlTitlesData(
+            topTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 22,
+                getTitlesWidget: (value, meta) {
+                  final i = value.toInt();
+                  if (i < 0 || i >= slices.length) return const SizedBox.shrink();
+                  return Text(
+                    '${slices[i].value.toStringAsFixed(0)}€',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          fontSize: 9,
+                          fontWeight: FontWeight.w700,
+                          color: slices[i].color,
+                        ),
+                  );
+                },
+              ),
+            ),
+            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 36,
+                getTitlesWidget: (value, _) => Text(
+                  '${value.round()}€',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9, color: ConfidiaColors.textSecondary(isDark)),
+                ),
+              ),
+            ),
+            bottomTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                getTitlesWidget: (value, meta) {
+                  final i = value.toInt();
+                  if (i < 0 || i >= slices.length) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 6),
+                    child: Text(
+                      slices[i].label,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9, color: ConfidiaColors.textSecondary(isDark)),
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+          barTouchData: BarTouchData(
+            touchTooltipData: ConfidiaChartTooltips.bar(
+              context,
+              itemBuilder: (groupIndex, rodIndex) {
+                final slice = slices[groupIndex];
+                return BarTooltipItem(
+                  '${slice.label} · ${slice.value.toStringAsFixed(2)} €',
+                  ConfidiaChartTooltips.label(context, color: slice.color, fontSize: 11),
+                );
+              },
+            ),
+          ),
+          barGroups: List.generate(
+            slices.length,
+            (i) => BarChartGroupData(
+              x: i,
+              barRods: [
+                BarChartRodData(
+                  toY: slices[i].value,
+                  width: 22,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [
+                      slices[i].color.withValues(alpha: 0.5),
+                      slices[i].color,
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      ),
+    );
+  }
+}

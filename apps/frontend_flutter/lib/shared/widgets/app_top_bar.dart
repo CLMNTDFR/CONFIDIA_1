@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import '../../core/auth/auth_provider.dart';
+import '../navigation/confidia_route_labels.dart';
 import '../../shared/models/user_model.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
@@ -32,19 +34,19 @@ class AppTopBar extends ConsumerWidget {
   }
 
   static (String, String?) routeMeta(String path) {
-    if (path.startsWith('/dashboard')) return ('Accueil', 'Widgets personnalisables');
+    if (path.startsWith('/dashboard')) return (ConfidiaRouteLabels.home, 'Widgets personnalisables');
     if (path.startsWith('/documents/')) return ('Document', 'Détail et analyse');
-    if (path.startsWith('/documents')) return ('Documents', 'Bibliothèque');
+    if (path.startsWith('/documents')) return (ConfidiaRouteLabels.documents, 'Bibliothèque');
     if (path.startsWith('/scan')) return ('Scanner', 'Capture photo');
     if (path.startsWith('/upload')) return ('Importer', 'Ajout de fichiers');
     if (path.startsWith('/payments/')) return ('Paiement', 'Détail et règlement');
-    if (path.startsWith('/payments')) return ('Paiements', 'Factures et échéances');
+    if (path.startsWith('/payments')) return (ConfidiaRouteLabels.payments, 'Factures et échéances');
     if (path.startsWith('/messaging/')) return ('Message', 'Analyse IA');
-    if (path.startsWith('/messaging')) return ('Messagerie', 'Boîte unifiée');
-    if (path.startsWith('/calendar')) return ('Calendrier', 'Échéances fusionnées');
-    if (path.startsWith('/notifications')) return ('Notifications', 'Centre d\'alertes');
+    if (path.startsWith('/messaging')) return (ConfidiaRouteLabels.messaging, 'Boîte unifiée');
+    if (path.startsWith('/calendar')) return (ConfidiaRouteLabels.calendar, 'Échéances fusionnées');
+    if (path.startsWith('/notifications')) return (ConfidiaRouteLabels.notifications, 'Centre d\'alertes');
     if (path.startsWith('/profile')) return ('Profil', 'Compte et identité');
-    if (path.startsWith('/settings')) return ('Paramètres', 'Préférences');
+    if (path.startsWith('/settings')) return (ConfidiaRouteLabels.settings, 'Préférences');
     if (path.startsWith('/admin')) return ('Administration', 'Plateforme');
     return ('CONFIDIA', null);
   }
@@ -82,6 +84,8 @@ class AppTopBar extends ConsumerWidget {
                     child: ConfidiaAnimatedLogo(layout: ConfidiaAnimatedLogoLayout.topBar),
                   ),
           ),
+          const _TopBarDate(),
+          const SizedBox(width: 12),
           if (showNotifications)
             ConfidiaIconButton(
               icon: Icons.notifications_none_rounded,
@@ -96,6 +100,26 @@ class AppTopBar extends ConsumerWidget {
             _ProfileChip(user: auth.user!, imageBase64: avatarBase64, onTap: () => context.go('/profile')),
         ],
       ),
+    );
+  }
+}
+
+class _TopBarDate extends StatelessWidget {
+  const _TopBarDate();
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final raw = DateFormat('EEEE d MMMM', 'fr_FR').format(DateTime.now());
+    final label = raw.isNotEmpty ? '${raw[0].toUpperCase()}${raw.substring(1)}' : raw;
+
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: ConfidiaColors.textSecondary(isDark),
+            fontWeight: FontWeight.w400,
+            letterSpacing: 0.1,
+          ),
     );
   }
 }

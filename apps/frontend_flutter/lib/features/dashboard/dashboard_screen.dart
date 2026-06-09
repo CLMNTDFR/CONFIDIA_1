@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
@@ -18,11 +17,14 @@ import '../payments/payments_provider.dart';
 import '../../shared/models/document_model.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
+import '../../shared/widgets/confidia_chart_card.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/stat_card.dart';
 import '../../shared/widgets/stagger_fade.dart';
 import '../calendar/calendar_provider.dart';
+import 'dashboard_chart_widgets.dart';
+import 'dashboard_grid.dart';
 import 'dashboard_provider.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -31,29 +33,41 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = ref.watch(dashboardLayoutProvider);
-    final user = ref.watch(authStateProvider).user;
-    final dateStr = DateFormat('EEEE d MMMM', 'fr_FR').format(DateTime.now());
     final bottomInset = layout.editMode ? (layout.hidden.isNotEmpty ? 168.0 : 88.0) : ConfidiaSpacing.lg;
+
+    final padding = EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.lg, ConfidiaSpacing.lg, bottomInset);
+
+    Widget buildTile(DashboardWidgetType type, int index) => StaggerFade(
+          index: index,
+          child: _buildWidget(context, ref, type, index, layout.editMode),
+        );
 
     return Stack(
       children: [
-        ReorderableListView.builder(
-          padding: EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.lg, ConfidiaSpacing.lg, bottomInset),
-          buildDefaultDragHandles: false,
-          onReorder: ref.read(dashboardLayoutProvider.notifier).reorderVisible,
-          itemCount: layout.visible.length,
-          itemBuilder: (context, index) {
-            final type = layout.visible[index];
-            return Padding(
-              key: ValueKey(type),
-              padding: const EdgeInsets.only(bottom: ConfidiaSpacing.md),
-              child: StaggerFade(
-                index: index,
-                child: _buildWidget(context, ref, type, index, user?.firstName ?? 'vous', dateStr, layout.editMode),
-              ),
-            );
-          },
-        ),
+        if (layout.editMode)
+          ReorderableListView.builder(
+            padding: padding,
+            buildDefaultDragHandles: false,
+            onReorder: ref.read(dashboardLayoutProvider.notifier).reorderVisible,
+            itemCount: layout.visible.length,
+            itemBuilder: (context, index) {
+              final type = layout.visible[index];
+              return Padding(
+                key: ValueKey(type),
+                padding: const EdgeInsets.only(bottom: ConfidiaSpacing.md),
+                child: buildTile(type, index),
+              );
+            },
+          )
+        else
+          ListView(
+            padding: padding,
+            children: DashboardGrid.buildRows(
+              context: context,
+              types: layout.visible,
+              builder: buildTile,
+            ),
+          ),
         if (layout.editMode) ...[
           Positioned(
             left: ConfidiaSpacing.lg,
@@ -89,8 +103,6 @@ class DashboardScreen extends ConsumerWidget {
     WidgetRef ref,
     DashboardWidgetType type,
     int index,
-    String name,
-    String dateStr,
     bool editMode,
   ) {
     final docs = MockEcosystem.documents;
@@ -103,8 +115,12 @@ class DashboardScreen extends ConsumerWidget {
     final nextPayment = paymentsNotifier.nextDue;
 
     final content = switch (type) {
-      DashboardWidgetType.greeting => _GreetingWidget(name: name),
+      DashboardWidgetType.greeting => const SizedBox.shrink(),
       DashboardWidgetType.stats => _StatsWidget(docs: docs, events: events, notifications: notifications, pendingCount: pendingPayments.length),
+      DashboardWidgetType.expensesTrend => const ExpensesTrendChartWidget(),
+      DashboardWidgetType.paymentsOverview => const PaymentsOverviewChartWidget(),
+      DashboardWidgetType.documentsBreakdown => const DocumentsCategoryChartWidget(),
+      DashboardWidgetType.hubActivity => const HubActivityChartWidget(),
       DashboardWidgetType.quickActions => const _QuickActionsWidget(),
       DashboardWidgetType.pendingPayments => _PendingPaymentsWidget(payments: pendingPayments, total: totalPending, next: nextPayment),
       DashboardWidgetType.recentDocs => _RecentDocsWidget(docs: docs),
@@ -135,6 +151,10 @@ class DashboardScreen extends ConsumerWidget {
 IconData _iconForType(DashboardWidgetType type) => switch (type) {
       DashboardWidgetType.greeting => Icons.waving_hand_rounded,
       DashboardWidgetType.stats => Icons.insights_rounded,
+      DashboardWidgetType.expensesTrend => Icons.trending_up_rounded,
+      DashboardWidgetType.paymentsOverview => Icons.bar_chart_rounded,
+      DashboardWidgetType.documentsBreakdown => Icons.pie_chart_rounded,
+      DashboardWidgetType.hubActivity => Icons.stacked_bar_chart_rounded,
       DashboardWidgetType.quickActions => Icons.bolt_rounded,
       DashboardWidgetType.pendingPayments => Icons.payments_rounded,
       DashboardWidgetType.recentDocs => Icons.folder_copy_rounded,
@@ -337,122 +357,94 @@ class _EditModeActions extends StatelessWidget {
   }
 }
 
-class _CustomizeFab extends StatelessWidget {
+class _CustomizeFab extends StatefulWidget {
   final VoidCallback onPressed;
 
   const _CustomizeFab({required this.onPressed});
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: ConfidiaColors.brandGradient,
-        boxShadow: [BoxShadow(color: ConfidiaColors.secondary.withValues(alpha: 0.35), blurRadius: 16, offset: const Offset(0, 4))],
-      ),
-      child: FloatingActionButton.small(
-        heroTag: 'dashboard_edit',
-        onPressed: onPressed,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        child: const Icon(Icons.tune_rounded, color: Colors.white),
-      ),
-    );
-  }
+  State<_CustomizeFab> createState() => _CustomizeFabState();
 }
 
-class _GreetingWidget extends StatelessWidget {
-  final String name;
-  const _GreetingWidget({required this.name});
+class _CustomizeFabState extends State<_CustomizeFab> {
+  bool _pressed = false;
+  bool _hovered = false;
+
+  static const _duration = Duration(milliseconds: 450);
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final now = DateTime.now();
-    final weekdayRaw = DateFormat('EEEE', 'fr_FR').format(now);
-    final weekday = weekdayRaw.isNotEmpty ? '${weekdayRaw[0].toUpperCase()}${weekdayRaw.substring(1)}' : weekdayRaw;
-    final monthRaw = DateFormat('MMMM', 'fr_FR').format(now);
-    final month = monthRaw.isNotEmpty ? '${monthRaw[0].toUpperCase()}${monthRaw.substring(1)}' : monthRaw;
-    final day = DateFormat('d', 'fr_FR').format(now);
+    final supportsHover = MediaQuery.sizeOf(context).width >= 600;
+    final expanded = !supportsHover || _hovered;
 
-    return GlassCard(
-      highlighted: true,
-      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                Text(
-                  'Bonjour ',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: ConfidiaColors.textSecondary(isDark),
-                        fontWeight: FontWeight.w500,
-                      ),
+    return Align(
+      alignment: Alignment.centerRight,
+      child: MouseRegion(
+        onEnter: supportsHover ? (_) => setState(() => _hovered = true) : null,
+        onExit: supportsHover ? (_) => setState(() => _hovered = false) : null,
+        child: GestureDetector(
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapUp: (_) => setState(() => _pressed = false),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTap: widget.onPressed,
+          child: AnimatedScale(
+            scale: _pressed ? 0.97 : 1,
+            duration: const Duration(milliseconds: 120),
+            child: AnimatedSize(
+              duration: _duration,
+              curve: Curves.easeInOutCubic,
+              alignment: Alignment.centerRight,
+              child: AnimatedContainer(
+                duration: _duration,
+                curve: Curves.easeInOutCubic,
+                height: 44,
+                padding: EdgeInsets.symmetric(horizontal: expanded ? 16 : 12),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(22),
+                  color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
+                  border: Border.all(color: ConfidiaColors.border(isDark)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
-                ShaderMask(
-                  shaderCallback: (b) => ConfidiaColors.brandGradient.createShader(b),
-                  child: Text(
-                    name,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.dashboard_customize_outlined,
+                      size: 20,
+                      color: expanded ? ConfidiaColors.primary : ConfidiaColors.textSecondary(isDark),
+                    ),
+                    AnimatedSize(
+                      duration: _duration,
+                      curve: Curves.easeInOutCubic,
+                      alignment: Alignment.centerLeft,
+                      child: expanded
+                          ? Padding(
+                              padding: const EdgeInsets.only(left: 8),
+                              child: Text(
+                                'Personnaliser',
+                                maxLines: 1,
+                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                      color: ConfidiaColors.textPrimary(isDark),
+                                      letterSpacing: 0.1,
+                                    ),
+                              ),
+                            )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  ConfidiaColors.primary.withValues(alpha: isDark ? 0.22 : 0.1),
-                  ConfidiaColors.secondary.withValues(alpha: isDark ? 0.18 : 0.08),
-                ],
               ),
-              border: Border.all(color: ConfidiaColors.secondary.withValues(alpha: 0.2)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  weekday,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: ConfidiaColors.textSecondary(isDark),
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.2,
-                      ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
-                  child: Text(
-                    day,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          height: 1,
-                          color: isDark ? Colors.white : ConfidiaColors.primary,
-                        ),
-                  ),
-                ),
-                Text(
-                  month,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: ConfidiaColors.secondary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -558,26 +550,59 @@ class _PendingPaymentsWidget extends StatelessWidget {
   }
 }
 
+class _DashboardCardShell extends StatelessWidget {
+  final Widget header;
+  final Widget body;
+  final Widget? footer;
+
+  const _DashboardCardShell({required this.header, required this.body, this.footer});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fillHeight = constraints.hasBoundedHeight && constraints.maxHeight.isFinite;
+
+        return GlassCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              header,
+              if (fillHeight) Expanded(child: body) else body,
+              if (footer != null) ...[
+                const SizedBox(height: 6),
+                footer!,
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
 class _ConnectedAccountsWidget extends StatelessWidget {
   const _ConnectedAccountsWidget();
 
   @override
   Widget build(BuildContext context) {
     final accounts = MockEcosystem.connectedAccounts.take(4);
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionHeader(title: 'Comptes connectés', onTap: () => context.go('/settings')),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: accounts.map((a) => MailProviderChip(provider: a.provider)).toList(),
-          ),
-          const SizedBox(height: 8),
-          Text('${MockEcosystem.connectedAccounts.length} comptes · Synchronisation active', style: Theme.of(context).textTheme.bodySmall),
-        ],
+    return _DashboardCardShell(
+      header: _SectionHeader(title: 'Comptes connectés', onTap: () => context.go('/settings')),
+      body: Align(
+        alignment: Alignment.topLeft,
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: accounts.map((a) => MailProviderChip(provider: a.provider)).toList(),
+        ),
+      ),
+      footer: Text(
+        '${MockEcosystem.connectedAccounts.length} comptes · Synchronisation active',
+        style: Theme.of(context).textTheme.bodySmall,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
@@ -599,8 +624,9 @@ class _AiAnalyzedWidget extends StatelessWidget {
           Row(
             children: [
               Text('Documents analysés par IA', style: Theme.of(context).textTheme.titleSmall),
-              const Spacer(),
               StatusBadge(label: '${MockEcosystem.analyzedDocumentsCount} docs', color: ConfidiaColors.secondary),
+              const Spacer(),
+              ConfidiaSeeAllButton(onTap: () => context.go('/documents')),
             ],
           ),
           const SizedBox(height: 8),
@@ -628,14 +654,13 @@ class _RecentDocsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionHeader(title: 'Documents récents', onTap: () => context.go('/documents')),
-          ...docs.take(3).map((d) => _DocRow(doc: d)),
-        ],
+    return _DashboardCardShell(
+      header: _SectionHeader(title: 'Documents récents', onTap: () => context.go('/documents')),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        children: docs.take(3).map((d) => _DocRow(doc: d)).toList(),
       ),
     );
   }
@@ -678,15 +703,13 @@ class _ImportantDocsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Documents importants', style: Theme.of(context).textTheme.titleSmall),
-          const SizedBox(height: 8),
-          ...docs.map((d) => _DocRow(doc: d)),
-        ],
+    return _DashboardCardShell(
+      header: _SectionHeader(title: 'Documents importants', onTap: () => context.go('/documents')),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        children: docs.take(4).map((d) => _DocRow(doc: d)).toList(),
       ),
     );
   }
@@ -728,9 +751,9 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleSmall),
+          Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
           const Spacer(),
-          ConfidiaGlowLink(label: 'Voir tout', onTap: onTap),
+          ConfidiaSeeAllButton(onTap: onTap),
         ],
       ),
     );
@@ -749,7 +772,7 @@ class _DocRow extends StatelessWidget {
       leading: const Icon(Icons.picture_as_pdf_rounded, color: ConfidiaColors.primary, size: 20),
       title: Text(doc.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text('${doc.category ?? 'Non classé'} · ${doc.fileSizeFormatted}', style: Theme.of(context).textTheme.labelSmall),
-      trailing: doc.isImportant ? const Icon(Icons.star_rounded, color: ConfidiaColors.warning, size: 16) : null,
+      trailing: doc.isImportant ? const Icon(Icons.star_rounded, color: ConfidiaColors.secondary, size: 16) : null,
       onTap: () => context.go('/documents/${doc.id}'),
     );
   }

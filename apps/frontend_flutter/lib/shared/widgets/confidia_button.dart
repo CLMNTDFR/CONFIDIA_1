@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import 'confidia_tooltip.dart';
 
 class ConfidiaButton extends StatefulWidget {
   final String label;
@@ -151,7 +152,7 @@ class _ConfidiaIconButtonState extends State<ConfidiaIconButton> with SingleTick
       ),
     );
 
-  final wrapped = widget.tooltip != null ? Tooltip(message: widget.tooltip!, child: btn) : btn;
+  final wrapped = widget.tooltip != null ? ConfidiaTooltip(message: widget.tooltip!, child: btn) : btn;
 
     if (!widget.showBadge) return wrapped;
 

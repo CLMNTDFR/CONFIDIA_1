@@ -50,6 +50,7 @@ class MessagingScreen extends ConsumerWidget {
                         fallbackIcon: p.icon,
                         fallbackColor: p.brandColor,
                         size: 14,
+                        adaptForTheme: false,
                       ),
                       onTap: () => ref.read(mailFilterProvider.notifier).state = p,
                     ),

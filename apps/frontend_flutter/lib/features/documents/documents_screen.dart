@@ -163,7 +163,7 @@ class _DocumentListTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (doc.isImportant) const Padding(padding: EdgeInsets.only(left: 8), child: Icon(Icons.star_rounded, color: ConfidiaColors.warning, size: 18)),
+              if (doc.isImportant) const Padding(padding: EdgeInsets.only(left: 8), child: Icon(Icons.star_rounded, color: ConfidiaColors.secondary, size: 18)),
               const Icon(Icons.chevron_right_rounded, color: ConfidiaColors.darkTextTertiary),
             ],
           ),
