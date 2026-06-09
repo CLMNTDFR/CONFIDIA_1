@@ -34,6 +34,7 @@ class ConfidiaChartCard extends StatelessWidget {
   final Widget chart;
   final Widget? footer;
   final List<Widget>? headerExtras;
+  final bool allowTooltipOverflow;
 
   const ConfidiaChartCard({
     super.key,
@@ -43,6 +44,7 @@ class ConfidiaChartCard extends StatelessWidget {
     required this.chart,
     this.footer,
     this.headerExtras,
+    this.allowTooltipOverflow = false,
   });
 
   @override
@@ -55,6 +57,7 @@ class ConfidiaChartCard extends StatelessWidget {
 
         return GlassCard(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          clipContent: !allowTooltipOverflow,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

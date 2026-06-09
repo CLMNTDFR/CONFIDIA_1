@@ -8,129 +8,206 @@ import '../../core/theme/colors.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/widgets/confidia_chart_card.dart';
 import '../../shared/widgets/confidia_chart_tooltips.dart';
+import '../../shared/widgets/premium_bar_rod.dart';
+import '../../shared/widgets/premium_chart_motion.dart';
+import '../../shared/widgets/premium_chart_stage.dart';
 import '../../shared/widgets/premium_donut_chart.dart';
 import '../payments/payments_provider.dart';
 import 'dashboard_chart_data.dart';
 
-Widget _chartArea(Widget chart, {double fallback = 200}) {
+Widget _chartArea(
+  Widget chart, {
+  double fallback = 200,
+  bool tooltipOverflow = false,
+}) {
   return LayoutBuilder(
     builder: (context, constraints) {
-      final height = constraints.hasBoundedHeight && constraints.maxHeight.isFinite && constraints.maxHeight > 0
+      final baseHeight = constraints.hasBoundedHeight && constraints.maxHeight.isFinite && constraints.maxHeight > 0
           ? constraints.maxHeight
           : fallback;
+      final height = tooltipOverflow ? baseHeight + 56 : baseHeight;
       return SizedBox(height: height, child: chart);
     },
   );
 }
 
-class ExpensesTrendChartWidget extends StatelessWidget {
+class ExpensesTrendChartWidget extends StatefulWidget {
   const ExpensesTrendChartWidget({super.key});
+
+  @override
+  State<ExpensesTrendChartWidget> createState() => _ExpensesTrendChartWidgetState();
+}
+
+class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
+  int? _touchedIndex;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final points = DashboardChartData.expenseTrend();
+    final spots = List.generate(points.length, (i) => FlSpot(i.toDouble(), points[i].value));
     final maxY = points.map((p) => p.value).reduce((a, b) => a > b ? a : b) * 1.15;
     final peak = points.reduce((a, b) => a.value > b.value ? a : b);
+    final hasFocus = _touchedIndex != null;
 
     return ConfidiaChartCard(
       title: 'Évolution des dépenses',
       subtitle: 'Pic · ${peak.value.toStringAsFixed(0)} € en ${peak.label}',
       linkRoute: '/payments',
+      allowTooltipOverflow: true,
       headerExtras: const [
         ConfidiaChartMetricChip(label: 'Courbe mensuelle', color: ConfidiaColors.primary),
       ],
       chart: _chartArea(
-        LineChart(
-        duration: const Duration(milliseconds: 900),
-        curve: Curves.easeOutCubic,
-        LineChartData(
-          minY: 0,
-          maxY: maxY,
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: maxY / 4,
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: ConfidiaColors.border(isDark).withValues(alpha: 0.45),
-              strokeWidth: 1,
-            ),
-          ),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 38,
-                interval: maxY / 4,
-                getTitlesWidget: (value, _) => Text(
-                  '${value.round()}€',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontSize: 9,
-                        color: ConfidiaColors.textSecondary(isDark),
+        tooltipOverflow: true,
+        PremiumChartStage(
+          accentColors: const [ConfidiaColors.primary, ConfidiaColors.secondary],
+          clipChart: false,
+          child: PremiumChartMotionScope(
+            hasFocus: hasFocus,
+            builder: (context, motion) {
+              final scaledSpots = spots
+                  .map((s) => FlSpot(s.x, motion.scaleY(s.y)))
+                  .toList();
+              final ghostAlpha = 0.16 - 0.06 * motion.focus;
+              final lineAlpha = 1.0 - 0.25 * motion.focus;
+
+              return Padding(
+                padding: const EdgeInsets.only(top: 4, right: 2),
+                child: LineChart(
+                  duration: Duration.zero,
+                  LineChartData(
+                    minY: 0,
+                    maxY: maxY,
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false, reservedSize: 36),
                       ),
-                ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final i = value.toInt();
-                  if (i < 0 || i >= points.length) return const SizedBox.shrink();
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      points[i].label,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            fontSize: 10,
-                            color: ConfidiaColors.textSecondary(isDark),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 38,
+                          interval: maxY / 4,
+                          getTitlesWidget: (value, _) => Text(
+                            '${value.round()}€',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  fontSize: 9,
+                                  color: ConfidiaColors.textSecondary(isDark)
+                                      .withValues(alpha: motion.labelAlpha(isActive: true, base: 0.85, dimmed: 0.55)),
+                                ),
                           ),
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            final i = value.toInt();
+                            if (i < 0 || i >= points.length) return const SizedBox.shrink();
+                            final active = _touchedIndex == i;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                points[i].label,
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      fontSize: 10,
+                                      fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                                      color: active
+                                          ? ConfidiaColors.primary
+                                          : ConfidiaColors.textSecondary(isDark)
+                                              .withValues(alpha: motion.labelAlpha(isActive: false, base: 0.8, dimmed: 0.45)),
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  );
-                },
-              ),
-            ),
-          ),
-          lineTouchData: LineTouchData(
-            touchTooltipData: ConfidiaChartTooltips.line(
-              context,
-              labelBuilder: (index, value) => '${points[index].label}\n${value.toStringAsFixed(0)} €',
-            ),
-          ),
-          lineBarsData: [
-            LineChartBarData(
-              spots: List.generate(points.length, (i) => FlSpot(i.toDouble(), points[i].value)),
-              isCurved: true,
-              curveSmoothness: 0.28,
-              barWidth: 3,
-              gradient: ConfidiaColors.primaryGradient,
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    ConfidiaColors.primary.withValues(alpha: isDark ? 0.28 : 0.18),
-                    ConfidiaColors.secondary.withValues(alpha: 0.02),
-                  ],
+                    lineTouchData: LineTouchData(
+                      touchCallback: (event, response) {
+                        if (!event.isInterestedForInteractions ||
+                            response == null ||
+                            response.lineBarSpots == null ||
+                            response.lineBarSpots!.isEmpty) {
+                          setState(() => _touchedIndex = null);
+                          return;
+                        }
+                        setState(() => _touchedIndex = response.lineBarSpots!.first.x.toInt());
+                      },
+                      touchTooltipData: ConfidiaChartTooltips.line(
+                        context,
+                        allowOverflow: true,
+                        labelBuilder: (index, value) => '${points[index].label}\n${value.toStringAsFixed(0)} €',
+                      ),
+                    ),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: scaledSpots,
+                        isCurved: true,
+                        curveSmoothness: 0.3,
+                        barWidth: 5.5,
+                        isStrokeCapRound: true,
+                        color: ConfidiaColors.primary.withValues(alpha: ghostAlpha),
+                        dotData: const FlDotData(show: false),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              ConfidiaColors.primary.withValues(alpha: (isDark ? 0.08 : 0.05) * motion.entry),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                      LineChartBarData(
+                        spots: scaledSpots,
+                        isCurved: true,
+                        curveSmoothness: 0.3,
+                        barWidth: 3 - 0.4 * motion.focus,
+                        isStrokeCapRound: true,
+                        gradient: LinearGradient(
+                          colors: [
+                            ConfidiaColors.primary.withValues(alpha: lineAlpha),
+                            ConfidiaColors.secondary.withValues(alpha: 0.85 - 0.3 * motion.focus),
+                          ],
+                        ),
+                        belowBarData: BarAreaData(
+                          show: true,
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              ConfidiaColors.primary.withValues(alpha: (isDark ? 0.24 : 0.16) * motion.entry),
+                              ConfidiaColors.secondary.withValues(alpha: 0.02),
+                            ],
+                          ),
+                        ),
+                        dotData: FlDotData(
+                          show: true,
+                          getDotPainter: (spot, _, __, ___) {
+                            final active = _touchedIndex == spot.x.toInt();
+                            final focusBoost = active ? motion.focus * 2.3 : 0.0;
+                            return FlDotCirclePainter(
+                              radius: 3.2 + focusBoost,
+                              color: Colors.white,
+                              strokeWidth: 2 + (active ? 0.5 * motion.focus : 0),
+                              strokeColor: active ? ConfidiaColors.secondary : ConfidiaColors.primary,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              dotData: FlDotData(
-                show: true,
-                getDotPainter: (spot, _, __, ___) => FlDotCirclePainter(
-                  radius: 3.5,
-                  color: Colors.white,
-                  strokeWidth: 2,
-                  strokeColor: ConfidiaColors.primary,
-                ),
-              ),
-            ),
-          ],
+              );
+            },
+          ),
         ),
-      ),
       ),
     );
   }
@@ -359,8 +436,16 @@ class _CategoryBreakdownList extends StatelessWidget {
   }
 }
 
-class HubActivityChartWidget extends StatelessWidget {
+class HubActivityChartWidget extends StatefulWidget {
   const HubActivityChartWidget({super.key});
+
+  @override
+  State<HubActivityChartWidget> createState() => _HubActivityChartWidgetState();
+}
+
+class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
+  int? _touchedGroup;
+  int? _touchedRod;
 
   static const _series = [
     (label: 'Documents', color: ConfidiaColors.primary),
@@ -376,106 +461,143 @@ class HubActivityChartWidget extends StatelessWidget {
         .map((m) => [m.documents, m.emails, m.payments].reduce((a, b) => a > b ? a : b))
         .reduce((a, b) => a > b ? a : b)
         .toDouble();
-
-    BarChartRodData rod(double y, Color color) => BarChartRodData(
-          toY: y,
-          width: 7,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(5)),
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [color.withValues(alpha: 0.55), color],
-          ),
-        );
+    final hasFocus = _touchedGroup != null;
 
     return ConfidiaChartCard(
       title: 'Activité du hub',
       subtitle: 'Documents, mails et paiements traités',
       linkRoute: '/dashboard',
+      allowTooltipOverflow: true,
       headerExtras: _series
           .map((s) => ConfidiaChartMetricChip(label: s.label, color: s.color))
           .toList(),
-      chart: SizedBox(
-        height: 210,
-        child: BarChart(
-          duration: const Duration(milliseconds: 900),
-          curve: Curves.easeOutCubic,
-          BarChartData(
-            maxY: maxY + 2,
-            gridData: FlGridData(
-              show: true,
-              drawVerticalLine: false,
-              horizontalInterval: 2,
-              getDrawingHorizontalLine: (_) => FlLine(
-                color: ConfidiaColors.border(isDark).withValues(alpha: 0.4),
-                strokeWidth: 1,
-              ),
-            ),
-            borderData: FlBorderData(show: false),
-            titlesData: FlTitlesData(
-              topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-              leftTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  reservedSize: 24,
-                  interval: 2,
-                  getTitlesWidget: (value, _) => Text(
-                    value.toInt().toString(),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9, color: ConfidiaColors.textSecondary(isDark)),
+      chart: _chartArea(
+        tooltipOverflow: true,
+        fallback: 210,
+        PremiumChartStage(
+          accentColors: const [ConfidiaColors.primary, ConfidiaColors.accent],
+          primaryGlowAlignment: const Alignment(-0.75, 0.1),
+          secondaryGlowAlignment: const Alignment(0.85, -0.55),
+          clipChart: false,
+          child: PremiumChartMotionScope(
+            hasFocus: hasFocus,
+            builder: (context, motion) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 4, right: 2),
+                child: BarChart(
+                  duration: Duration.zero,
+                  BarChartData(
+                    maxY: maxY + 2,
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      topTitles: const AxisTitles(
+                        sideTitles: SideTitles(showTitles: false, reservedSize: 36),
+                      ),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 24,
+                          interval: 2,
+                          getTitlesWidget: (value, _) => Text(
+                            value.toInt().toString(),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  fontSize: 9,
+                                  color: ConfidiaColors.textSecondary(isDark)
+                                      .withValues(alpha: motion.labelAlpha(isActive: true, base: 0.85, dimmed: 0.5)),
+                                ),
+                          ),
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, _) {
+                            final i = value.toInt();
+                            if (i < 0 || i >= months.length) return const SizedBox.shrink();
+                            final active = _touchedGroup == i;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                months[i].label,
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      fontSize: 10,
+                                      fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                                      color: active
+                                          ? ConfidiaColors.accent
+                                          : ConfidiaColors.textSecondary(isDark)
+                                              .withValues(alpha: motion.labelAlpha(isActive: false, base: 0.8, dimmed: 0.45)),
+                                    ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                    barTouchData: BarTouchData(
+                      touchCallback: (event, response) {
+                        if (!event.isInterestedForInteractions || response == null || response.spot == null) {
+                          setState(() {
+                            _touchedGroup = null;
+                            _touchedRod = null;
+                          });
+                          return;
+                        }
+                        setState(() {
+                          _touchedGroup = response.spot!.touchedBarGroupIndex;
+                          _touchedRod = response.spot!.touchedRodDataIndex;
+                        });
+                      },
+                      touchTooltipData: ConfidiaChartTooltips.bar(
+                        context,
+                        allowOverflow: true,
+                        itemBuilder: (groupIndex, rodIndex) {
+                          if (rodIndex < 0 || rodIndex >= _series.length) return null;
+                          final month = months[groupIndex];
+                          final values = [month.documents, month.emails, month.payments];
+                          final series = _series[rodIndex];
+                          return BarTooltipItem(
+                            '${series.label} · ${values[rodIndex]}',
+                            ConfidiaChartTooltips.label(context, color: series.color, fontSize: 11),
+                            children: [
+                              TextSpan(
+                                text: '\n${month.label}',
+                                style: ConfidiaChartTooltips.caption(context),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                    barGroups: List.generate(
+                      months.length,
+                      (i) {
+                        final groupActive = !hasFocus || _touchedGroup == i;
+                        final values = [
+                          months[i].documents.toDouble(),
+                          months[i].emails.toDouble(),
+                          months[i].payments.toDouble(),
+                        ];
+                        return BarChartGroupData(
+                          x: i,
+                          barsSpace: 4,
+                          barRods: List.generate(3, (rodIndex) {
+                            return premiumGroupedBarRod(
+                              toY: values[rodIndex],
+                              color: _series[rodIndex].color,
+                              isGroupActive: groupActive,
+                              isRodActive: _touchedGroup == i && _touchedRod == rodIndex,
+                              motion: motion,
+                            );
+                          }),
+                        );
+                      },
+                    ),
                   ),
                 ),
-              ),
-              bottomTitles: AxisTitles(
-                sideTitles: SideTitles(
-                  showTitles: true,
-                  getTitlesWidget: (value, _) {
-                    final i = value.toInt();
-                    if (i < 0 || i >= months.length) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 6),
-                      child: Text(
-                        months[i].label,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 10, color: ConfidiaColors.textSecondary(isDark)),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-            barTouchData: BarTouchData(
-              touchTooltipData: ConfidiaChartTooltips.bar(
-                context,
-                itemBuilder: (groupIndex, rodIndex) {
-                  if (rodIndex < 0 || rodIndex >= _series.length) return null;
-                  final month = months[groupIndex];
-                  final values = [month.documents, month.emails, month.payments];
-                  final series = _series[rodIndex];
-                  return BarTooltipItem(
-                    '${series.label} · ${values[rodIndex]}',
-                    ConfidiaChartTooltips.label(context, color: series.color, fontSize: 11),
-                    children: [
-                      TextSpan(
-                        text: '\n${month.label}',
-                        style: ConfidiaChartTooltips.caption(context),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            barGroups: List.generate(
-              months.length,
-              (i) => BarChartGroupData(
-                x: i,
-                barsSpace: 4,
-                barRods: [
-                  rod(months[i].documents.toDouble(), ConfidiaColors.primary),
-                  rod(months[i].emails.toDouble(), ConfidiaColors.secondary),
-                  rod(months[i].payments.toDouble(), ConfidiaColors.accent),
-                ],
-              ),
-            ),
+              );
+            },
           ),
         ),
       ),
@@ -483,21 +605,30 @@ class HubActivityChartWidget extends StatelessWidget {
   }
 }
 
-class PaymentsOverviewChartWidget extends ConsumerWidget {
+class PaymentsOverviewChartWidget extends ConsumerStatefulWidget {
   const PaymentsOverviewChartWidget({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PaymentsOverviewChartWidget> createState() => _PaymentsOverviewChartWidgetState();
+}
+
+class _PaymentsOverviewChartWidgetState extends ConsumerState<PaymentsOverviewChartWidget> {
+  int? _touchedIndex;
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final payments = ref.watch(paymentsProvider);
     final slices = DashboardChartData.paymentsByStatus(payments);
     final total = slices.fold<double>(0, (sum, s) => sum + s.value);
     final maxY = slices.isEmpty ? 1.0 : slices.map((s) => s.value).reduce((a, b) => a > b ? a : b) * 1.2;
+    final hasFocus = _touchedIndex != null;
 
     return ConfidiaChartCard(
       title: 'Vue des paiements',
       subtitle: '${total.toStringAsFixed(0)} € au total',
       linkRoute: '/payments',
+      allowTooltipOverflow: true,
       headerExtras: slices
           .map((s) => ConfidiaChartMetricChip(
                 label: s.label,
@@ -506,100 +637,128 @@ class PaymentsOverviewChartWidget extends ConsumerWidget {
               ))
           .toList(),
       chart: _chartArea(
-        BarChart(
-        duration: const Duration(milliseconds: 850),
-        curve: Curves.easeOutCubic,
-        BarChartData(
-          maxY: maxY,
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            getDrawingHorizontalLine: (_) => FlLine(color: ConfidiaColors.border(isDark).withValues(alpha: 0.4)),
-          ),
-          borderData: FlBorderData(show: false),
-          titlesData: FlTitlesData(
-            topTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 22,
-                getTitlesWidget: (value, meta) {
-                  final i = value.toInt();
-                  if (i < 0 || i >= slices.length) return const SizedBox.shrink();
-                  return Text(
-                    '${slices[i].value.toStringAsFixed(0)}€',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: slices[i].color,
+        tooltipOverflow: true,
+        PremiumChartStage(
+          accentColors: slices.map((s) => s.color).take(3).toList(),
+          primaryGlowAlignment: const Alignment(-0.7, -0.4),
+          secondaryGlowAlignment: const Alignment(0.8, 0.65),
+          clipChart: false,
+          child: PremiumChartMotionScope(
+            hasFocus: hasFocus,
+            builder: (context, motion) {
+              return Padding(
+                padding: const EdgeInsets.only(top: 6, right: 2),
+                child: BarChart(
+                  duration: Duration.zero,
+                  BarChartData(
+                    maxY: maxY,
+                    gridData: const FlGridData(show: false),
+                    borderData: FlBorderData(show: false),
+                    titlesData: FlTitlesData(
+                      topTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 36,
+                          getTitlesWidget: (value, meta) {
+                            final i = value.toInt();
+                            if (i < 0 || i >= slices.length) return const SizedBox.shrink();
+                            final active = _touchedIndex == i;
+                            return Text(
+                              '${slices[i].value.toStringAsFixed(0)}€',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700,
+                                    color: slices[i].color.withValues(
+                                      alpha: motion.dimOpacity(isActive: active, active: 1, idle: 0.85, dimmed: 0.45),
+                                    ),
+                                  ),
+                            );
+                          },
                         ),
-                  );
-                },
-              ),
-            ),
-            rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 36,
-                getTitlesWidget: (value, _) => Text(
-                  '${value.round()}€',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9, color: ConfidiaColors.textSecondary(isDark)),
-                ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (value, meta) {
-                  final i = value.toInt();
-                  if (i < 0 || i >= slices.length) return const SizedBox.shrink();
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Text(
-                      slices[i].label,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9, color: ConfidiaColors.textSecondary(isDark)),
-                      textAlign: TextAlign.center,
+                      ),
+                      rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 36,
+                          getTitlesWidget: (value, _) => Text(
+                            '${value.round()}€',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  fontSize: 9,
+                                  color: ConfidiaColors.textSecondary(isDark)
+                                      .withValues(alpha: motion.labelAlpha(isActive: true, base: 0.85, dimmed: 0.5)),
+                                ),
+                          ),
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          getTitlesWidget: (value, meta) {
+                            final i = value.toInt();
+                            if (i < 0 || i >= slices.length) return const SizedBox.shrink();
+                            final active = _touchedIndex == i;
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 6),
+                              child: Text(
+                                slices[i].label,
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                      fontSize: 9,
+                                      fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                                      color: active
+                                          ? slices[i].color
+                                          : ConfidiaColors.textSecondary(isDark)
+                                              .withValues(alpha: motion.labelAlpha(isActive: false, base: 0.8, dimmed: 0.45)),
+                                    ),
+                                textAlign: TextAlign.center,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
-                  );
-                },
-              ),
-            ),
-          ),
-          barTouchData: BarTouchData(
-            touchTooltipData: ConfidiaChartTooltips.bar(
-              context,
-              itemBuilder: (groupIndex, rodIndex) {
-                final slice = slices[groupIndex];
-                return BarTooltipItem(
-                  '${slice.label} · ${slice.value.toStringAsFixed(2)} €',
-                  ConfidiaChartTooltips.label(context, color: slice.color, fontSize: 11),
-                );
-              },
-            ),
-          ),
-          barGroups: List.generate(
-            slices.length,
-            (i) => BarChartGroupData(
-              x: i,
-              barRods: [
-                BarChartRodData(
-                  toY: slices[i].value,
-                  width: 22,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [
-                      slices[i].color.withValues(alpha: 0.5),
-                      slices[i].color,
-                    ],
+                    barTouchData: BarTouchData(
+                      touchCallback: (event, response) {
+                        if (!event.isInterestedForInteractions || response == null || response.spot == null) {
+                          setState(() => _touchedIndex = null);
+                          return;
+                        }
+                        setState(() => _touchedIndex = response.spot!.touchedBarGroupIndex);
+                      },
+                      touchTooltipData: ConfidiaChartTooltips.bar(
+                        context,
+                        allowOverflow: true,
+                        itemBuilder: (groupIndex, rodIndex) {
+                          final slice = slices[groupIndex];
+                          return BarTooltipItem(
+                            '${slice.label} · ${slice.value.toStringAsFixed(2)} €',
+                            ConfidiaChartTooltips.label(context, color: slice.color, fontSize: 11),
+                          );
+                        },
+                      ),
+                    ),
+                    barGroups: List.generate(
+                      slices.length,
+                      (i) => BarChartGroupData(
+                        x: i,
+                        barRods: [
+                          premiumBarRod(
+                            toY: slices[i].value,
+                            color: slices[i].color,
+                            isActive: !hasFocus || _touchedIndex == i,
+                            motion: motion,
+                            width: 20,
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(9)),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
-      ),
       ),
     );
   }

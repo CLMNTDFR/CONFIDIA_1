@@ -32,6 +32,7 @@ abstract final class ConfidiaChartTooltips {
   static LineTouchTooltipData line(
     BuildContext context, {
     required String Function(int index, double value) labelBuilder,
+    bool allowOverflow = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return LineTouchTooltipData(
@@ -39,8 +40,9 @@ abstract final class ConfidiaChartTooltips {
       tooltipBorder: BorderSide(color: ConfidiaColors.border(isDark)),
       tooltipRoundedRadius: 8,
       tooltipPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      tooltipMargin: 10,
-      fitInsideHorizontally: true,
+      tooltipMargin: 12,
+      fitInsideHorizontally: !allowOverflow,
+      fitInsideVertically: !allowOverflow,
       getTooltipItems: (spots) => spots
           .map(
             (spot) => LineTooltipItem(
@@ -56,6 +58,7 @@ abstract final class ConfidiaChartTooltips {
   static BarTouchTooltipData bar(
     BuildContext context, {
     required BarTooltipItem? Function(int groupIndex, int rodIndex) itemBuilder,
+    bool allowOverflow = false,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return BarTouchTooltipData(
@@ -63,8 +66,9 @@ abstract final class ConfidiaChartTooltips {
       tooltipBorder: BorderSide(color: ConfidiaColors.border(isDark)),
       tooltipRoundedRadius: 8,
       tooltipPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-      tooltipMargin: 8,
-      fitInsideHorizontally: true,
+      tooltipMargin: 12,
+      fitInsideHorizontally: !allowOverflow,
+      fitInsideVertically: !allowOverflow,
       direction: TooltipDirection.top,
       getTooltipItem: (group, groupIndex, rod, rodIndex) => itemBuilder(groupIndex, rodIndex),
     );
