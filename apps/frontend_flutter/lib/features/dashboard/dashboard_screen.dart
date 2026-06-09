@@ -23,6 +23,7 @@ import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/stat_card.dart';
 import '../../shared/widgets/stagger_fade.dart';
 import '../calendar/calendar_provider.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import 'dashboard_chart_widgets.dart';
 import 'dashboard_grid.dart';
 import 'dashboard_provider.dart';
@@ -33,31 +34,35 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = ref.watch(dashboardLayoutProvider);
-    final bottomInset = layout.editMode ? (layout.hidden.isNotEmpty ? 168.0 : 88.0) : ConfidiaSpacing.lg;
-
-    final padding = EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.lg, ConfidiaSpacing.lg, bottomInset);
+    final editActionsClearance = layout.editMode ? (layout.hidden.isNotEmpty ? 168.0 : 88.0) : 0.0;
+    final padding = ConfidiaInsets.pageWithExtra(context, extraBottom: editActionsClearance);
+    final visibleCount = layout.visible.length;
+    final notifier = ref.read(dashboardLayoutProvider.notifier);
 
     Widget buildTile(DashboardWidgetType type, int index) => StaggerFade(
           index: index,
-          child: _buildWidget(context, ref, type, index, layout.editMode),
+          child: _buildWidget(
+            context,
+            ref,
+            type,
+            index,
+            layout.editMode,
+            canMoveUp: index > 0,
+            canMoveDown: index < visibleCount - 1,
+            onMoveUp: () => notifier.moveVisible(index, index - 1),
+            onMoveDown: () => notifier.moveVisible(index, index + 1),
+          ),
         );
 
     return Stack(
       children: [
         if (layout.editMode)
-          ReorderableListView.builder(
+          _EditModeDashboardList(
             padding: padding,
-            buildDefaultDragHandles: false,
-            onReorder: ref.read(dashboardLayoutProvider.notifier).reorderVisible,
-            itemCount: layout.visible.length,
-            itemBuilder: (context, index) {
-              final type = layout.visible[index];
-              return Padding(
-                key: ValueKey(type),
-                padding: const EdgeInsets.only(bottom: ConfidiaSpacing.md),
-                child: buildTile(type, index),
-              );
-            },
+            types: layout.visible,
+            buildTile: buildTile,
+            onReorderSegment: (oldIndex, newIndex, segments) =>
+                notifier.reorderSegments(oldIndex, newIndex, segments),
           )
         else
           ListView(
@@ -72,7 +77,8 @@ class DashboardScreen extends ConsumerWidget {
           Positioned(
             left: ConfidiaSpacing.lg,
             right: ConfidiaSpacing.lg,
-            bottom: layout.hidden.isNotEmpty ? 88 : ConfidiaSpacing.lg,
+            bottom: ConfidiaMobileShell.bottomScrollInset(context) +
+                (layout.hidden.isNotEmpty ? 88.0 : ConfidiaSpacing.lg),
             child: _EditModeActions(
               onReset: () => ref.read(dashboardLayoutProvider.notifier).reset(),
               onDone: () => ref.read(dashboardLayoutProvider.notifier).toggleEditMode(),
@@ -91,7 +97,7 @@ class DashboardScreen extends ConsumerWidget {
         ] else
           Positioned(
             right: ConfidiaSpacing.lg,
-            bottom: ConfidiaSpacing.lg,
+            bottom: ConfidiaMobileShell.fabBottom(context),
             child: _CustomizeFab(onPressed: () => ref.read(dashboardLayoutProvider.notifier).toggleEditMode()),
           ),
       ],
@@ -103,8 +109,12 @@ class DashboardScreen extends ConsumerWidget {
     WidgetRef ref,
     DashboardWidgetType type,
     int index,
-    bool editMode,
-  ) {
+    bool editMode, {
+    bool canMoveUp = false,
+    bool canMoveDown = false,
+    VoidCallback? onMoveUp,
+    VoidCallback? onMoveDown,
+  }) {
     final docs = MockEcosystem.documents;
     final events = ref.watch(calendarProvider);
     final notifications = MockEcosystem.notifications;
@@ -133,16 +143,139 @@ class DashboardScreen extends ConsumerWidget {
 
     if (!editMode) return content;
 
+    final body = Opacity(opacity: 0.92, child: content);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _WidgetEditBar(
-          index: index,
           label: type.label,
           icon: _iconForType(type),
           onHide: () => ref.read(dashboardLayoutProvider.notifier).toggleWidget(type),
+          canMoveUp: canMoveUp,
+          canMoveDown: canMoveDown,
+          onMoveUp: onMoveUp,
+          onMoveDown: onMoveDown,
         ),
-        Opacity(opacity: 0.92, child: content),
+        if (type.isHalfWidth) Expanded(child: body) else body,
+      ],
+    );
+  }
+}
+
+class _EditModeDashboardList extends StatelessWidget {
+  final EdgeInsets padding;
+  final List<DashboardWidgetType> types;
+  final Widget Function(DashboardWidgetType type, int index) buildTile;
+  final void Function(int oldIndex, int newIndex, List<List<DashboardWidgetType>> segments) onReorderSegment;
+
+  const _EditModeDashboardList({
+    required this.padding,
+    required this.types,
+    required this.buildTile,
+    required this.onReorderSegment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isWide = DashboardGrid.isWideLayout(context);
+    final segments = DashboardGrid.buildSegments(types, isWide: isWide);
+    final segmentTypes = segments.map((s) => List<DashboardWidgetType>.from(s.types)).toList();
+
+    return ReorderableListView.builder(
+      padding: padding,
+      buildDefaultDragHandles: false,
+      onReorder: (oldIndex, newIndex) => onReorderSegment(oldIndex, newIndex, segmentTypes),
+      itemCount: segments.length,
+      itemBuilder: (context, segmentIndex) {
+        final segment = segments[segmentIndex];
+        final startIndex = segments.take(segmentIndex).fold<int>(0, (sum, s) => sum + s.types.length);
+
+        return Padding(
+          key: ValueKey(segment.key),
+          padding: const EdgeInsets.only(bottom: DashboardGrid.rowGap),
+          child: _EditSegmentRow(
+            segmentIndex: segmentIndex,
+            segment: segment,
+            isWide: isWide,
+            startIndex: startIndex,
+            buildTile: buildTile,
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _EditSegmentRow extends StatelessWidget {
+  final int segmentIndex;
+  final DashboardGridSegment segment;
+  final bool isWide;
+  final int startIndex;
+  final Widget Function(DashboardWidgetType type, int index) buildTile;
+
+  const _EditSegmentRow({
+    required this.segmentIndex,
+    required this.segment,
+    required this.isWide,
+    required this.startIndex,
+    required this.buildTile,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final rowBody = segment.types.length == 2
+        ? Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: buildTile(segment.types[0], startIndex)),
+              const SizedBox(width: ConfidiaSpacing.md),
+              Expanded(child: buildTile(segment.types[1], startIndex + 1)),
+            ],
+          )
+        : isWide && segment.types.single.isHalfWidth
+            ? Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: buildTile(segment.types.single, startIndex)),
+                  const SizedBox(width: ConfidiaSpacing.md),
+                  const Expanded(child: SizedBox()),
+                ],
+              )
+            : buildTile(segment.types.single, startIndex);
+
+    final fixedHeight = segment.rowHeight(editMode: true);
+    final content = fixedHeight > DashboardGrid.editChromeHeight
+        ? SizedBox(height: fixedHeight, child: rowBody)
+        : rowBody;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ReorderableDragStartListener(
+          index: segmentIndex,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            decoration: BoxDecoration(
+              color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.06 : 0.04),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.45)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.drag_indicator_rounded, size: 18, color: ConfidiaColors.textSecondary(isDark)),
+                const SizedBox(width: 8),
+                Text(
+                  segment.types.length == 2 ? 'Déplacer la ligne' : 'Déplacer le bloc',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ],
+            ),
+          ),
+        ),
+        content,
       ],
     );
   }
@@ -166,12 +299,23 @@ IconData _iconForType(DashboardWidgetType type) => switch (type) {
     };
 
 class _WidgetEditBar extends StatelessWidget {
-  final int index;
   final String label;
   final IconData icon;
   final VoidCallback onHide;
+  final bool canMoveUp;
+  final bool canMoveDown;
+  final VoidCallback? onMoveUp;
+  final VoidCallback? onMoveDown;
 
-  const _WidgetEditBar({required this.index, required this.label, required this.icon, required this.onHide});
+  const _WidgetEditBar({
+    required this.label,
+    required this.icon,
+    required this.onHide,
+    this.canMoveUp = false,
+    this.canMoveDown = false,
+    this.onMoveUp,
+    this.onMoveDown,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -179,32 +323,65 @@ class _WidgetEditBar extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            ConfidiaColors.primary.withValues(alpha: isDark ? 0.22 : 0.12),
-            ConfidiaColors.secondary.withValues(alpha: isDark ? 0.18 : 0.1),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ConfidiaColors.secondary.withValues(alpha: 0.35)),
+        color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.07 : 0.04),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          ReorderableDragStartListener(
-            index: index,
-            child: _EditActionChip(icon: Icons.drag_indicator_rounded, label: 'Déplacer'),
-          ),
-          const SizedBox(width: 10),
           Icon(icon, size: 16, color: ConfidiaColors.secondary),
           const SizedBox(width: 6),
           Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.labelLarge, overflow: TextOverflow.ellipsis),
+            child: Text(label, style: Theme.of(context).textTheme.labelMedium, overflow: TextOverflow.ellipsis),
           ),
+          _EditIconButton(
+            icon: Icons.keyboard_arrow_up_rounded,
+            tooltip: 'Monter',
+            enabled: canMoveUp,
+            onTap: onMoveUp,
+          ),
+          _EditIconButton(
+            icon: Icons.keyboard_arrow_down_rounded,
+            tooltip: 'Descendre',
+            enabled: canMoveDown,
+            onTap: onMoveDown,
+          ),
+          const SizedBox(width: 4),
           _EditActionChip(icon: Icons.visibility_off_outlined, label: 'Masquer', onTap: onHide),
         ],
       ),
+    );
+  }
+}
+
+class _EditIconButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final bool enabled;
+  final VoidCallback? onTap;
+
+  const _EditIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.enabled,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return IconButton(
+      onPressed: enabled ? onTap : null,
+      tooltip: tooltip,
+      visualDensity: VisualDensity.compact,
+      iconSize: 18,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+      color: enabled ? ConfidiaColors.textPrimary(isDark) : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.35),
+      icon: Icon(icon),
     );
   }
 }

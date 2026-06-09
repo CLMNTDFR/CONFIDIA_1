@@ -148,27 +148,35 @@ class ConfidiaMobileNavBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final selected = _selectedIndex();
 
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-        child: Container(
-          decoration: BoxDecoration(
-            color: (isDark ? ConfidiaColors.darkSurface : Colors.white).withValues(alpha: 0.72),
-            border: Border(top: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.45))),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-              child: Row(
-                children: List.generate(destinations.length, (i) {
-                  return Expanded(
-                    child: _MobileNavItem(
-                      destination: destinations[i],
-                      isActive: i == selected,
-                    ),
-                  );
-                }),
+    return Material(
+      color: Colors.transparent,
+      elevation: 0,
+      child: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: isDark
+                  ? const Color(0xFF12121A).withValues(alpha: 0.22)
+                  : Colors.white.withValues(alpha: 0.18),
+              border: Border(
+                top: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.28)),
+              ),
+            ),
+            child: SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+                child: Row(
+                  children: List.generate(destinations.length, (i) {
+                    return Expanded(
+                      child: _MobileNavItem(
+                        destination: destinations[i],
+                        isActive: i == selected,
+                      ),
+                    );
+                  }),
+                ),
               ),
             ),
           ),

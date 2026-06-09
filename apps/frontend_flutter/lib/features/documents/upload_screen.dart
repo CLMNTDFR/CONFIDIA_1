@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 
 class UploadScreen extends StatefulWidget {
   const UploadScreen({super.key});
@@ -46,7 +47,7 @@ class _UploadScreenState extends State<UploadScreen> {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+      padding: ConfidiaInsets.page(context),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 800),

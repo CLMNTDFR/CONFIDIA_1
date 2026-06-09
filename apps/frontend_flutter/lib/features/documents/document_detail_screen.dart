@@ -10,6 +10,7 @@ import '../../shared/models/document_model.dart';
 import '../../shared/services/mock_ai_service.dart';
 import '../../shared/widgets/ai_streaming_text.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/status_badge.dart';
 
 class DocumentDetailScreen extends StatefulWidget {
@@ -34,7 +35,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final analysisText = _analysisText(insight, doc);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+      padding: ConfidiaInsets.page(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

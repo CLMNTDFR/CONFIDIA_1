@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/stat_card.dart';
 
 class AdminScreen extends ConsumerWidget {
@@ -20,7 +21,7 @@ class AdminScreen extends ConsumerWidget {
     }
 
     return SingleChildScrollView(
-        padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+        padding: ConfidiaInsets.page(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

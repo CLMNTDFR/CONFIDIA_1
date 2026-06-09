@@ -11,6 +11,7 @@ import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/brands/brand_assets.dart';
 import '../../shared/widgets/brand_icon.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/provider_chip.dart';
 import 'messaging_provider.dart';
 
@@ -62,7 +63,7 @@ class MessagingScreen extends ConsumerWidget {
                 child: filtered.isEmpty
                     ? const Center(child: Text('Aucun message'))
                     : ListView.separated(
-                        padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+                        padding: ConfidiaInsets.page(context),
                         itemCount: filtered.length,
                         separatorBuilder: (_, __) => const SizedBox(height: 6),
                         itemBuilder: (context, i) => _EmailTile(email: filtered[i]),

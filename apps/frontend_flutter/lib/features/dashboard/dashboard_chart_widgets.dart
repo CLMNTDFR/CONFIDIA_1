@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -248,88 +250,107 @@ class _CategoryBreakdownList extends StatelessWidget {
         return MouseRegion(
           onEnter: (_) => onHover(i),
           onExit: (_) => onExit(),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 220),
-            curve: Curves.easeOut,
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: active
-                  ? slice.color.withValues(alpha: isDark ? 0.12 : 0.07)
-                  : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.02),
-              border: Border.all(
-                color: active ? slice.color.withValues(alpha: 0.35) : ConfidiaColors.border(isDark).withValues(alpha: 0.35),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        gradient: LinearGradient(
-                          colors: [slice.color, slice.color.withValues(alpha: 0.65)],
-                        ),
-                        boxShadow: active
-                            ? [BoxShadow(color: slice.color.withValues(alpha: 0.5), blurRadius: 8, spreadRadius: 1)]
-                            : null,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        slice.label,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                            ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    Text(
-                      '${slice.value.toInt()}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: ConfidiaColors.textSecondary(isDark),
-                          ),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      '${(pct * 100).round()}%',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: active ? slice.color : ConfidiaColors.textPrimary(isDark),
-                          ),
-                    ),
-                  ],
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOut,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(10),
+                  color: active
+                      ? (isDark ? Colors.black : Colors.white).withValues(alpha: isDark ? 0.42 : 0.72)
+                      : (isDark ? Colors.black : Colors.white).withValues(alpha: isDark ? 0.28 : 0.52),
+                  border: Border.all(
+                    color: active
+                        ? slice.color.withValues(alpha: 0.28)
+                        : ConfidiaColors.border(isDark).withValues(alpha: 0.35),
+                  ),
                 ),
-                const SizedBox(height: 7),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: SizedBox(
-                    height: 3,
-                    child: Stack(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Container(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06)),
-                        FractionallySizedBox(
-                          alignment: Alignment.centerLeft,
-                          widthFactor: pct.clamp(0.04, 1.0),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [slice.color.withValues(alpha: 0.55), slice.color],
-                              ),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: LinearGradient(
+                              colors: [slice.color, slice.color.withValues(alpha: 0.65)],
+                            ),
+                            boxShadow: active
+                                ? [BoxShadow(color: slice.color.withValues(alpha: 0.35), blurRadius: 6)]
+                                : null,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            slice.label,
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                                ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(12),
+                            color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.07 : 0.05),
+                            border: Border.all(
+                              color: ConfidiaColors.border(isDark).withValues(alpha: 0.45),
                             ),
                           ),
+                          child: Text(
+                            '${slice.value.toInt()}',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: ConfidiaColors.textSecondary(isDark),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${(pct * 100).round()}%',
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: active ? slice.color : ConfidiaColors.textPrimary(isDark),
+                              ),
                         ),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 7),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: SizedBox(
+                        height: 3,
+                        child: Stack(
+                          children: [
+                            Container(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06)),
+                            FractionallySizedBox(
+                              alignment: Alignment.centerLeft,
+                              widthFactor: pct.clamp(0.04, 1.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [slice.color.withValues(alpha: 0.55), slice.color],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );

@@ -9,6 +9,7 @@ import '../../shared/models/ai_insight_model.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/provider_chip.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/status_badge.dart';
 import 'messaging_provider.dart';
 
@@ -27,7 +28,7 @@ class EmailDetailScreen extends ConsumerWidget {
     final insight = notifier.ai.analyzeEmail(email);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+      padding: ConfidiaInsets.page(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

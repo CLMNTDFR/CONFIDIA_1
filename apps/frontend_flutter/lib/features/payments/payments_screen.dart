@@ -7,6 +7,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/payment_model.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/status_badge.dart';
 import 'payments_provider.dart';
 
@@ -126,7 +127,7 @@ class _PaymentList extends StatelessWidget {
       return Center(child: Text(emptyMessage, style: Theme.of(context).textTheme.bodyMedium));
     }
     return ListView.separated(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+      padding: ConfidiaInsets.page(context),
       itemCount: payments.length,
       separatorBuilder: (_, __) => const SizedBox(height: 10),
       itemBuilder: (context, i) => _PaymentCard(payment: payments[i]),

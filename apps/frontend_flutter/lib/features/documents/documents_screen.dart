@@ -9,6 +9,7 @@ import '../../shared/models/document_model.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/premium_search_field.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/stagger_fade.dart';
 
 class DocumentsScreen extends StatefulWidget {
@@ -108,7 +109,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
               ),
             ),
           ),
-        const SliverToBoxAdapter(child: SizedBox(height: 80)),
+        SliverToBoxAdapter(child: SizedBox(height: ConfidiaInsets.scrollTail(context))),
       ],
     );
   }

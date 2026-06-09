@@ -9,6 +9,7 @@ import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/calendar_event_model.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/confidia_glow_segmented.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/provider_chip.dart';
@@ -59,7 +60,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+            padding: ConfidiaInsets.page(context),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight - ConfidiaSpacing.lg * 2),
               child: Column(

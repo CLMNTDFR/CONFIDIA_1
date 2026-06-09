@@ -7,6 +7,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/logout_button.dart';
 import '../../shared/widgets/stagger_fade.dart';
 import '../../shared/widgets/user_avatar.dart';
@@ -27,7 +28,7 @@ class ProfileScreen extends ConsumerWidget {
     final isWide = MediaQuery.of(context).size.width >= 720;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+      padding: ConfidiaInsets.page(context),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 720),

@@ -11,6 +11,7 @@ import '../../shared/widgets/glass_card.dart';
 import '../../shared/brands/brand_assets.dart';
 import '../../shared/widgets/brand_icon.dart';
 import '../../shared/widgets/confidia_switch.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/logout_button.dart';
 import '../../shared/widgets/provider_chip.dart';
 import '../../shared/widgets/status_badge.dart';
@@ -25,7 +26,7 @@ class SettingsScreen extends ConsumerWidget {
     final isDark = ref.watch(themeModeProvider);
 
     return ListView(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+      padding: ConfidiaInsets.page(context),
       children: [
         _SectionTitle(label: 'Apparence'),
         const SizedBox(height: 6),

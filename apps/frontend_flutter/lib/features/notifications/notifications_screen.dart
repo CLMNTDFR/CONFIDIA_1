@@ -8,6 +8,7 @@ import '../../shared/data/mock_data.dart';
 import '../../shared/models/notification_model.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -62,7 +63,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+            padding: ConfidiaInsets.page(context),
             itemCount: _notifications.length,
             itemBuilder: (context, index) {
               final notif = _notifications[index];

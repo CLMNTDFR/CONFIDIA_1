@@ -8,6 +8,7 @@ import '../../core/theme/spacing.dart';
 import '../../shared/models/payment_model.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/status_badge.dart';
 import 'payments_provider.dart';
 
@@ -35,7 +36,7 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
     final canPay = payment.status == PaymentStatus.pending || payment.status == PaymentStatus.waiting;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+      padding: ConfidiaInsets.page(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

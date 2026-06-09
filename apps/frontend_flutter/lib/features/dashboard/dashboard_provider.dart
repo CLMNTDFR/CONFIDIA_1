@@ -131,10 +131,29 @@ class DashboardLayoutNotifier extends StateNotifier<DashboardLayout> {
   }
 
   void reorderVisible(int oldIndex, int newIndex) {
-    final visible = List<DashboardWidgetType>.from(state.visible);
     if (newIndex > oldIndex) newIndex -= 1;
-    final item = visible.removeAt(oldIndex);
-    visible.insert(newIndex, item);
+    moveVisible(oldIndex, newIndex);
+  }
+
+  void moveVisible(int from, int to) {
+    if (from == to) return;
+    final visible = List<DashboardWidgetType>.from(state.visible);
+    final item = visible.removeAt(from);
+    visible.insert(to, item);
+    _commitVisibleOrder(visible);
+  }
+
+  void setVisibleOrder(List<DashboardWidgetType> visible) => _commitVisibleOrder(visible);
+
+  void reorderSegments(int oldIndex, int newIndex, List<List<DashboardWidgetType>> segments) {
+    if (newIndex > oldIndex) newIndex -= 1;
+    final reordered = List<List<DashboardWidgetType>>.from(segments);
+    final segment = reordered.removeAt(oldIndex);
+    reordered.insert(newIndex, segment);
+    setVisibleOrder(reordered.expand((group) => group).toList());
+  }
+
+  void _commitVisibleOrder(List<DashboardWidgetType> visible) {
     final hiddenItems = state.order.where((w) => state.hidden.contains(w)).toList();
     state = state.copyWith(order: [...visible, ...hiddenItems]);
   }

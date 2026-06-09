@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -63,7 +64,7 @@ class _ScanScreenState extends State<ScanScreen> {
     final isWide = MediaQuery.of(context).size.width >= 700;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+      padding: ConfidiaInsets.page(context),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 900),

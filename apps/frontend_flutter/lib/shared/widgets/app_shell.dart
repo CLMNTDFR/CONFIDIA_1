@@ -11,6 +11,7 @@ import 'confidia_animated_logo.dart';
 import 'confidia_navigation.dart';
 import 'mesh_background.dart';
 import 'mobile_page_header.dart';
+import 'mobile_shell_insets.dart';
 
 class AppShell extends ConsumerStatefulWidget {
   final Widget child;
@@ -38,16 +39,24 @@ class _AppShellState extends ConsumerState<AppShell> {
       return MeshBackground(
         child: Scaffold(
           backgroundColor: Colors.transparent,
+          extendBody: true,
           appBar: PreferredSize(
             preferredSize: const Size.fromHeight(ConfidiaSpacing.topBarHeight),
             child: topBar,
           ),
-          body: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              MobilePageHeader(title: routeMeta.$1, subtitle: routeMeta.$2),
-              Expanded(child: widget.child),
-            ],
+          body: MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              padding: MediaQuery.paddingOf(context).copyWith(
+                bottom: ConfidiaMobileShell.bottomScrollInset(context),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                MobilePageHeader(title: routeMeta.$1, subtitle: routeMeta.$2),
+                Expanded(child: widget.child),
+              ],
+            ),
           ),
           bottomNavigationBar: ConfidiaMobileNavBar(
             currentPath: currentPath,
