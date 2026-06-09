@@ -1,0 +1,105 @@
+{
+  "realm": "confidia",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "ADMIN",
+        "description": "Administrator role with full access"
+      },
+      {
+        "name": "USER",
+        "description": "Standard user role"
+      },
+      {
+        "name": "MANAGER",
+        "description": "Manager role with elevated permissions"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "confidia-frontend",
+      "name": "CONFIDIA Frontend",
+      "enabled": true,
+      "publicClient": true,
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "redirectUris": [
+        "http://localhost:*",
+        "confidia://callback"
+      ],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "confidia-backend",
+      "name": "CONFIDIA Backend",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "confidia-backend-secret",
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@confidia.local",
+      "firstName": "Admin",
+      "lastName": "CONFIDIA",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ADMIN", "USER"]
+    },
+    {
+      "username": "user",
+      "enabled": true,
+      "email": "user@confidia.local",
+      "firstName": "Jean",
+      "lastName": "Dupont",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "user",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["USER"]
+    },
+    {
+      "username": "manager",
+      "enabled": true,
+      "email": "manager@confidia.local",
+      "firstName": "Marie",
+      "lastName": "Martin",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "manager",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["MANAGER", "USER"]
+    }
+  ]
+}

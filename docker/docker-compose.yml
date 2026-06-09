@@ -1,0 +1,161 @@
+version: "3.9"
+
+services:
+  # ─── PostgreSQL (shared) ───────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    container_name: confidia-postgres
+    environment:
+      POSTGRES_USER: confidia
+      POSTGRES_PASSWORD: confidia_secret
+      POSTGRES_DB: confidia
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U confidia"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - confidia-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: confidia-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - confidia-net
+
+  # ─── Keycloak ──────────────────────────────────────────────────────
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    container_name: confidia-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: confidia
+      KC_DB_PASSWORD: confidia_secret
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HEALTH_ENABLED: "true"
+    volumes:
+      - ../services/keycloak/realm-export.json:/opt/keycloak/data/import/realm-export.json
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - confidia-net
+
+  # ─── Paperless-ngx ─────────────────────────────────────────────────
+  paperless-redis:
+    image: redis:7-alpine
+    container_name: confidia-paperless-redis
+    networks:
+      - confidia-net
+
+  paperless:
+    image: ghcr.io/paperless-ngx/paperless-ngx:latest
+    container_name: confidia-paperless
+    environment:
+      PAPERLESS_REDIS: redis://paperless-redis:6379
+      PAPERLESS_DBHOST: postgres
+      PAPERLESS_DBNAME: paperless
+      PAPERLESS_DBUSER: confidia
+      PAPERLESS_DBPASS: confidia_secret
+      PAPERLESS_SECRET_KEY: change-me-in-production-paperless-secret
+      PAPERLESS_ADMIN_USER: admin
+      PAPERLESS_ADMIN_PASSWORD: admin
+      PAPERLESS_URL: http://localhost:8001
+      PAPERLESS_OCR_LANGUAGE: fra+eng
+      PAPERLESS_ENABLE_HTTP_REMOTE_USER: "false"
+    volumes:
+      - paperless_data:/usr/src/paperless/data
+      - paperless_media:/usr/src/paperless/media
+      - paperless_export:/usr/src/paperless/export
+    ports:
+      - "8001:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      paperless-redis:
+        condition: service_started
+    networks:
+      - confidia-net
+
+  # ─── Nextcloud ─────────────────────────────────────────────────────
+  nextcloud:
+    image: nextcloud:29-apache
+    container_name: confidia-nextcloud
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_DB: nextcloud
+      POSTGRES_USER: confidia
+      POSTGRES_PASSWORD: confidia_secret
+      NEXTCLOUD_ADMIN_USER: admin
+      NEXTCLOUD_ADMIN_PASSWORD: admin
+      NEXTCLOUD_TRUSTED_DOMAINS: localhost nextcloud
+    volumes:
+      - nextcloud_data:/var/www/html
+    ports:
+      - "8081:80"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - confidia-net
+
+  # ─── FastAPI Backend ───────────────────────────────────────────────
+  backend:
+    build:
+      context: ../apps/backend_fastapi
+      dockerfile: Dockerfile
+    container_name: confidia-backend
+    env_file:
+      - .env
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgresql+asyncpg://confidia:confidia_secret@postgres:5432/confidia
+      REDIS_URL: redis://redis:6379/0
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: confidia
+      KEYCLOAK_CLIENT_ID: confidia-backend
+      KEYCLOAK_CLIENT_SECRET: confidia-backend-secret
+      PAPERLESS_URL: http://paperless:8000
+      PAPERLESS_TOKEN: ${PAPERLESS_TOKEN:-}
+      NEXTCLOUD_URL: http://nextcloud:80
+      NEXTCLOUD_USER: admin
+      NEXTCLOUD_PASSWORD: admin
+      CORS_ORIGINS: http://localhost:3000,http://localhost:8082
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+      keycloak:
+        condition: service_started
+    volumes:
+      - ../apps/backend_fastapi:/app
+    networks:
+      - confidia-net
+
+volumes:
+  postgres_data:
+  paperless_data:
+  paperless_media:
+  paperless_export:
+  nextcloud_data:
+
+networks:
+  confidia-net:
+    driver: bridge
