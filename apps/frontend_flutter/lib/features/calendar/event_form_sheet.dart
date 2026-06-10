@@ -74,6 +74,7 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
     final initial = isStart ? _start : _end;
     final date = await showDatePicker(
       context: context,
+      useRootNavigator: true,
       initialDate: initial,
       firstDate: DateTime(2020),
       lastDate: DateTime(2035),
@@ -93,7 +94,11 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
       return;
     }
 
-    final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(initial));
+    final time = await showTimePicker(
+      context: context,
+      useRootNavigator: true,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
     if (time == null || !mounted) return;
 
     setState(() {
