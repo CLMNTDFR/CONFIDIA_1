@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
+import 'mobile_shell_insets.dart';
 
 /// Affiche une modale / bottom sheet au style CONFIDIA (glass, glow sobre).
 Future<T?> showConfidiaSheet<T>({
@@ -41,16 +42,19 @@ class ConfidiaSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bottom = MediaQuery.viewInsetsOf(context).bottom;
+    final keyboardBottom = MediaQuery.viewInsetsOf(context).bottom;
+    final shellBottom = ConfidiaMobileShell.isMobileShell(context)
+        ? ConfidiaMobileShell.bottomScrollInset(context)
+        : 0.0;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: bottom),
+      padding: EdgeInsets.only(bottom: keyboardBottom),
       child: ClipRRect(
         borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            margin: const EdgeInsets.fromLTRB(10, 0, 10, 10),
+            margin: EdgeInsets.fromLTRB(10, 0, 10, 10 + shellBottom),
             constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.92),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(22),
@@ -124,7 +128,12 @@ class ConfidiaSheet extends StatelessWidget {
                 Divider(height: 1, color: ConfidiaColors.border(isDark).withValues(alpha: 0.5)),
                 Flexible(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+                    padding: EdgeInsets.fromLTRB(
+                      ConfidiaSpacing.lg,
+                      ConfidiaSpacing.lg,
+                      ConfidiaSpacing.lg,
+                      ConfidiaSpacing.lg + shellBottom,
+                    ),
                     child: child,
                   ),
                 ),

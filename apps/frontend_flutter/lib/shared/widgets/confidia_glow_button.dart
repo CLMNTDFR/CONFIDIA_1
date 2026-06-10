@@ -8,6 +8,7 @@ class ConfidiaGlowButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback? onPressed;
   final bool primary;
+  final bool expand;
 
   const ConfidiaGlowButton({
     super.key,
@@ -15,6 +16,7 @@ class ConfidiaGlowButton extends StatefulWidget {
     required this.icon,
     this.onPressed,
     this.primary = true,
+    this.expand = false,
   });
 
   @override
@@ -101,11 +103,12 @@ class _ConfidiaGlowButtonState extends State<ConfidiaGlowButton> with SingleTick
       child: ScaleTransition(
         scale: _scale,
         child: Container(
+          width: widget.expand ? double.infinity : null,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: decoration,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
+            mainAxisSize: widget.expand ? MainAxisSize.max : MainAxisSize.min,
             children: [
               Icon(
                 widget.icon,

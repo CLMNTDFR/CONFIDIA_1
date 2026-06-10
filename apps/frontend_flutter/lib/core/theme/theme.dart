@@ -46,21 +46,49 @@ abstract final class ConfidiaTheme {
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
+        isDense: true,
         filled: true,
-        fillColor: surfaceVariant,
+        fillColor: isDark
+            ? ConfidiaColors.darkSurfaceElevated.withValues(alpha: 0.55)
+            : Colors.white.withValues(alpha: 0.92),
+        labelStyle: TextStyle(
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: ConfidiaColors.textSecondary(isDark),
+        ),
+        floatingLabelStyle: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: ConfidiaColors.primary,
+          letterSpacing: 0.2,
+        ),
+        hintStyle: TextStyle(
+          fontSize: 13,
+          color: ConfidiaColors.textSecondary(isDark),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+        prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
+        suffixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: border),
+          borderRadius: BorderRadius.circular(11),
+          borderSide: BorderSide(color: border.withValues(alpha: 0.85)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: border),
+          borderRadius: BorderRadius.circular(11),
+          borderSide: BorderSide(color: border.withValues(alpha: 0.75)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: ConfidiaColors.primary, width: 2),
+          borderRadius: BorderRadius.circular(11),
+          borderSide: BorderSide(color: ConfidiaColors.primary.withValues(alpha: 0.55), width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.md, vertical: 14),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(11),
+          borderSide: const BorderSide(color: ConfidiaColors.error),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(11),
+          borderSide: const BorderSide(color: ConfidiaColors.error, width: 1.5),
+        ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(

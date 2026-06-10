@@ -54,13 +54,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final allEvents = ref.watch(calendarProvider);
     final events = filter == null ? allEvents : allEvents.where((e) => e.eventType == filter).toList();
     final selectedEvents = _eventsForDay(_selectedDay ?? DateTime.now(), events);
+    final isMobileShell = ConfidiaMobileShell.isMobileShell(context);
+    const fabClearance = 56.0;
 
     return Stack(
       children: [
         LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
-            padding: ConfidiaInsets.page(context),
+            padding: ConfidiaInsets.pageWithExtra(
+              context,
+              extraBottom: isMobileShell ? fabClearance : 0,
+            ),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight - ConfidiaSpacing.lg * 2),
               child: Column(
@@ -117,7 +122,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         ),
         Positioned(
           right: ConfidiaSpacing.lg,
-          bottom: ConfidiaSpacing.lg,
+          bottom: ConfidiaMobileShell.fabBottom(context),
           child: ConfidiaGlowButton(
             label: 'Événement',
             icon: Icons.add_rounded,
@@ -173,7 +178,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           return dayEvents;
         },
         locale: 'fr_FR',
-        rowHeight: 48,
+        rowHeight: 52,
         calendarStyle: CalendarStyle(
           todayDecoration: BoxDecoration(
             color: ConfidiaColors.accent.withValues(alpha: 0.25),
@@ -183,11 +188,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
             gradient: ConfidiaColors.primaryGradient,
             shape: BoxShape.circle,
           ),
-          markerDecoration: const BoxDecoration(
-            color: ConfidiaColors.secondary,
-            shape: BoxShape.circle,
-          ),
+          markersMaxCount: 4,
+          markerSize: 6,
+          markerMargin: const EdgeInsets.symmetric(horizontal: 1),
           outsideDaysVisible: false,
+        ),
+        calendarBuilders: CalendarBuilders(
+          markerBuilder: (context, day, events) {
+            if (events.isEmpty) return const SizedBox.shrink();
+            return _DayEventMarkers(events: events.cast<CalendarEventModel>());
+          },
         ),
         headerStyle: HeaderStyle(
           formatButtonVisible: false,
@@ -271,18 +281,27 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                 child: ListView(
                                   padding: const EdgeInsets.all(2),
                                   children: dayEvents
-                                      .map((e) => GestureDetector(
-                                            onTap: () => showEventFormSheet(context, event: e),
-                                            child: Container(
-                                              margin: const EdgeInsets.only(bottom: 2),
-                                              padding: const EdgeInsets.all(3),
-                                              decoration: BoxDecoration(
-                                                color: (e.color ?? ConfidiaColors.primary).withValues(alpha: 0.2),
-                                                borderRadius: BorderRadius.circular(4),
-                                              ),
-                                              child: Text(e.title, style: const TextStyle(fontSize: 9), maxLines: 2, overflow: TextOverflow.ellipsis),
+                                      .map((e) {
+                                        final typeColor = eventColor(e);
+                                        return GestureDetector(
+                                          onTap: () => showEventFormSheet(context, event: e),
+                                          child: Container(
+                                            margin: const EdgeInsets.only(bottom: 2),
+                                            padding: const EdgeInsets.only(left: 4, right: 3, top: 3, bottom: 3),
+                                            decoration: BoxDecoration(
+                                              color: typeColor.withValues(alpha: 0.14),
+                                              borderRadius: BorderRadius.circular(4),
+                                              border: Border(left: BorderSide(color: typeColor, width: 2)),
                                             ),
-                                          ))
+                                            child: Text(
+                                              e.title,
+                                              style: TextStyle(fontSize: 9, color: typeColor.withValues(alpha: 0.95), fontWeight: FontWeight.w600),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                        );
+                                      })
                                       .toList(),
                                 ),
                               ),
@@ -472,6 +491,54 @@ class _EventList extends StatelessWidget {
   }
 }
 
+class _DayEventMarkers extends StatelessWidget {
+  final List<CalendarEventModel> events;
+
+  const _DayEventMarkers({required this.events});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final visible = events.take(4).toList();
+    final overflow = events.length - visible.length;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (final event in visible)
+          Container(
+            width: 6,
+            height: 6,
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+            decoration: BoxDecoration(
+              color: eventColor(event),
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: eventColor(event).withValues(alpha: 0.35),
+                  blurRadius: 2,
+                ),
+              ],
+            ),
+          ),
+        if (overflow > 0)
+          Padding(
+            padding: const EdgeInsets.only(left: 2),
+            child: Text(
+              '+$overflow',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontSize: 7,
+                    fontWeight: FontWeight.w700,
+                    color: ConfidiaColors.textSecondary(isDark),
+                  ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
 class _EventTile extends StatelessWidget {
   final CalendarEventModel event;
   final VoidCallback? onTap;
@@ -499,7 +566,7 @@ class _EventTile extends StatelessWidget {
                 Container(
                   width: 4,
                   height: 52,
-                  decoration: BoxDecoration(color: event.color ?? cfg.color, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: cfg.color, borderRadius: BorderRadius.circular(2)),
                 ),
                 const SizedBox(width: ConfidiaSpacing.md),
                 Expanded(

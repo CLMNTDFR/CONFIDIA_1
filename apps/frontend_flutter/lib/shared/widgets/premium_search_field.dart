@@ -22,35 +22,21 @@ class PremiumSearchField extends StatelessWidget {
     return TextField(
       onChanged: onChanged,
       onSubmitted: onSubmitted,
-      style: Theme.of(context).textTheme.bodySmall,
+      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            height: 1.35,
+          ),
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontSize: 13,
               color: ConfidiaColors.textSecondary(isDark),
             ),
         prefixIcon: Icon(
           Icons.search_rounded,
           size: 18,
           color: ConfidiaColors.textSecondary(isDark),
-        ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 36),
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        filled: true,
-        fillColor: isDark
-            ? ConfidiaColors.darkSurfaceVariant.withValues(alpha: 0.65)
-            : Colors.white.withValues(alpha: 0.85),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: ConfidiaColors.border(isDark)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.7)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: ConfidiaColors.primary.withValues(alpha: 0.45)),
         ),
       ),
     );

@@ -69,7 +69,6 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
               final scaledSpots = spots
                   .map((s) => FlSpot(s.x, motion.scaleY(s.y)))
                   .toList();
-              final ghostAlpha = 0.16 - 0.06 * motion.focus;
               final lineAlpha = 1.0 - 0.25 * motion.focus;
 
               return Padding(
@@ -144,26 +143,6 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
                       ),
                     ),
                     lineBarsData: [
-                      LineChartBarData(
-                        spots: scaledSpots,
-                        isCurved: true,
-                        curveSmoothness: 0.3,
-                        barWidth: 5.5,
-                        isStrokeCapRound: true,
-                        color: ConfidiaColors.primary.withValues(alpha: ghostAlpha),
-                        dotData: const FlDotData(show: false),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              ConfidiaColors.primary.withValues(alpha: (isDark ? 0.08 : 0.05) * motion.entry),
-                              Colors.transparent,
-                            ],
-                          ),
-                        ),
-                      ),
                       LineChartBarData(
                         spots: scaledSpots,
                         isCurved: true,

@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -50,74 +48,44 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final unread = _notifications.where((n) => !n.read).length;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Stack(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Positioned.fill(child: _NotificationsBackdrop()),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ConfidiaPageReveal(
-              index: 0,
-              staggerCount: 2,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.md, ConfidiaSpacing.lg, ConfidiaSpacing.sm),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Centre d\'alertes', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-                          const SizedBox(height: 2),
-                          Text(
-                            unread > 0 ? '$unread notification${unread > 1 ? 's' : ''} non lue${unread > 1 ? 's' : ''}' : 'Tout est à jour',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: ConfidiaColors.textSecondary(isDark),
-                                ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (unread > 0)
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                        decoration: BoxDecoration(
-                          color: ConfidiaColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: ConfidiaColors.primary.withValues(alpha: 0.25)),
+        ConfidiaPageReveal(
+          index: 0,
+          staggerCount: 1,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.sm, ConfidiaSpacing.lg, ConfidiaSpacing.xs),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    unread > 0
+                        ? '$unread notification${unread > 1 ? 's' : ''} non lue${unread > 1 ? 's' : ''}'
+                        : 'Tout est à jour',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: ConfidiaColors.textSecondary(isDark),
+                          fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.w400,
                         ),
-                        child: Text(
-                          '$unread',
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                color: ConfidiaColors.primary,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-            if (unread > 0)
-              ConfidiaPageReveal(
-                index: 1,
-                staggerCount: 2,
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, 0, ConfidiaSpacing.lg, ConfidiaSpacing.sm),
-                  child: Align(
-                    alignment: Alignment.centerRight,
-                    child: ConfidiaGlowButton(
-                      label: 'Tout marquer comme lu',
-                      icon: Icons.done_all_rounded,
-                      primary: false,
-                      onPressed: _markAllRead,
-                    ),
                   ),
                 ),
-              ),
-            Expanded(
-              child: ListView.builder(
-                padding: ConfidiaInsets.page(context),
+                if (unread > 0) ...[
+                  const SizedBox(width: ConfidiaSpacing.sm),
+                  ConfidiaGlowButton(
+                    label: 'Tout marquer comme lu',
+                    icon: Icons.done_all_rounded,
+                    primary: false,
+                    onPressed: _markAllRead,
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+                padding: ConfidiaInsets.page(context).copyWith(top: ConfidiaSpacing.xs),
                 itemCount: _notifications.length,
                 itemBuilder: (context, index) {
                   final notif = _notifications[index];
@@ -154,66 +122,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 },
               ),
             ),
-          ],
-        ),
       ],
     );
   }
-}
-
-/// Arrière-plan en couches — anneaux et halos inspirés du donut chart.
-class _NotificationsBackdrop extends StatelessWidget {
-  const _NotificationsBackdrop();
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return IgnorePointer(
-      child: CustomPaint(
-        painter: _NotificationsBackdropPainter(isDark: isDark),
-        child: const SizedBox.expand(),
-      ),
-    );
-  }
-}
-
-class _NotificationsBackdropPainter extends CustomPainter {
-  final bool isDark;
-
-  _NotificationsBackdropPainter({required this.isDark});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    void drawHalo(Offset center, double radius, Color color, double opacity) {
-      final paint = Paint()
-        ..shader = RadialGradient(
-          colors: [color.withValues(alpha: opacity), color.withValues(alpha: 0)],
-        ).createShader(Rect.fromCircle(center: center, radius: radius));
-      canvas.drawCircle(center, radius, paint);
-    }
-
-    void drawArcRing(Offset center, double radius, Color color, double opacity, double startDeg, double sweepDeg) {
-      final paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = radius * 0.18
-        ..strokeCap = StrokeCap.round
-        ..color = color.withValues(alpha: opacity);
-      final rect = Rect.fromCircle(center: center, radius: radius);
-      canvas.drawArc(rect, startDeg * math.pi / 180, sweepDeg * math.pi / 180, false, paint);
-    }
-
-    drawHalo(Offset(size.width * 0.88, size.height * 0.08), 120, ConfidiaColors.secondary, isDark ? 0.14 : 0.1);
-    drawHalo(Offset(size.width * 0.06, size.height * 0.22), 90, ConfidiaColors.primary, isDark ? 0.12 : 0.08);
-    drawHalo(Offset(size.width * 0.72, size.height * 0.55), 160, ConfidiaColors.accent, isDark ? 0.1 : 0.07);
-
-    drawArcRing(Offset(size.width * 0.92, size.height * 0.12), 70, ConfidiaColors.primary, isDark ? 0.22 : 0.16, 200, 110);
-    drawArcRing(Offset(size.width * 0.08, size.height * 0.38), 52, ConfidiaColors.secondary, isDark ? 0.18 : 0.12, -30, 95);
-    drawArcRing(Offset(size.width * 0.78, size.height * 0.68), 88, ConfidiaColors.accent, isDark ? 0.16 : 0.1, 140, 75);
-  }
-
-  @override
-  bool shouldRepaint(covariant _NotificationsBackdropPainter oldDelegate) => oldDelegate.isDark != isDark;
 }
 
 class _NotificationCard extends StatelessWidget {

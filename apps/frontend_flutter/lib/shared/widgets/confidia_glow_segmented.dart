@@ -14,110 +14,164 @@ class ConfidiaGlowSegment<T> {
   });
 }
 
-/// Sélecteur segmenté premium — glow sobre, centré.
+/// Sélecteur segmenté premium — indicateur glissant animé, glow sobre.
 class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
   final T value;
   final List<ConfidiaGlowSegment<T>> segments;
   final ValueChanged<T> onChanged;
+  final bool expand;
 
   const ConfidiaGlowSegmentedControl({
     super.key,
     required this.value,
     required this.segments,
     required this.onChanged,
+    this.expand = false,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+  static const _segmentHeight = 36.0;
+  static const _shellPadding = 3.0;
+  static const _compactSegmentWidth = 96.0;
 
-    return Center(
-      child: Container(
-        padding: const EdgeInsets.all(3),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-          border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.7)),
-          boxShadow: [
-            BoxShadow(
-              color: ConfidiaColors.secondary.withValues(alpha: isDark ? 0.08 : 0.05),
-              blurRadius: 12,
-              spreadRadius: -4,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: segments.map((seg) {
-            final selected = seg.value == value;
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 1),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: () => onChanged(seg.value),
-                  borderRadius: BorderRadius.circular(9),
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(9),
-                      gradient: selected
-                          ? LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [
-                                ConfidiaColors.primary.withValues(alpha: 0.9),
-                                ConfidiaColors.secondary.withValues(alpha: 0.75),
-                              ],
-                            )
-                          : null,
-                      color: selected ? null : Colors.transparent,
-                      border: selected
-                          ? Border.all(color: Colors.white.withValues(alpha: 0.15))
-                          : null,
-                      boxShadow: selected
-                          ? [
-                              BoxShadow(
-                                color: ConfidiaColors.primary.withValues(alpha: 0.25),
-                                blurRadius: 10,
-                                spreadRadius: -3,
-                                offset: const Offset(0, 2),
-                              ),
-                            ]
-                          : null,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          seg.icon,
-                          size: 14,
-                          color: selected
-                              ? Colors.white
-                              : ConfidiaColors.textSecondary(isDark),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          seg.label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                            letterSpacing: 0.2,
-                            color: selected
-                                ? Colors.white
-                                : ConfidiaColors.textSecondary(isDark),
-                          ),
-                        ),
+  int get _selectedIndex {
+    final i = segments.indexWhere((s) => s.value == value);
+    return i < 0 ? 0 : i;
+  }
+
+  Alignment _thumbAlignment(int index) {
+    if (segments.length <= 1) return Alignment.center;
+    final x = -1.0 + (2.0 * index / (segments.length - 1));
+    return Alignment(x, 0);
+  }
+
+  Widget _buildShell(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final selectedIndex = _selectedIndex;
+
+    return Container(
+      width: expand ? double.infinity : null,
+      padding: const EdgeInsets.all(_shellPadding),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.7)),
+        boxShadow: [
+          BoxShadow(
+            color: ConfidiaColors.secondary.withValues(alpha: isDark ? 0.08 : 0.05),
+            blurRadius: 12,
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final innerWidth = constraints.maxWidth;
+          final segmentWidth = innerWidth / segments.length;
+
+          return Stack(
+            clipBehavior: Clip.hardEdge,
+            children: [
+              AnimatedAlign(
+                alignment: _thumbAlignment(selectedIndex),
+                duration: const Duration(milliseconds: 340),
+                curve: Curves.easeOutCubic,
+                child: Container(
+                  width: segmentWidth,
+                  height: _segmentHeight,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(9),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        ConfidiaColors.primary.withValues(alpha: 0.92),
+                        ConfidiaColors.secondary.withValues(alpha: 0.78),
                       ],
                     ),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: ConfidiaColors.primary.withValues(alpha: 0.28),
+                        blurRadius: 14,
+                        spreadRadius: -4,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            );
-          }).toList(),
-        ),
+              Row(
+                children: List.generate(segments.length, (i) {
+                  final seg = segments[i];
+                  final selected = i == selectedIndex;
+                  return Expanded(
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => onChanged(seg.value),
+                        borderRadius: BorderRadius.circular(9),
+                        splashColor: ConfidiaColors.primary.withValues(alpha: 0.08),
+                        highlightColor: Colors.transparent,
+                        child: SizedBox(
+                          height: _segmentHeight,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              AnimatedScale(
+                                scale: selected ? 1.05 : 1,
+                                duration: const Duration(milliseconds: 280),
+                                curve: Curves.easeOutCubic,
+                                child: Icon(
+                                  seg.icon,
+                                  size: 14,
+                                  color: selected ? Colors.white : ConfidiaColors.textSecondary(isDark),
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Flexible(
+                                child: AnimatedDefaultTextStyle(
+                                  duration: const Duration(milliseconds: 280),
+                                  curve: Curves.easeOutCubic,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                                    letterSpacing: 0.2,
+                                    color: selected ? Colors.white : ConfidiaColors.textSecondary(isDark),
+                                  ),
+                                  child: Text(
+                                    seg.label,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final shell = _buildShell(context);
+
+    if (expand) return shell;
+
+    final outerWidth = segments.length * _compactSegmentWidth + _shellPadding * 2;
+    return Center(
+      child: SizedBox(
+        width: outerWidth,
+        child: shell,
       ),
     );
   }

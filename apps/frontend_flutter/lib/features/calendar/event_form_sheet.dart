@@ -9,6 +9,7 @@ import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/confidia_modal_sheet.dart';
 import '../../shared/widgets/confidia_switch.dart';
+import '../../shared/widgets/confidia_text_field.dart';
 import 'calendar_provider.dart';
 import 'event_type_config.dart';
 
@@ -174,21 +175,24 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
             }).toList(),
           ),
           const SizedBox(height: ConfidiaSpacing.md),
-          TextFormField(
+          ConfidiaTextFormField(
             controller: _titleCtrl,
-            decoration: const InputDecoration(labelText: 'Titre', prefixIcon: Icon(Icons.title_rounded)),
+            labelText: 'Titre',
+            prefixIcon: Icons.title_rounded,
             validator: (v) => v?.trim().isEmpty == true ? 'Requis' : null,
           ),
           const SizedBox(height: ConfidiaSpacing.sm),
-          TextFormField(
+          ConfidiaTextFormField(
             controller: _descCtrl,
-            decoration: const InputDecoration(labelText: 'Description', prefixIcon: Icon(Icons.notes_rounded)),
+            labelText: 'Description',
+            prefixIcon: Icons.notes_rounded,
             maxLines: 2,
           ),
           const SizedBox(height: ConfidiaSpacing.sm),
-          TextFormField(
+          ConfidiaTextFormField(
             controller: _locationCtrl,
-            decoration: const InputDecoration(labelText: 'Lieu (optionnel)', prefixIcon: Icon(Icons.place_outlined)),
+            labelText: 'Lieu (optionnel)',
+            prefixIcon: Icons.place_outlined,
           ),
           const SizedBox(height: ConfidiaSpacing.sm),
           ConfidiaSwitchTile(
@@ -223,17 +227,17 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
           ConfidiaGlowButton(
             label: _isEdit ? 'Enregistrer' : 'Créer l\'événement',
             icon: Icons.check_rounded,
+            expand: true,
             onPressed: _save,
           ),
           if (_isEdit) ...[
             const SizedBox(height: ConfidiaSpacing.sm),
-            Center(
-              child: ConfidiaGlowButton(
-                label: 'Supprimer',
-                icon: Icons.delete_outline_rounded,
-                primary: false,
-                onPressed: _confirmDelete,
-              ),
+            ConfidiaGlowButton(
+              label: 'Supprimer',
+              icon: Icons.delete_outline_rounded,
+              primary: false,
+              expand: true,
+              onPressed: _confirmDelete,
             ),
           ],
         ],

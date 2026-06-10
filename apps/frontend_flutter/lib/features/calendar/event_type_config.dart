@@ -54,3 +54,5 @@ EventTypeConfig configFor(EventType type) =>
     eventTypeConfigs.firstWhere((c) => c.type == type, orElse: () => eventTypeConfigs.last);
 
 Color colorForEventType(EventType type) => configFor(type).color;
+
+Color eventColor(CalendarEventModel event) => colorForEventType(event.eventType);

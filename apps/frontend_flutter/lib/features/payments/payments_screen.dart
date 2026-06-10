@@ -9,8 +9,11 @@ import '../../shared/models/payment_model.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
+import '../../shared/widgets/confidia_glow_segmented.dart';
 import '../../shared/widgets/status_badge.dart';
 import 'payments_provider.dart';
+
+enum _PaymentsTab { pending, paid }
 
 class PaymentsScreen extends ConsumerStatefulWidget {
   const PaymentsScreen({super.key});
@@ -19,26 +22,15 @@ class PaymentsScreen extends ConsumerStatefulWidget {
   ConsumerState<PaymentsScreen> createState() => _PaymentsScreenState();
 }
 
-class _PaymentsScreenState extends ConsumerState<PaymentsScreen> with SingleTickerProviderStateMixin {
-  late final TabController _tabs;
-
-  @override
-  void initState() {
-    super.initState();
-    _tabs = TabController(length: 2, vsync: this);
-  }
-
-  @override
-  void dispose() {
-    _tabs.dispose();
-    super.dispose();
-  }
+class _PaymentsScreenState extends ConsumerState<PaymentsScreen> {
+  _PaymentsTab _tab = _PaymentsTab.pending;
 
   @override
   Widget build(BuildContext context) {
     final notifier = ref.watch(paymentsProvider.notifier);
     final pending = notifier.pending;
     final paid = notifier.paid;
+    final showPending = _tab == _PaymentsTab.pending;
 
     return Column(
       children: [
@@ -51,21 +43,52 @@ class _PaymentsScreenState extends ConsumerState<PaymentsScreen> with SingleTick
           ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),
-        TabBar(
-          controller: _tabs,
-          labelColor: ConfidiaColors.primary,
-          tabs: [
-            Tab(text: 'À traiter (${pending.length})'),
-            Tab(text: 'Effectués (${paid.length})'),
-          ],
-        ),
-        Expanded(
-          child: TabBarView(
-            controller: _tabs,
-            children: [
-              _PaymentList(payments: pending, emptyMessage: 'Aucun paiement en attente'),
-              _PaymentList(payments: paid, emptyMessage: 'Aucun paiement effectué'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
+          child: ConfidiaGlowSegmentedControl<_PaymentsTab>(
+            expand: true,
+            value: _tab,
+            onChanged: (v) => setState(() => _tab = v),
+            segments: [
+              ConfidiaGlowSegment(
+                value: _PaymentsTab.pending,
+                label: 'À traiter (${pending.length})',
+                icon: Icons.pending_actions_rounded,
+              ),
+              ConfidiaGlowSegment(
+                value: _PaymentsTab.paid,
+                label: 'Effectués (${paid.length})',
+                icon: Icons.check_circle_outline_rounded,
+              ),
             ],
+          ),
+        ),
+        const SizedBox(height: ConfidiaSpacing.sm),
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 320),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              final slide = Tween<Offset>(begin: const Offset(0, 0.02), end: Offset.zero).animate(
+                CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+              );
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(position: slide, child: child),
+              );
+            },
+            child: showPending
+                ? _PaymentList(
+                    key: const ValueKey('pending'),
+                    payments: pending,
+                    emptyMessage: 'Aucun paiement en attente',
+                  )
+                : _PaymentList(
+                    key: const ValueKey('paid'),
+                    payments: paid,
+                    emptyMessage: 'Aucun paiement effectué',
+                  ),
           ),
         ),
       ],
@@ -124,7 +147,7 @@ class _PaymentList extends StatelessWidget {
   final List<PaymentModel> payments;
   final String emptyMessage;
 
-  const _PaymentList({required this.payments, required this.emptyMessage});
+  const _PaymentList({super.key, required this.payments, required this.emptyMessage});
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +197,7 @@ class _PaymentCard extends StatelessWidget {
             border: Border.all(color: ConfidiaColors.border(isDark)),
           ),
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
                 width: 48,
@@ -188,19 +212,17 @@ class _PaymentCard extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(child: Text(payment.creditor, style: Theme.of(context).textTheme.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
-                        StatusBadge(label: payment.status.label, color: payment.status.color),
-                      ],
-                    ),
+                    Text(payment.creditor, style: Theme.of(context).textTheme.titleSmall, maxLines: 1, overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 4),
                     Text(payment.label, style: Theme.of(context).textTheme.bodySmall),
                     Text('Échéance · ${DateFormat('d MMM yyyy', 'fr_FR').format(payment.dueDate)}', style: Theme.of(context).textTheme.labelSmall),
                   ],
                 ),
               ),
+              const SizedBox(width: 10),
+              StatusBadge(label: payment.status.label, color: payment.status.color),
               const SizedBox(width: 12),
               Text(payment.amountFormatted, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
             ],

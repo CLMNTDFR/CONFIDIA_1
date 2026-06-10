@@ -24,42 +24,46 @@ class MessagingScreen extends ConsumerWidget {
     final filter = ref.watch(mailFilterProvider);
     final emails = ref.watch(messagingProvider.notifier).inbox;
     final filtered = filter == null ? emails : emails.where((e) => e.provider == filter).toList();
+    final isWide = MediaQuery.sizeOf(context).width >= 900;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (MediaQuery.of(context).size.width >= 900)
+        if (isWide)
           SizedBox(width: 220, child: _AccountsSidebar(selected: filter, onSelect: (p) => ref.read(mailFilterProvider.notifier).state = p)),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              ConfidiaGlowChipScroll(
-                children: [
-                  ConfidiaGlowChip(
-                    label: 'Tous',
-                    icon: Icons.inbox_rounded,
-                    selected: filter == null,
-                    onTap: () => ref.read(mailFilterProvider.notifier).state = null,
-                  ),
-                  ...MailProvider.values.map(
-                    (p) => ConfidiaGlowChip(
-                      label: p.label,
-                      selected: filter == p,
-                      accentColor: p.brandColor,
-                      leading: BrandIcon(
-                        assetPath: p.logoAsset,
-                        fallbackIcon: p.icon,
-                        fallbackColor: p.brandColor,
-                        size: 14,
-                        adaptForTheme: false,
-                      ),
-                      onTap: () => ref.read(mailFilterProvider.notifier).state = p,
+              if (!isWide) ...[
+                ConfidiaGlowChipScroll(
+                  padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.md, ConfidiaSpacing.lg, 0),
+                  children: [
+                    ConfidiaGlowChip(
+                      label: 'Tous',
+                      icon: Icons.inbox_rounded,
+                      selected: filter == null,
+                      onTap: () => ref.read(mailFilterProvider.notifier).state = null,
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 4),
+                    ...MailProvider.values.map(
+                      (p) => ConfidiaGlowChip(
+                        label: p.label,
+                        selected: filter == p,
+                        accentColor: p.brandColor,
+                        leading: BrandIcon(
+                          assetPath: p.logoAsset,
+                          fallbackIcon: p.icon,
+                          fallbackColor: p.brandColor,
+                          size: 14,
+                          adaptForTheme: false,
+                        ),
+                        onTap: () => ref.read(mailFilterProvider.notifier).state = p,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+              ],
               Expanded(
                 child: filtered.isEmpty
                     ? const Center(child: Text('Aucun message'))

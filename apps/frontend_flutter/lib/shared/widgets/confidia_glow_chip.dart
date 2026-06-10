@@ -251,11 +251,10 @@ class ConfidiaGlowChipScroll extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 36,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: padding,
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: padding,
+      child: Row(
         children: children
             .map((c) => Padding(padding: const EdgeInsets.only(right: 6), child: c))
             .toList(),

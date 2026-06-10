@@ -5,6 +5,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/confidia_logo.dart';
 import '../../shared/widgets/confidia_button.dart';
+import '../../shared/widgets/confidia_text_field.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/mesh_background.dart';
 import '../../shared/widgets/theme_toggle_button.dart';
@@ -133,24 +134,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             const SizedBox(height: 4),
             Text('Accédez à votre espace CONFIDIA', style: Theme.of(context).textTheme.bodySmall),
             const SizedBox(height: ConfidiaSpacing.xl),
-            TextFormField(
+            ConfidiaTextFormField(
               controller: _usernameController,
               enabled: !busy,
-              decoration: const InputDecoration(labelText: 'Identifiant', prefixIcon: Icon(Icons.person_outline_rounded)),
+              labelText: 'Identifiant',
+              prefixIcon: Icons.person_outline_rounded,
               validator: (v) => v?.isEmpty == true ? 'Requis' : null,
             ),
             const SizedBox(height: ConfidiaSpacing.md),
-            TextFormField(
+            ConfidiaTextFormField(
               controller: _passwordController,
               enabled: !busy,
               obscureText: _obscurePassword,
-              decoration: InputDecoration(
-                labelText: 'Mot de passe',
-                prefixIcon: const Icon(Icons.lock_outline_rounded),
-                suffixIcon: IconButton(
-                  icon: Icon(_obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined),
-                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+              labelText: 'Mot de passe',
+              prefixIcon: Icons.lock_outline_rounded,
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                  size: 18,
                 ),
+                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
               ),
               validator: (v) => v?.isEmpty == true ? 'Requis' : null,
             ),
