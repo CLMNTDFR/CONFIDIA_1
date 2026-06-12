@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
@@ -10,6 +11,7 @@ import '../../shared/models/connected_account_model.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/brands/brand_assets.dart';
 import '../../shared/widgets/brand_icon.dart';
+import '../../shared/widgets/confidia_palette_picker.dart';
 import '../../shared/widgets/confidia_switch.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/logout_button.dart';
@@ -24,6 +26,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeModeProvider);
+    final paletteId = ref.watch(colorPaletteProvider);
 
     return ListView(
       padding: ConfidiaInsets.page(context),
@@ -32,11 +35,35 @@ class SettingsScreen extends ConsumerWidget {
         const SizedBox(height: 6),
         GlassCard(
           padding: EdgeInsets.zero,
-          child: ConfidiaSwitchTile(
-            title: 'Mode sombre',
-            subtitle: 'Thème clair ou sombre',
-            value: isDark,
-            onChanged: (v) => ref.read(themeModeProvider.notifier).state = v,
+          child: Column(
+            children: [
+              ConfidiaSwitchTile(
+                title: 'Mode sombre',
+                subtitle: 'Thème clair ou sombre',
+                value: isDark,
+                onChanged: (v) => ref.read(themeModeProvider.notifier).state = v,
+              ),
+              Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark).withValues(alpha: 0.5)),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Thème couleur',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 2),
+                    Text('Palette de marque bleu ou rose', style: Theme.of(context).textTheme.labelSmall),
+                    const SizedBox(height: 10),
+                    ConfidiaPalettePicker(
+                      value: paletteId,
+                      onChanged: (id) => ref.read(colorPaletteProvider.notifier).state = id,
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),
@@ -77,7 +104,9 @@ class SettingsScreen extends ConsumerWidget {
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Stockage documentaire'),
         const SizedBox(height: 6),
-        ...MockEcosystem.storageServices.map((svc) => Padding(
+        ...MockEcosystem.storageServices.map((svc) {
+              final svcColor = svc.id == 'paperless' ? context.palette.primary : svc.color;
+              return Padding(
               padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
               child: GlassCard(
                 padding: const EdgeInsets.all(12),
@@ -92,7 +121,7 @@ class SettingsScreen extends ConsumerWidget {
                           ),
                           adaptForTheme: true,
                           fallbackIcon: svc.icon,
-                          fallbackColor: svc.color,
+                          fallbackColor: svcColor,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
@@ -112,7 +141,7 @@ class SettingsScreen extends ConsumerWidget {
                         value: svc.usageRatio,
                         minHeight: 4,
                         backgroundColor: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark),
-                        color: svc.color,
+                        color: svcColor,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -123,7 +152,8 @@ class SettingsScreen extends ConsumerWidget {
                   ],
                 ),
               ),
-            )),
+            );
+            }),
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Sécurité'),
         const SizedBox(height: 6),
@@ -205,7 +235,7 @@ class _CompactActionTile extends StatelessWidget {
       dense: true,
       visualDensity: VisualDensity.compact,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
-      leading: Icon(icon, size: 18, color: ConfidiaColors.primary),
+      leading: Icon(icon, size: 18, color: context.palette.primary),
       title: Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
       subtitle: subtitle != null ? Text(subtitle!, style: Theme.of(context).textTheme.labelSmall) : null,
       trailing: showChevron ? const Icon(Icons.chevron_right_rounded, size: 18) : null,

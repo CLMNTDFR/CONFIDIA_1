@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/palette.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/models/notification_model.dart';
@@ -136,7 +138,8 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = _colorForType(notification.type);
+    final palette = context.palette;
+    final accent = _colorForType(notification.type, palette);
 
     return Material(
       color: Colors.transparent,
@@ -189,7 +192,7 @@ class _NotificationCard extends StatelessWidget {
                             width: 10,
                             height: 10,
                             decoration: BoxDecoration(
-                              color: ConfidiaColors.primary,
+                              color: context.palette.primary,
                               shape: BoxShape.circle,
                               border: Border.all(color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white, width: 1.5),
                             ),
@@ -256,13 +259,13 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  Color _colorForType(NotificationType type) {
+  Color _colorForType(NotificationType type, ConfidiaPalette palette) {
     return switch (type) {
       NotificationType.warning => ConfidiaColors.warning,
       NotificationType.success => ConfidiaColors.success,
       NotificationType.error => ConfidiaColors.error,
-      NotificationType.document => ConfidiaColors.primary,
-      NotificationType.calendar => ConfidiaColors.accent,
+      NotificationType.document => palette.primary,
+      NotificationType.calendar => palette.accent,
       _ => ConfidiaColors.info,
     };
   }

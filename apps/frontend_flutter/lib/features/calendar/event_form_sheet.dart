@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/calendar_event_model.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
@@ -169,7 +170,7 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: eventTypeConfigs.map((cfg) {
+            children: eventTypeConfigs(context.palette).map((cfg) {
               return ConfidiaGlowChip(
                 label: cfg.label,
                 icon: cfg.icon,

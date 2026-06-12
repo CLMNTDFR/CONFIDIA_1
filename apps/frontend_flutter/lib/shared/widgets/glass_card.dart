@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 
 class GlassCard extends StatelessWidget {
@@ -36,12 +37,12 @@ class GlassCard extends StatelessWidget {
       borderRadius: radius,
       border: Border.all(
         color: highlighted
-            ? ConfidiaColors.primary.withValues(alpha: 0.4)
+            ? context.palette.primary.withValues(alpha: 0.4)
             : (isDark ? ConfidiaColors.darkBorder : ConfidiaColors.lightBorder),
       ),
       boxShadow: [
         BoxShadow(
-          color: isDark ? Colors.black.withValues(alpha: 0.3) : ConfidiaColors.primary.withValues(alpha: 0.04),
+          color: isDark ? Colors.black.withValues(alpha: 0.3) : context.palette.primary.withValues(alpha: 0.04),
           blurRadius: 24,
           offset: const Offset(0, 8),
         ),

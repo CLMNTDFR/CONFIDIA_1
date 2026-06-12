@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../features/messaging/messaging_provider.dart';
 import '../../shared/data/mock_data.dart';
@@ -138,7 +139,7 @@ class _Sidebar extends StatelessWidget {
         border: Border(right: BorderSide(color: isDark ? ConfidiaColors.darkBorderSubtle : ConfidiaColors.lightBorder)),
         boxShadow: [
           BoxShadow(
-            color: ConfidiaColors.secondary.withValues(alpha: isDark ? 0.06 : 0.04),
+            color: context.palette.secondary.withValues(alpha: isDark ? 0.06 : 0.04),
             blurRadius: 24,
             offset: const Offset(4, 0),
           ),

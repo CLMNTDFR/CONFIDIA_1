@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../core/theme/theme_context.dart';
 import '../brands/brand_assets.dart';
 import '../models/calendar_event_model.dart';
 import '../models/email_model.dart';
@@ -43,20 +44,22 @@ class CalendarSourceChip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (source == CalendarSource.confidia) return const SizedBox.shrink();
 
+    final color = source.themeColor(context.palette);
+
     return Container(
       padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8, vertical: compact ? 2 : 4),
       decoration: BoxDecoration(
-        color: source.color.withValues(alpha: 0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
       ),
       child: BrandLabel(
         assetPath: source.logoAsset,
         fallbackIcon: Icons.calendar_month_rounded,
-        fallbackColor: source.color,
+        fallbackColor: color,
         label: source.label,
         iconSize: compact ? 11 : 13,
         showLabel: true,
-        labelStyle: TextStyle(fontSize: compact ? 9 : 10, fontWeight: FontWeight.w700, color: source.color),
+        labelStyle: TextStyle(fontSize: compact ? 9 : 10, fontWeight: FontWeight.w700, color: color),
       ),
     );
   }

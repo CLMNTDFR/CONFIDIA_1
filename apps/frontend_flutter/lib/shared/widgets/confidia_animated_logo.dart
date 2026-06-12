@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import 'confidia_logo.dart';
 
 /// Taille et disposition du logo CONFIDIA animé (anneau tournant).
@@ -83,10 +84,10 @@ class _ConfidiaAnimatedLogoState extends State<ConfidiaAnimatedLogo> with Single
                       shape: BoxShape.circle,
                       gradient: SweepGradient(
                         colors: [
-                          ConfidiaColors.primary.withValues(alpha: pulse * 0.1),
-                          ConfidiaColors.secondary.withValues(alpha: pulse * 0.45),
-                          ConfidiaColors.accent.withValues(alpha: pulse * 0.25),
-                          ConfidiaColors.primary.withValues(alpha: pulse * 0.1),
+                          context.palette.primary.withValues(alpha: pulse * 0.1),
+                          context.palette.secondary.withValues(alpha: pulse * 0.45),
+                          context.palette.accent.withValues(alpha: pulse * 0.25),
+                          context.palette.primary.withValues(alpha: pulse * 0.1),
                         ],
                       ),
                     ),
@@ -114,7 +115,7 @@ class _ConfidiaAnimatedLogoState extends State<ConfidiaAnimatedLogo> with Single
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   ShaderMask(
-                    shaderCallback: (b) => ConfidiaColors.brandGradient.createShader(b),
+                    shaderCallback: (b) => context.palette.brandGradient.createShader(b),
                     child: Text(
                       'CONFIDIA',
                       style: TextStyle(

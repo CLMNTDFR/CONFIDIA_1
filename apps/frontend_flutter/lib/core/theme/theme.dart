@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'colors.dart';
+import 'palette.dart';
 import 'spacing.dart';
 import 'typography.dart';
 
 abstract final class ConfidiaTheme {
-  static ThemeData dark() => _buildTheme(isDark: true);
-  static ThemeData light() => _buildTheme(isDark: false);
+  static ThemeData dark(ConfidiaPalette palette) => _buildTheme(isDark: true, palette: palette);
+  static ThemeData light(ConfidiaPalette palette) => _buildTheme(isDark: false, palette: palette);
 
-  static ThemeData _buildTheme({required bool isDark}) {
+  static ThemeData _buildTheme({required bool isDark, required ConfidiaPalette palette}) {
     final surface = isDark ? ConfidiaColors.darkSurface : ConfidiaColors.lightSurface;
     final surfaceVariant = isDark ? ConfidiaColors.darkSurfaceVariant : ConfidiaColors.lightSurfaceVariant;
     final border = isDark ? ConfidiaColors.darkBorder : ConfidiaColors.lightBorder;
@@ -18,13 +19,14 @@ abstract final class ConfidiaTheme {
       useMaterial3: true,
       brightness: isDark ? Brightness.dark : Brightness.light,
       scaffoldBackgroundColor: Colors.transparent,
+      extensions: [ConfidiaPaletteTheme(palette: palette)],
       colorScheme: ColorScheme(
         brightness: isDark ? Brightness.dark : Brightness.light,
-        primary: ConfidiaColors.primary,
+        primary: palette.primary,
         onPrimary: Colors.white,
-        secondary: ConfidiaColors.secondary,
+        secondary: palette.secondary,
         onSecondary: Colors.white,
-        tertiary: ConfidiaColors.accent,
+        tertiary: palette.accent,
         surface: surface,
         onSurface: ConfidiaColors.textPrimary(isDark),
         error: ConfidiaColors.error,
@@ -59,7 +61,7 @@ abstract final class ConfidiaTheme {
         floatingLabelStyle: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: ConfidiaColors.primary,
+          color: palette.primary,
           letterSpacing: 0.2,
         ),
         hintStyle: TextStyle(
@@ -79,7 +81,7 @@ abstract final class ConfidiaTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: ConfidiaColors.primary.withValues(alpha: 0.55), width: 1.5),
+          borderSide: BorderSide(color: palette.primary.withValues(alpha: 0.55), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
@@ -92,7 +94,7 @@ abstract final class ConfidiaTheme {
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: ConfidiaColors.primary,
+          backgroundColor: palette.primary,
           foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg, vertical: 14),
@@ -107,8 +109,8 @@ abstract final class ConfidiaTheme {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         ),
       ),
-      floatingActionButtonTheme: const FloatingActionButtonThemeData(
-        backgroundColor: ConfidiaColors.primary,
+      floatingActionButtonTheme: FloatingActionButtonThemeData(
+        backgroundColor: palette.primary,
         foregroundColor: Colors.white,
         elevation: 4,
       ),
@@ -120,7 +122,7 @@ abstract final class ConfidiaTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
-        indicatorColor: ConfidiaColors.primary.withValues(alpha: 0.12),
+        indicatorColor: palette.primary.withValues(alpha: 0.12),
         height: 68,
       ),
       snackBarTheme: SnackBarThemeData(

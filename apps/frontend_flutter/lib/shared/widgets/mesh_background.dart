@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 
 class MeshBackground extends StatelessWidget {
   final Widget child;
@@ -24,17 +25,17 @@ class MeshBackground extends StatelessWidget {
           Positioned(
             top: -120,
             right: -80,
-            child: _Orb(color: ConfidiaColors.primary.withValues(alpha: 0.18), size: 320),
+            child: _Orb(color: context.palette.primary.withValues(alpha: 0.18), size: 320),
           ),
           Positioned(
             top: 200,
             left: -100,
-            child: _Orb(color: ConfidiaColors.secondary.withValues(alpha: 0.12), size: 280),
+            child: _Orb(color: context.palette.secondary.withValues(alpha: 0.12), size: 280),
           ),
           Positioned(
             bottom: -60,
             right: 100,
-            child: _Orb(color: ConfidiaColors.accent.withValues(alpha: 0.1), size: 240),
+            child: _Orb(color: context.palette.accent.withValues(alpha: 0.1), size: 240),
           ),
         ],
         child,

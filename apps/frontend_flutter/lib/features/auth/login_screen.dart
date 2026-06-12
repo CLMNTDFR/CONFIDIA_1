@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/confidia_logo.dart';
 import '../../shared/widgets/confidia_button.dart';
@@ -85,7 +86,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const ConfidiaLogo(size: 48),
                 const SizedBox(height: ConfidiaSpacing.xxl),
                 ShaderMask(
-                  shaderCallback: (b) => ConfidiaColors.brandGradient.createShader(b),
+                  shaderCallback: (b) => context.palette.brandGradient.createShader(b),
                   child: Text(
                     'Votre vie administrative,\nsimplifiée.',
                     style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800, height: 1.15),
@@ -200,7 +201,7 @@ class _FeatureRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: ConfidiaColors.secondary),
+          Icon(icon, size: 18, color: context.palette.secondary),
           const SizedBox(width: ConfidiaSpacing.sm),
           Text(text, style: Theme.of(context).textTheme.bodyMedium),
         ],

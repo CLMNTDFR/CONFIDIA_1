@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
@@ -26,13 +27,13 @@ class AdminScreen extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const ConfidiaPageReveal(
+            ConfidiaPageReveal(
               index: 0,
               staggerCount: 3,
               child: StatsRow(stats: [
-                CompactStat(label: 'Utilisateurs', value: '3', icon: Icons.people_outline, color: ConfidiaColors.primary),
-                CompactStat(label: 'Documents', value: '6', icon: Icons.description_outlined, color: ConfidiaColors.accent),
-                CompactStat(label: 'Services', value: '3', icon: Icons.cloud_outlined, color: ConfidiaColors.secondary),
+                CompactStat(label: 'Utilisateurs', value: '3', icon: Icons.people_outline, color: context.palette.primary),
+                CompactStat(label: 'Documents', value: '6', icon: Icons.description_outlined, color: context.palette.accent),
+                CompactStat(label: 'Services', value: '3', icon: Icons.cloud_outlined, color: context.palette.secondary),
                 CompactStat(label: 'Uptime', value: '99.9%', icon: Icons.trending_up, color: ConfidiaColors.success),
               ]),
             ),
@@ -109,7 +110,7 @@ class _ServiceRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Icon(icon, color: ConfidiaColors.primary),
+      leading: Icon(icon, color: context.palette.primary),
       title: Text(name),
       subtitle: Text(url),
       trailing: Container(
@@ -138,8 +139,8 @@ class _UserRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: ConfidiaColors.primary.withValues(alpha: 0.15),
-        child: Text(name[0], style: const TextStyle(color: ConfidiaColors.primary)),
+        backgroundColor: context.palette.primary.withValues(alpha: 0.15),
+        child: Text(name[0], style: TextStyle(color: context.palette.primary)),
       ),
       title: Text(name),
       subtitle: Text(email),

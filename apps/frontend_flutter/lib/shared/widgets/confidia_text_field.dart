@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 
 /// Champ de formulaire premium — typo compacte, bordures sobres.
 class ConfidiaTextFormField extends StatelessWidget {
@@ -68,7 +69,7 @@ class ConfidiaTextFormField extends StatelessWidget {
         floatingLabelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: ConfidiaColors.primary,
+              color: context.palette.primary,
               letterSpacing: 0.2,
             ),
         hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -95,7 +96,7 @@ class ConfidiaTextFormField extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: ConfidiaColors.primary.withValues(alpha: 0.55), width: 1.5),
+          borderSide: BorderSide(color: context.palette.primary.withValues(alpha: 0.55), width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(11),

@@ -1,11 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/theme/palette.dart';
+import '../../core/theme/theme_provider.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/calendar_event_model.dart';
 import 'event_type_config.dart';
 
 class CalendarNotifier extends StateNotifier<List<CalendarEventModel>> {
-  CalendarNotifier() : super(List.from(MockEcosystem.calendarEvents));
+  CalendarNotifier(this._ref) : super(List.from(MockEcosystem.calendarEvents));
+
+  final Ref _ref;
+
+  ConfidiaPalette get _palette => ConfidiaPalette.byId(_ref.watch(colorPaletteProvider));
 
   List<CalendarEventModel> eventsForDay(DateTime day) {
     return state.where((e) =>
@@ -48,14 +54,14 @@ class CalendarNotifier extends StateNotifier<List<CalendarEventModel>> {
       eventType: eventType,
       location: location,
       allDay: allDay,
-      color: colorForEventType(eventType),
+      color: colorForEventType(eventType, _palette),
       documentId: documentId,
     );
   }
 }
 
 final calendarProvider = StateNotifierProvider<CalendarNotifier, List<CalendarEventModel>>((ref) {
-  return CalendarNotifier();
+  return CalendarNotifier(ref);
 });
 
 final calendarFilterProvider = StateProvider<EventType?>((ref) => null);

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/models/document_model.dart';
@@ -150,10 +151,10 @@ class _DocumentListTile extends StatelessWidget {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: ConfidiaColors.primary.withValues(alpha: 0.12),
+                  color: context.palette.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.picture_as_pdf_rounded, color: ConfidiaColors.primary, size: 22),
+                child: Icon(Icons.picture_as_pdf_rounded, color: context.palette.primary, size: 22),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -173,7 +174,7 @@ class _DocumentListTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (doc.isImportant) const Padding(padding: EdgeInsets.only(left: 8), child: Icon(Icons.star_rounded, color: ConfidiaColors.secondary, size: 18)),
+              if (doc.isImportant) Padding(padding: const EdgeInsets.only(left: 8), child: Icon(Icons.star_rounded, color: context.palette.secondary, size: 18)),
               const Icon(Icons.chevron_right_rounded, color: ConfidiaColors.darkTextTertiary),
             ],
           ),

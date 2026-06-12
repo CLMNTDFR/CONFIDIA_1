@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/widgets/confidia_chart_card.dart';
 import '../../shared/widgets/confidia_chart_tooltips.dart';
@@ -55,13 +56,13 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
       subtitle: 'Pic · ${peak.value.toStringAsFixed(0)} € en ${peak.label}',
       linkRoute: '/payments',
       allowTooltipOverflow: true,
-      headerExtras: const [
-        ConfidiaChartMetricChip(label: 'Courbe mensuelle', color: ConfidiaColors.primary),
+      headerExtras: [
+        ConfidiaChartMetricChip(label: 'Courbe mensuelle', color: context.palette.primary),
       ],
       chart: _chartArea(
         tooltipOverflow: true,
         PremiumChartStage(
-          accentColors: const [ConfidiaColors.primary, ConfidiaColors.secondary],
+          accentColors: [context.palette.primary, context.palette.secondary],
           clipChart: false,
           child: PremiumChartMotionScope(
             hasFocus: hasFocus,
@@ -115,7 +116,7 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
                                       fontSize: 10,
                                       fontWeight: active ? FontWeight.w700 : FontWeight.w400,
                                       color: active
-                                          ? ConfidiaColors.primary
+                                          ? context.palette.primary
                                           : ConfidiaColors.textSecondary(isDark)
                                               .withValues(alpha: motion.labelAlpha(isActive: false, base: 0.8, dimmed: 0.45)),
                                     ),
@@ -151,8 +152,8 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
                         isStrokeCapRound: true,
                         gradient: LinearGradient(
                           colors: [
-                            ConfidiaColors.primary.withValues(alpha: lineAlpha),
-                            ConfidiaColors.secondary.withValues(alpha: 0.85 - 0.3 * motion.focus),
+                            context.palette.primary.withValues(alpha: lineAlpha),
+                            context.palette.secondary.withValues(alpha: 0.85 - 0.3 * motion.focus),
                           ],
                         ),
                         belowBarData: BarAreaData(
@@ -161,8 +162,8 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              ConfidiaColors.primary.withValues(alpha: (isDark ? 0.24 : 0.16) * motion.entry),
-                              ConfidiaColors.secondary.withValues(alpha: 0.02),
+                              context.palette.primary.withValues(alpha: (isDark ? 0.24 : 0.16) * motion.entry),
+                              context.palette.secondary.withValues(alpha: 0.02),
                             ],
                           ),
                         ),
@@ -175,7 +176,7 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
                               radius: 3.2 + focusBoost,
                               color: Colors.white,
                               strokeWidth: 2 + (active ? 0.5 * motion.focus : 0),
-                              strokeColor: active ? ConfidiaColors.secondary : ConfidiaColors.primary,
+                              strokeColor: active ? context.palette.secondary : context.palette.primary,
                             );
                           },
                         ),
@@ -205,7 +206,8 @@ class _DocumentsCategoryChartWidgetState extends State<DocumentsCategoryChartWid
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final slices = DashboardChartData.documentsByCategory(MockEcosystem.documents);
+    final palette = context.palette;
+    final slices = DashboardChartData.documentsByCategory(MockEcosystem.documents, palette);
     final total = slices.fold<double>(0, (sum, s) => sum + s.value);
 
     return ConfidiaChartCard(
@@ -426,15 +428,16 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
   int? _touchedGroup;
   int? _touchedRod;
 
-  static const _series = [
-    (label: 'Documents', color: ConfidiaColors.primary),
-    (label: 'Mails', color: ConfidiaColors.secondary),
-    (label: 'Paiements', color: ConfidiaColors.accent),
+  List<({String label, Color color})> _series(BuildContext context) => [
+    (label: 'Documents', color: context.palette.primary),
+    (label: 'Mails', color: context.palette.secondary),
+    (label: 'Paiements', color: context.palette.accent),
   ];
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final series = _series(context);
     final months = DashboardChartData.hubActivity();
     final maxY = months
         .map((m) => [m.documents, m.emails, m.payments].reduce((a, b) => a > b ? a : b))
@@ -447,14 +450,14 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
       subtitle: 'Documents, mails et paiements traités',
       linkRoute: '/dashboard',
       allowTooltipOverflow: true,
-      headerExtras: _series
+      headerExtras: series
           .map((s) => ConfidiaChartMetricChip(label: s.label, color: s.color))
           .toList(),
       chart: _chartArea(
         tooltipOverflow: true,
         fallback: 210,
         PremiumChartStage(
-          accentColors: const [ConfidiaColors.primary, ConfidiaColors.accent],
+          accentColors: [context.palette.primary, context.palette.accent],
           primaryGlowAlignment: const Alignment(-0.75, 0.1),
           secondaryGlowAlignment: const Alignment(0.85, -0.55),
           clipChart: false,
@@ -504,7 +507,7 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
                                       fontSize: 10,
                                       fontWeight: active ? FontWeight.w700 : FontWeight.w400,
                                       color: active
-                                          ? ConfidiaColors.accent
+                                          ? context.palette.accent
                                           : ConfidiaColors.textSecondary(isDark)
                                               .withValues(alpha: motion.labelAlpha(isActive: false, base: 0.8, dimmed: 0.45)),
                                     ),
@@ -532,13 +535,13 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
                         context,
                         allowOverflow: true,
                         itemBuilder: (groupIndex, rodIndex) {
-                          if (rodIndex < 0 || rodIndex >= _series.length) return null;
+                          if (rodIndex < 0 || rodIndex >= series.length) return null;
                           final month = months[groupIndex];
                           final values = [month.documents, month.emails, month.payments];
-                          final series = _series[rodIndex];
+                          final entry = series[rodIndex];
                           return BarTooltipItem(
-                            '${series.label} · ${values[rodIndex]}',
-                            ConfidiaChartTooltips.label(context, color: series.color, fontSize: 11),
+                            '${entry.label} · ${values[rodIndex]}',
+                            ConfidiaChartTooltips.label(context, color: entry.color, fontSize: 11),
                             children: [
                               TextSpan(
                                 text: '\n${month.label}',
@@ -564,7 +567,7 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
                           barRods: List.generate(3, (rodIndex) {
                             return premiumGroupedBarRod(
                               toY: values[rodIndex],
-                              color: _series[rodIndex].color,
+                              color: series[rodIndex].color,
                               isGroupActive: groupActive,
                               isRodActive: _touchedGroup == i && _touchedRod == rodIndex,
                               motion: motion,
@@ -598,7 +601,8 @@ class _PaymentsOverviewChartWidgetState extends ConsumerState<PaymentsOverviewCh
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final payments = ref.watch(paymentsProvider);
-    final slices = DashboardChartData.paymentsByStatus(payments);
+    final palette = context.palette;
+    final slices = DashboardChartData.paymentsByStatus(payments, palette);
     final total = slices.fold<double>(0, (sum, s) => sum + s.value);
     final maxY = slices.isEmpty ? 1.0 : slices.map((s) => s.value).reduce((a, b) => a > b ? a : b) * 1.2;
     final hasFocus = _touchedIndex != null;

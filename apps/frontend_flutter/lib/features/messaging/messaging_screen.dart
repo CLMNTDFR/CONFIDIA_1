@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/email_model.dart';
@@ -139,7 +140,7 @@ class _AccountTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: selected ? ConfidiaColors.primary.withValues(alpha: 0.1) : Colors.transparent,
+      color: selected ? context.palette.primary.withValues(alpha: 0.1) : Colors.transparent,
       borderRadius: BorderRadius.circular(10),
       child: InkWell(
         onTap: onTap,
@@ -177,7 +178,7 @@ class _EmailTile extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Material(
-      color: email.isRead ? Colors.transparent : ConfidiaColors.primary.withValues(alpha: 0.04),
+      color: email.isRead ? Colors.transparent : context.palette.primary.withValues(alpha: 0.04),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         onTap: () {

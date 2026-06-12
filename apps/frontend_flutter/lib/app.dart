@@ -13,12 +13,13 @@ class ConfidiaApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final isDark = ref.watch(themeModeProvider);
+    final palette = watchPalette(ref);
 
     return MaterialApp.router(
       title: 'CONFIDIA',
       debugShowCheckedModeBanner: false,
-      theme: ConfidiaTheme.light(),
-      darkTheme: ConfidiaTheme.dark(),
+      theme: ConfidiaTheme.light(palette),
+      darkTheme: ConfidiaTheme.dark(palette),
       themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       locale: const Locale('fr', 'FR'),
       supportedLocales: const [

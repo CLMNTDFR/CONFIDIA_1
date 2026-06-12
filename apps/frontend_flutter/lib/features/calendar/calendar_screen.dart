@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/calendar_event_model.dart';
@@ -110,7 +111,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   if (filter != null) ...[
                     const SizedBox(height: ConfidiaSpacing.md),
                     Text(
-                      '${events.length} événement(s) de type « ${configFor(filter).label} »',
+                      '${events.length} événement(s) de type « ${configFor(filter, context.palette).label} »',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
@@ -181,11 +182,11 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
         rowHeight: 52,
         calendarStyle: CalendarStyle(
           todayDecoration: BoxDecoration(
-            color: ConfidiaColors.accent.withValues(alpha: 0.25),
+            color: context.palette.accent.withValues(alpha: 0.25),
             shape: BoxShape.circle,
           ),
-          selectedDecoration: const BoxDecoration(
-            gradient: ConfidiaColors.primaryGradient,
+          selectedDecoration: BoxDecoration(
+            gradient: context.palette.primaryGradient,
             shape: BoxShape.circle,
           ),
           markersMaxCount: 4,
@@ -252,7 +253,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 2),
                     child: Material(
-                      color: isSelected ? ConfidiaColors.primary.withValues(alpha: 0.08) : Colors.transparent,
+                      color: isSelected ? context.palette.primary.withValues(alpha: 0.08) : Colors.transparent,
                       borderRadius: BorderRadius.circular(10),
                       child: InkWell(
                         onTap: () => setState(() => _selectedDay = day),
@@ -261,7 +262,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: isToday ? ConfidiaColors.primary : ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark),
+                              color: isToday ? context.palette.primary : ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark),
                             ),
                           ),
                           child: Column(
@@ -272,7 +273,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                   DateFormat('E\nd', 'fr_FR').format(day),
                                   textAlign: TextAlign.center,
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                        color: isToday ? ConfidiaColors.primary : null,
+                                        color: isToday ? context.palette.primary : null,
                                         fontWeight: isToday ? FontWeight.w700 : null,
                                       ),
                                 ),
@@ -282,7 +283,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                   padding: const EdgeInsets.all(2),
                                   children: dayEvents
                                       .map((e) {
-                                        final typeColor = eventColor(e);
+                                        final typeColor = eventColor(e, context.palette);
                                         return GestureDetector(
                                           onTap: () => showEventFormSheet(context, event: e),
                                           child: Container(
@@ -381,14 +382,14 @@ class _ConnectedCalendarsBar extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.sync_rounded, size: 16, color: ConfidiaColors.secondary),
+              Icon(Icons.sync_rounded, size: 16, color: context.palette.secondary),
               const SizedBox(width: 8),
               Text('Calendriers connectés', style: Theme.of(context).textTheme.labelLarge),
               const Spacer(),
               Text(
                 'Vue fusionnée',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: ConfidiaColors.primary,
+                      color: context.palette.primary,
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -450,7 +451,7 @@ class _TypeLegend extends StatelessWidget {
           selected: selected == null,
           onTap: () => onSelected(null),
         ),
-        ...eventTypeConfigs.map(
+        ...eventTypeConfigs(context.palette).map(
           (cfg) => ConfidiaGlowChip(
             label: cfg.label,
             icon: cfg.icon,
@@ -512,11 +513,11 @@ class _DayEventMarkers extends StatelessWidget {
             height: 6,
             margin: const EdgeInsets.symmetric(horizontal: 1),
             decoration: BoxDecoration(
-              color: eventColor(event),
+              color: eventColor(event, context.palette),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: eventColor(event).withValues(alpha: 0.35),
+                  color: eventColor(event, context.palette).withValues(alpha: 0.35),
                   blurRadius: 2,
                 ),
               ],
@@ -548,7 +549,7 @@ class _EventTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cfg = configFor(event.eventType);
+    final cfg = configFor(event.eventType, context.palette);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
@@ -559,7 +560,7 @@ class _EventTile extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(12),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.fromLTRB(10, 10, onDelete != null ? 2 : 10, 10),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -568,18 +569,26 @@ class _EventTile extends StatelessWidget {
                   height: 52,
                   decoration: BoxDecoration(color: cfg.color, borderRadius: BorderRadius.circular(2)),
                 ),
-                const SizedBox(width: ConfidiaSpacing.md),
+                const SizedBox(width: ConfidiaSpacing.sm),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
-                          CalendarSourceChip(source: event.source, compact: true),
-                          const SizedBox(width: 6),
                           Icon(cfg.icon, size: 14, color: cfg.color),
-                          const SizedBox(width: 4),
-                          Text(cfg.label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: cfg.color, fontWeight: FontWeight.w600)),
+                          Text(
+                            cfg.label,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: cfg.color,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                          if (event.source != CalendarSource.confidia)
+                            CalendarSourceChip(source: event.source, compact: true),
                         ],
                       ),
                       const SizedBox(height: 4),

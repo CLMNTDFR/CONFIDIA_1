@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 
 /// Chip / pill glowy sobre — filtres, actions, liens compacts.
 class ConfidiaGlowChip extends StatefulWidget {
@@ -86,7 +87,7 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = widget.accentColor ?? ConfidiaColors.primary;
+    final accent = widget.accentColor ?? context.palette.primary;
     final selected = widget.selected;
     final hovered = _hovered && !selected;
     final brandSelected = _isBrandChip && selected;
@@ -116,8 +117,8 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        ConfidiaColors.primary.withValues(alpha: 0.9),
-                        ConfidiaColors.secondary.withValues(alpha: 0.75),
+                        context.palette.primary.withValues(alpha: 0.9),
+                        context.palette.secondary.withValues(alpha: 0.75),
                       ],
                     )
                   : null,
@@ -126,7 +127,7 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
                   : selected
                       ? null
                       : hovered
-                          ? (_isBrandChip ? accent.withValues(alpha: 0.08) : ConfidiaColors.primary.withValues(alpha: isDark ? 0.1 : 0.06))
+                          ? (_isBrandChip ? accent.withValues(alpha: 0.08) : context.palette.primary.withValues(alpha: isDark ? 0.1 : 0.06))
                           : Colors.transparent,
               border: Border.all(
                 color: brandSelected
@@ -134,7 +135,7 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
                     : selected
                         ? Colors.white.withValues(alpha: 0.15)
                         : hovered
-                            ? (_isBrandChip ? accent.withValues(alpha: 0.35) : ConfidiaColors.secondary.withValues(alpha: 0.35))
+                            ? (_isBrandChip ? accent.withValues(alpha: 0.35) : context.palette.secondary.withValues(alpha: 0.35))
                             : ConfidiaColors.border(isDark).withValues(alpha: 0.5),
               ),
               boxShadow: brandSelected
@@ -158,7 +159,7 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
                       : hovered
                           ? [
                               BoxShadow(
-                                color: (_isBrandChip ? accent : ConfidiaColors.secondary).withValues(alpha: 0.12),
+                                color: (_isBrandChip ? accent : context.palette.secondary).withValues(alpha: 0.12),
                                 blurRadius: 8,
                                 spreadRadius: -2,
                               ),
@@ -219,7 +220,7 @@ class ConfidiaGlowChipBar extends StatelessWidget {
         border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.7)),
         boxShadow: [
           BoxShadow(
-            color: ConfidiaColors.secondary.withValues(alpha: isDark ? 0.08 : 0.05),
+            color: context.palette.secondary.withValues(alpha: isDark ? 0.08 : 0.05),
             blurRadius: 12,
             spreadRadius: -4,
           ),
@@ -289,11 +290,11 @@ class _ConfidiaGlowLinkState extends State<ConfidiaGlowLink> {
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            color: _hovered ? ConfidiaColors.primary.withValues(alpha: 0.08) : Colors.transparent,
+            color: _hovered ? context.palette.primary.withValues(alpha: 0.08) : Colors.transparent,
             boxShadow: _hovered
                 ? [
                     BoxShadow(
-                      color: ConfidiaColors.primary.withValues(alpha: 0.15),
+                      color: context.palette.primary.withValues(alpha: 0.15),
                       blurRadius: 8,
                       spreadRadius: -2,
                     ),
@@ -303,7 +304,7 @@ class _ConfidiaGlowLinkState extends State<ConfidiaGlowLink> {
           child: Text(
             widget.label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: ConfidiaColors.primary,
+                  color: context.palette.primary,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.2,
                 ),

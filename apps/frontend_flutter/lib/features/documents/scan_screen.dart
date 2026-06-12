@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
@@ -84,7 +84,7 @@ class _ScanScreenState extends State<ScanScreen> {
                         Container(
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            gradient: ConfidiaColors.accentGradient,
+                            gradient: context.palette.accentGradient,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: const Icon(Icons.document_scanner_rounded, color: Colors.white, size: 22),
@@ -115,18 +115,18 @@ class _ScanScreenState extends State<ScanScreen> {
                         height: isWide ? 360 : 240,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusMd),
-                          border: Border.all(color: ConfidiaColors.primary.withValues(alpha: 0.25), width: 2),
+                          border: Border.all(color: context.palette.primary.withValues(alpha: 0.25), width: 2),
                           gradient: LinearGradient(
                             colors: [
-                              ConfidiaColors.primary.withValues(alpha: 0.05),
-                              ConfidiaColors.secondary.withValues(alpha: 0.05),
+                              context.palette.primary.withValues(alpha: 0.05),
+                              context.palette.secondary.withValues(alpha: 0.05),
                             ],
                           ),
                         ),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Icon(Icons.camera_alt_rounded, size: 56, color: ConfidiaColors.primary.withValues(alpha: 0.5)),
+                            Icon(Icons.camera_alt_rounded, size: 56, color: context.palette.primary.withValues(alpha: 0.5)),
                             const SizedBox(height: ConfidiaSpacing.md),
                             Text('Cadrez votre document', style: Theme.of(context).textTheme.titleMedium),
                             const SizedBox(height: ConfidiaSpacing.xs),

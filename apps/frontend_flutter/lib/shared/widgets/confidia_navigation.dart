@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../navigation/confidia_route_labels.dart';
 import 'confidia_tooltip.dart';
 
@@ -76,7 +77,7 @@ class _ConfidiaSidebarNavItemState extends State<ConfidiaSidebarNavItem> {
                     active ? d.iconFilled : d.iconOutlined,
                     size: 20,
                     color: active
-                        ? ConfidiaColors.primary
+                        ? context.palette.primary
                         : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.75),
                   ),
                   if (!widget.collapsed) ...[
@@ -86,7 +87,7 @@ class _ConfidiaSidebarNavItemState extends State<ConfidiaSidebarNavItem> {
                         d.label,
                         style: Theme.of(context).textTheme.labelLarge?.copyWith(
                               color: active
-                                  ? ConfidiaColors.primary
+                                  ? context.palette.primary
                                   : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.8),
                               fontWeight: active ? FontWeight.w700 : FontWeight.w400,
                             ),
@@ -117,7 +118,7 @@ class _NavBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: ConfidiaColors.primary,
+        color: context.palette.primary,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600)),
@@ -201,7 +202,7 @@ class _MobileNavItem extends StatelessWidget {
       isActive ? d.iconFilled : d.iconOutlined,
       size: 22,
       color: isActive
-          ? ConfidiaColors.primary
+          ? context.palette.primary
           : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.7),
     );
 
@@ -209,7 +210,7 @@ class _MobileNavItem extends StatelessWidget {
       icon = Badge(
         isLabelVisible: true,
         label: Text('${d.badge}', style: const TextStyle(fontSize: 9)),
-        backgroundColor: ConfidiaColors.primary,
+        backgroundColor: context.palette.primary,
         child: icon,
       );
     }
@@ -233,7 +234,7 @@ class _MobileNavItem extends StatelessWidget {
                   fontSize: 9,
                   fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
                   color: isActive
-                      ? ConfidiaColors.primary
+                      ? context.palette.primary
                       : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.75),
                 ),
               ),

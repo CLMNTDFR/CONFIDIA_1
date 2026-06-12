@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 
 class ConfidiaGlowSegment<T> {
   final T value;
@@ -57,7 +58,7 @@ class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
         border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.7)),
         boxShadow: [
           BoxShadow(
-            color: ConfidiaColors.secondary.withValues(alpha: isDark ? 0.08 : 0.05),
+            color: context.palette.secondary.withValues(alpha: isDark ? 0.08 : 0.05),
             blurRadius: 12,
             spreadRadius: -4,
           ),
@@ -84,14 +85,14 @@ class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        ConfidiaColors.primary.withValues(alpha: 0.92),
-                        ConfidiaColors.secondary.withValues(alpha: 0.78),
+                        context.palette.primary.withValues(alpha: 0.92),
+                        context.palette.secondary.withValues(alpha: 0.78),
                       ],
                     ),
                     border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
                     boxShadow: [
                       BoxShadow(
-                        color: ConfidiaColors.primary.withValues(alpha: 0.28),
+                        color: context.palette.primary.withValues(alpha: 0.28),
                         blurRadius: 14,
                         spreadRadius: -4,
                         offset: const Offset(0, 3),
@@ -110,7 +111,7 @@ class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
                       child: InkWell(
                         onTap: () => onChanged(seg.value),
                         borderRadius: BorderRadius.circular(9),
-                        splashColor: ConfidiaColors.primary.withValues(alpha: 0.08),
+                        splashColor: context.palette.primary.withValues(alpha: 0.08),
                         highlightColor: Colors.transparent,
                         child: SizedBox(
                           height: _segmentHeight,

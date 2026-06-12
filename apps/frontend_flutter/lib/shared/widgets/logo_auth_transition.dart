@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import 'confidia_logo.dart';
 
@@ -235,10 +236,10 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with TickerProv
                                           shape: BoxShape.circle,
                                           gradient: SweepGradient(
                                             colors: [
-                                              ConfidiaColors.primary.withValues(alpha: _glowPulse.value * 0.12),
-                                              ConfidiaColors.secondary.withValues(alpha: _glowPulse.value * 0.5),
-                                              ConfidiaColors.accent.withValues(alpha: _glowPulse.value * 0.3),
-                                              ConfidiaColors.primary.withValues(alpha: _glowPulse.value * 0.12),
+                                              context.palette.primary.withValues(alpha: _glowPulse.value * 0.12),
+                                              context.palette.secondary.withValues(alpha: _glowPulse.value * 0.5),
+                                              context.palette.accent.withValues(alpha: _glowPulse.value * 0.3),
+                                              context.palette.primary.withValues(alpha: _glowPulse.value * 0.12),
                                             ],
                                           ),
                                         ),
@@ -251,7 +252,7 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with TickerProv
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: ConfidiaColors.secondary.withValues(alpha: 0.2 * _glowPulse.value),
+                                            color: context.palette.secondary.withValues(alpha: 0.2 * _glowPulse.value),
                                             blurRadius: 48,
                                             spreadRadius: 2,
                                           ),

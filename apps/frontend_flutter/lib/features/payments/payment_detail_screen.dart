@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/payment_model.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
@@ -99,7 +100,7 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
                         if (payment.documentId != null)
                           _LinkTile(
                             icon: Icons.description_rounded,
-                            color: ConfidiaColors.primary,
+                            color: context.palette.primary,
                             title: 'Document lié',
                             subtitle: 'Consulter la fiche documentaire',
                             onTap: () => context.go('/documents/${payment.documentId}'),
@@ -109,7 +110,7 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
                         if (payment.emailId != null)
                           _LinkTile(
                             icon: Icons.mail_rounded,
-                            color: ConfidiaColors.secondary,
+                            color: context.palette.secondary,
                             title: 'Email source',
                             subtitle: 'Ouvrir dans la messagerie',
                             onTap: () => context.go('/messaging/${payment.emailId}'),
@@ -205,8 +206,8 @@ class _PaymentHeroCard extends StatelessWidget {
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    payment.status.color.withValues(alpha: 0.2),
-                    payment.status.color.withValues(alpha: 0),
+                    payment.status.themeColor(context.palette).withValues(alpha: 0.2),
+                    payment.status.themeColor(context.palette).withValues(alpha: 0),
                   ],
                 ),
               ),
@@ -218,7 +219,7 @@ class _PaymentHeroCard extends StatelessWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _HeroIcon(icon: payment.icon, color: payment.status.color),
+                  _HeroIcon(icon: payment.icon, color: payment.status.themeColor(context.palette)),
                   const SizedBox(width: 14),
                   Expanded(
                     child: Padding(
@@ -232,7 +233,7 @@ class _PaymentHeroCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  StatusBadge(label: payment.status.label, color: payment.status.color),
+                  StatusBadge(label: payment.status.label, color: payment.status.themeColor(context.palette)),
                 ],
               ),
               const SizedBox(height: 8),
@@ -279,7 +280,7 @@ class _PaymentHeroCard extends StatelessWidget {
                             child: _HeroDueBlock(
                               caption: dueCaption,
                               value: dueValue,
-                              color: payment.status.color,
+                              color: payment.status.themeColor(context.palette),
                             ),
                           ),
                         Expanded(
@@ -288,7 +289,7 @@ class _PaymentHeroCard extends StatelessWidget {
                             child: _HeroDueBlock(
                               caption: 'Échéance',
                               value: DateFormat('d MMM yyyy', 'fr_FR').format(payment.dueDate),
-                              color: ConfidiaColors.accent,
+                              color: context.palette.accent,
                               compact: true,
                             ),
                           ),
@@ -313,7 +314,7 @@ class _PaymentHeroCard extends StatelessWidget {
                         flex: 2,
                         child: Align(
                           alignment: Alignment.center,
-                          child: _HeroDueBlock(caption: dueCaption, value: dueValue, color: payment.status.color),
+                          child: _HeroDueBlock(caption: dueCaption, value: dueValue, color: payment.status.themeColor(context.palette)),
                         ),
                       ),
                     Expanded(
@@ -323,7 +324,7 @@ class _PaymentHeroCard extends StatelessWidget {
                         child: _HeroDueBlock(
                           caption: 'Échéance',
                           value: DateFormat('d MMM yyyy', 'fr_FR').format(payment.dueDate),
-                          color: ConfidiaColors.accent,
+                          color: context.palette.accent,
                           compact: true,
                         ),
                       ),
@@ -390,7 +391,7 @@ class _HeroAmount extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ShaderMask(
-      shaderCallback: (b) => ConfidiaColors.brandGradient.createShader(b),
+      shaderCallback: (b) => context.palette.brandGradient.createShader(b),
       child: Text(
         amount,
         style: Theme.of(context).textTheme.displaySmall?.copyWith(
@@ -502,10 +503,10 @@ class _InfoRow extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: ConfidiaColors.primary.withValues(alpha: 0.08),
+              color: context.palette.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(9),
             ),
-            child: Icon(icon, size: 16, color: ConfidiaColors.primary),
+            child: Icon(icon, size: 16, color: context.palette.primary),
           ),
           const SizedBox(width: 12),
           Expanded(

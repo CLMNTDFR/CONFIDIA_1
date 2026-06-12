@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
+import '../../core/theme/palette.dart';
 import '../../shared/models/calendar_event_model.dart';
 
 class EventTypeConfig {
@@ -19,40 +19,40 @@ class EventTypeConfig {
   });
 }
 
-const eventTypeConfigs = <EventTypeConfig>[
-  EventTypeConfig(
-    type: EventType.deadline,
-    label: 'Échéance',
-    description: 'Factures, taxes, contrats',
-    color: ConfidiaColors.primary,
-    icon: Icons.flag_rounded,
-  ),
-  EventTypeConfig(
-    type: EventType.appointment,
-    label: 'Rendez-vous',
-    description: 'Médical, administratif',
-    color: ConfidiaColors.accent,
-    icon: Icons.event_available_rounded,
-  ),
-  EventTypeConfig(
-    type: EventType.meeting,
-    label: 'Réunion',
-    description: 'Professionnel ou personnel',
-    color: ConfidiaColors.secondary,
-    icon: Icons.groups_rounded,
-  ),
-  EventTypeConfig(
-    type: EventType.reminder,
-    label: 'Rappel',
-    description: 'Renouvellements, démarches',
-    color: Color(0xFFE8A838),
-    icon: Icons.notifications_active_rounded,
-  ),
-];
+List<EventTypeConfig> eventTypeConfigs(ConfidiaPalette palette) => [
+      EventTypeConfig(
+        type: EventType.deadline,
+        label: 'Échéance',
+        description: 'Factures, taxes, contrats',
+        color: palette.primary,
+        icon: Icons.flag_rounded,
+      ),
+      EventTypeConfig(
+        type: EventType.appointment,
+        label: 'Rendez-vous',
+        description: 'Médical, administratif',
+        color: palette.accent,
+        icon: Icons.event_available_rounded,
+      ),
+      EventTypeConfig(
+        type: EventType.meeting,
+        label: 'Réunion',
+        description: 'Professionnel ou personnel',
+        color: palette.secondary,
+        icon: Icons.groups_rounded,
+      ),
+      EventTypeConfig(
+        type: EventType.reminder,
+        label: 'Rappel',
+        description: 'Renouvellements, démarches',
+        color: const Color(0xFFE8A838),
+        icon: Icons.notifications_active_rounded,
+      ),
+    ];
 
-EventTypeConfig configFor(EventType type) =>
-    eventTypeConfigs.firstWhere((c) => c.type == type, orElse: () => eventTypeConfigs.last);
+EventTypeConfig configFor(EventType type, ConfidiaPalette palette) =>
+    eventTypeConfigs(palette).firstWhere((c) => c.type == type, orElse: () => eventTypeConfigs(palette).last);
 
-Color colorForEventType(EventType type) => configFor(type).color;
+Color colorForEventType(EventType type, ConfidiaPalette palette) => configFor(type, palette).color;
 
-Color eventColor(CalendarEventModel event) => colorForEventType(event.eventType);
+Color eventColor(CalendarEventModel event, ConfidiaPalette palette) => colorForEventType(event.eventType, palette);

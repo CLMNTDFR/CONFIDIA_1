@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import 'mobile_shell_insets.dart';
 
@@ -71,10 +72,10 @@ class ConfidiaSheet extends StatelessWidget {
                         const Color(0xFFFAFAFE).withValues(alpha: 0.98),
                       ],
               ),
-              border: Border.all(color: ConfidiaColors.secondary.withValues(alpha: 0.2)),
+              border: Border.all(color: context.palette.secondary.withValues(alpha: 0.2)),
               boxShadow: [
                 BoxShadow(
-                  color: ConfidiaColors.primary.withValues(alpha: 0.12),
+                  color: context.palette.primary.withValues(alpha: 0.12),
                   blurRadius: 32,
                   spreadRadius: -8,
                   offset: const Offset(0, -4),
@@ -99,7 +100,7 @@ class ConfidiaSheet extends StatelessWidget {
                     children: [
                       Expanded(
                         child: ShaderMask(
-                          shaderCallback: (b) => ConfidiaColors.brandGradient.createShader(b),
+                          shaderCallback: (b) => context.palette.brandGradient.createShader(b),
                           child: Text(
                             title,
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(

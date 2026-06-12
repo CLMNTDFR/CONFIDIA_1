@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 
 /// Affiche du texte progressivement, comme une réponse IA en cours de rédaction.
 class AiStreamingText extends StatefulWidget {
@@ -93,8 +94,8 @@ class _AiStreamingTextState extends State<AiStreamingText> with TickerProviderSt
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            ConfidiaColors.primary.withValues(alpha: 0.5),
-                            ConfidiaColors.secondary,
+                            context.palette.primary.withValues(alpha: 0.5),
+                            context.palette.secondary,
                           ],
                         ),
                       ),

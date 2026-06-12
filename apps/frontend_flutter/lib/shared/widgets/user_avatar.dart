@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../models/user_model.dart';
 
 class UserAvatar extends StatelessWidget {
@@ -31,11 +31,11 @@ class UserAvatar extends StatelessWidget {
 
     return CircleAvatar(
       radius: radius,
-      backgroundColor: ConfidiaColors.primary.withValues(alpha: 0.15),
+      backgroundColor: context.palette.primary.withValues(alpha: 0.15),
       child: Text(
         user.initials,
         style: TextStyle(
-          color: ConfidiaColors.primary,
+          color: context.palette.primary,
           fontWeight: FontWeight.w700,
           fontSize: radius * 0.7,
         ),
@@ -66,10 +66,10 @@ class UserAvatarLarge extends StatelessWidget {
     Widget avatar = Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: ConfidiaColors.secondary.withValues(alpha: 0.4), width: 2),
+        border: Border.all(color: context.palette.secondary.withValues(alpha: 0.4), width: 2),
         boxShadow: [
           BoxShadow(
-            color: ConfidiaColors.primary.withValues(alpha: 0.12),
+            color: context.palette.primary.withValues(alpha: 0.12),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -82,13 +82,13 @@ class UserAvatarLarge extends StatelessWidget {
             )
           : CircleAvatar(
               radius: radius,
-              backgroundColor: ConfidiaColors.primary.withValues(alpha: 0.12),
+              backgroundColor: context.palette.primary.withValues(alpha: 0.12),
               child: Text(
                 user.initials,
                 style: TextStyle(
                   fontSize: radius * 0.55,
                   fontWeight: FontWeight.w800,
-                  color: ConfidiaColors.primary,
+                  color: context.palette.primary,
                 ),
               ),
             ),

@@ -4,6 +4,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/widgets/glass_card.dart';
@@ -49,7 +50,7 @@ class ProfileScreen extends ConsumerWidget {
                             right: -2,
                             bottom: -2,
                             child: Material(
-                              color: ConfidiaColors.primary,
+                              color: context.palette.primary,
                               shape: const CircleBorder(),
                               child: InkWell(
                                 onTap: () => _showAvatarOptions(context, ref),
@@ -84,11 +85,11 @@ class ProfileScreen extends ConsumerWidget {
               const SizedBox(height: ConfidiaSpacing.md),
               Row(
                   children: [
-                    Expanded(child: _MetricTile(label: 'Documents', value: '$docCount', icon: Icons.folder_copy_rounded, color: ConfidiaColors.primary)),
+                    Expanded(child: _MetricTile(label: 'Documents', value: '$docCount', icon: Icons.folder_copy_rounded, color: context.palette.primary)),
                     const SizedBox(width: ConfidiaSpacing.sm),
-                    Expanded(child: _MetricTile(label: 'Échéances', value: '$eventCount', icon: Icons.event_rounded, color: ConfidiaColors.accent)),
+                    Expanded(child: _MetricTile(label: 'Échéances', value: '$eventCount', icon: Icons.event_rounded, color: context.palette.accent)),
                     const SizedBox(width: ConfidiaSpacing.sm),
-                    Expanded(child: _MetricTile(label: 'Alertes', value: '$unread', icon: Icons.notifications_rounded, color: ConfidiaColors.secondary)),
+                    Expanded(child: _MetricTile(label: 'Alertes', value: '$unread', icon: Icons.notifications_rounded, color: context.palette.secondary)),
                   ],
                 ),
               const SizedBox(height: ConfidiaSpacing.md),
@@ -198,7 +199,7 @@ class _ProfileTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       dense: true,
-      leading: Icon(icon, color: ConfidiaColors.primary, size: 18),
+      leading: Icon(icon, color: context.palette.primary, size: 18),
       title: Text(title, style: Theme.of(context).textTheme.labelMedium),
       subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
     );

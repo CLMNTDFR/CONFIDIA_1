@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/theme_provider.dart';
 
 class ThemeToggleButton extends ConsumerWidget {
@@ -43,7 +44,7 @@ class ThemeToggleButton extends ConsumerWidget {
                   isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
                   key: ValueKey(isDark),
                   size: 18,
-                  color: isDark ? ConfidiaColors.secondary : ConfidiaColors.warning,
+                  color: isDark ? context.palette.secondary : ConfidiaColors.warning,
                 ),
               ),
               if (!compact) ...[

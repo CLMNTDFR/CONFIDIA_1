@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/models/ai_insight_model.dart';
@@ -140,7 +141,7 @@ class _AiAnalysisSection extends StatelessWidget {
           Row(
             children: [
               ShaderMask(
-                shaderCallback: (bounds) => ConfidiaColors.brandGradient.createShader(bounds),
+                shaderCallback: (bounds) => context.palette.brandGradient.createShader(bounds),
                 child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
               ),
               const SizedBox(width: 8),
@@ -149,7 +150,7 @@ class _AiAnalysisSection extends StatelessWidget {
               AnimatedOpacity(
                 opacity: analysisComplete ? 1 : 0,
                 duration: const Duration(milliseconds: 400),
-                child: analysisComplete ? StatusBadge(label: insight.priority.label, color: insight.priority.color) : const SizedBox.shrink(),
+                child: analysisComplete ? StatusBadge(label: insight.priority.label, color: insight.priority.themeColor(context.palette)) : const SizedBox.shrink(),
               ),
             ],
           ),
@@ -177,9 +178,9 @@ class _AiAnalysisSection extends StatelessWidget {
                             (tag) => Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: ConfidiaColors.secondary.withValues(alpha: 0.1),
+                                color: context.palette.secondary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: ConfidiaColors.secondary.withValues(alpha: 0.2)),
+                                border: Border.all(color: context.palette.secondary.withValues(alpha: 0.2)),
                               ),
                               child: Text('#$tag', style: Theme.of(context).textTheme.labelSmall),
                             ),
@@ -216,7 +217,7 @@ class _DocumentPreview extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.picture_as_pdf_rounded, size: 52, color: ConfidiaColors.primary.withValues(alpha: 0.45)),
+              Icon(Icons.picture_as_pdf_rounded, size: 52, color: context.palette.primary.withValues(alpha: 0.45)),
               const SizedBox(height: 12),
               Text('Aperçu du document', style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 4),

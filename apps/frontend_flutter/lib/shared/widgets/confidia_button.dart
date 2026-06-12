@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import 'confidia_tooltip.dart';
 
 class ConfidiaButton extends StatefulWidget {
@@ -72,13 +73,13 @@ class _ConfidiaButtonState extends State<ConfidiaButton> with SingleTickerProvid
           duration: const Duration(milliseconds: 200),
           padding: padding,
           decoration: BoxDecoration(
-            gradient: widget.outlined ? null : ConfidiaColors.primaryGradient,
+            gradient: widget.outlined ? null : context.palette.primaryGradient,
             color: widget.outlined ? Colors.transparent : null,
             borderRadius: BorderRadius.circular(12),
             border: widget.outlined ? Border.all(color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)) : null,
             boxShadow: widget.outlined
                 ? null
-                : [BoxShadow(color: ConfidiaColors.primary.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))],
+                : [BoxShadow(color: context.palette.primary.withValues(alpha: 0.25), blurRadius: 12, offset: const Offset(0, 4))],
           ),
           child: DefaultTextStyle(
             style: TextStyle(
@@ -160,7 +161,7 @@ class _ConfidiaIconButtonState extends State<ConfidiaIconButton> with SingleTick
       clipBehavior: Clip.none,
       children: [
         wrapped,
-        Positioned(right: 6, top: 6, child: Container(width: 8, height: 8, decoration: const BoxDecoration(color: ConfidiaColors.primary, shape: BoxShape.circle))),
+        Positioned(right: 6, top: 6, child: Container(width: 8, height: 8, decoration: BoxDecoration(color: context.palette.primary, shape: BoxShape.circle))),
       ],
     );
   }

@@ -1,3 +1,4 @@
+import 'package:confidia/core/theme/palette.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
@@ -14,8 +15,8 @@ extension CalendarSourceX on CalendarSource {
         CalendarSource.microsoft365 => 'Microsoft 365',
       };
 
-  Color get color => switch (this) {
-        CalendarSource.confidia => const Color(0xFFD20050),
+  Color themeColor(ConfidiaPalette palette) => switch (this) {
+        CalendarSource.confidia => palette.primary,
         CalendarSource.google => const Color(0xFF4285F4),
         CalendarSource.outlook => const Color(0xFF0078D4),
         CalendarSource.apple => const Color(0xFF555555),

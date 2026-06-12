@@ -1,3 +1,5 @@
+import 'package:confidia/core/theme/colors.dart';
+import 'package:confidia/core/theme/palette.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
@@ -11,11 +13,11 @@ extension PaymentStatusX on PaymentStatus {
         PaymentStatus.expired => 'Expiré',
       };
 
-  Color get color => switch (this) {
-        PaymentStatus.pending => const Color(0xFFD20050),
-        PaymentStatus.waiting => const Color(0xFFE8A838),
-        PaymentStatus.paid => const Color(0xFF22C55E),
-        PaymentStatus.expired => const Color(0xFF94A3B8),
+  Color themeColor(ConfidiaPalette palette) => switch (this) {
+        PaymentStatus.pending => palette.primary,
+        PaymentStatus.waiting => ConfidiaColors.warning,
+        PaymentStatus.paid => ConfidiaColors.success,
+        PaymentStatus.expired => ConfidiaColors.textSecondary(true),
       };
 }
 

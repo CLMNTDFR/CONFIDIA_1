@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 
 /// Scène graphique à plans — halo d'ambiance + contenu au premier plan.
 class PremiumChartStage extends StatelessWidget {
@@ -22,6 +23,7 @@ class PremiumChartStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
     const radius = BorderRadius.all(Radius.circular(12));
 
     final background = ClipRRect(
@@ -32,6 +34,8 @@ class PremiumChartStage extends StatelessWidget {
           CustomPaint(
             painter: _ChartAmbientPainter(
               colors: accentColors,
+              fallbackPrimary: palette.primary,
+              fallbackSecondary: palette.secondary,
               isDark: isDark,
               primaryAlignment: primaryGlowAlignment,
               secondaryAlignment: secondaryGlowAlignment,
@@ -74,12 +78,16 @@ class PremiumChartStage extends StatelessWidget {
 
 class _ChartAmbientPainter extends CustomPainter {
   final List<Color> colors;
+  final Color fallbackPrimary;
+  final Color fallbackSecondary;
   final bool isDark;
   final Alignment primaryAlignment;
   final Alignment? secondaryAlignment;
 
   const _ChartAmbientPainter({
     required this.colors,
+    required this.fallbackPrimary,
+    required this.fallbackSecondary,
     required this.isDark,
     required this.primaryAlignment,
     this.secondaryAlignment,
@@ -87,8 +95,8 @@ class _ChartAmbientPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final primary = colors.isNotEmpty ? colors.first : ConfidiaColors.primary;
-    final secondary = colors.length > 1 ? colors[1] : ConfidiaColors.secondary;
+    final primary = colors.isNotEmpty ? colors.first : fallbackPrimary;
+    final secondary = colors.length > 1 ? colors[1] : fallbackSecondary;
 
     _drawGlow(
       canvas,

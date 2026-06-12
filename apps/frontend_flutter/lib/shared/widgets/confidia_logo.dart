@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 
 /// Logo CONFIDIA · prêt à recevoir une image via [imageAssetPath].
@@ -31,7 +32,7 @@ class ConfidiaLogo extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               ShaderMask(
-                shaderCallback: (bounds) => ConfidiaColors.brandGradient.createShader(bounds),
+                shaderCallback: (bounds) => context.palette.brandGradient.createShader(bounds),
                 child: Text(
                   'CONFIDIA',
                   style: TextStyle(
@@ -80,11 +81,11 @@ class _LogoMark extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        gradient: ConfidiaColors.primaryGradient,
+        gradient: context.palette.primaryGradient,
         borderRadius: BorderRadius.circular(size * 0.28),
         boxShadow: [
           BoxShadow(
-            color: ConfidiaColors.primary.withValues(alpha: 0.35),
+            color: context.palette.primary.withValues(alpha: 0.35),
             blurRadius: size * 0.4,
             offset: Offset(0, size * 0.08),
           ),

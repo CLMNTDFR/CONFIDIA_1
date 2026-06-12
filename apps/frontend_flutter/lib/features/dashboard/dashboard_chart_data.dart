@@ -2,6 +2,7 @@ import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/document_model.dart';
 import '../../shared/models/payment_model.dart';
 import '../../core/theme/colors.dart';
+import '../../core/theme/palette.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
@@ -36,16 +37,6 @@ class HubActivityMonth {
 
 /// Données agrégées pour les graphiques du tableau de bord.
 abstract final class DashboardChartData {
-  static const _palette = [
-    ConfidiaColors.primary,
-    ConfidiaColors.secondary,
-    ConfidiaColors.accent,
-    ConfidiaColors.success,
-    Color(0xFFE91E7A),
-    Color(0xFF6366F1),
-    Color(0xFF14B8A6),
-  ];
-
   /// Dépenses mensuelles sur 6 mois (factures + paiements du hub).
   static List<MonthlyPoint> expenseTrend() {
     final now = DateTime.now();
@@ -68,20 +59,21 @@ abstract final class DashboardChartData {
   }
 
   /// Répartition des documents par catégorie.
-  static List<ChartSlice> documentsByCategory(List<DocumentModel> docs) {
+  static List<ChartSlice> documentsByCategory(List<DocumentModel> docs, ConfidiaPalette palette) {
     final counts = <String, int>{};
     for (final doc in docs) {
       final key = doc.category ?? 'Autre';
       counts[key] = (counts[key] ?? 0) + 1;
     }
 
+    final chartColors = palette.chartColors;
     final entries = counts.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
     return List.generate(entries.length, (i) {
       final entry = entries[i];
       return ChartSlice(
         label: entry.key,
         value: entry.value.toDouble(),
-        color: _palette[i % _palette.length],
+        color: chartColors[i % chartColors.length],
       );
     });
   }
@@ -121,15 +113,15 @@ abstract final class DashboardChartData {
   }
 
   /// Montants par statut de paiement.
-  static List<ChartSlice> paymentsByStatus(List<PaymentModel> payments) {
+  static List<ChartSlice> paymentsByStatus(List<PaymentModel> payments, ConfidiaPalette palette) {
     final totals = <PaymentStatus, double>{};
     for (final payment in payments) {
       totals[payment.status] = (totals[payment.status] ?? 0) + payment.amount;
     }
 
     Color colorFor(PaymentStatus status) => switch (status) {
-          PaymentStatus.pending => ConfidiaColors.primary,
-          PaymentStatus.waiting => ConfidiaColors.secondary,
+          PaymentStatus.pending => palette.primary,
+          PaymentStatus.waiting => palette.secondary,
           PaymentStatus.paid => ConfidiaColors.success,
           PaymentStatus.expired => ConfidiaColors.error,
         };

@@ -1,3 +1,5 @@
+import 'package:confidia/core/theme/colors.dart';
+import 'package:confidia/core/theme/palette.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
@@ -11,11 +13,11 @@ extension AiPriorityX on AiPriority {
         AiPriority.urgent => 'Urgente',
       };
 
-  Color get color => switch (this) {
-        AiPriority.low => const Color(0xFF94A3B8),
-        AiPriority.medium => const Color(0xFF4B96B4),
-        AiPriority.high => const Color(0xFFE8A838),
-        AiPriority.urgent => const Color(0xFFD20050),
+  Color themeColor(ConfidiaPalette palette) => switch (this) {
+        AiPriority.low => ConfidiaColors.textSecondary(true),
+        AiPriority.medium => palette.accent,
+        AiPriority.high => ConfidiaColors.warning,
+        AiPriority.urgent => palette.primary,
       };
 }
 

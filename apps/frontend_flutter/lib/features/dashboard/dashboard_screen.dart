@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/ai_insight_model.dart';
@@ -331,7 +332,7 @@ class _WidgetEditBar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: ConfidiaColors.secondary),
+          Icon(icon, size: 16, color: context.palette.secondary),
           const SizedBox(width: 6),
           Expanded(
             child: Text(label, style: Theme.of(context).textTheme.labelMedium, overflow: TextOverflow.ellipsis),
@@ -443,7 +444,7 @@ class _HiddenWidgetsPanel extends StatelessWidget {
                 (isDark ? const Color(0xFF0E0E16) : const Color(0xFFF8F6FC)).withValues(alpha: 0.95),
               ],
             ),
-            border: Border(top: BorderSide(color: ConfidiaColors.secondary.withValues(alpha: 0.3))),
+            border: Border(top: BorderSide(color: context.palette.secondary.withValues(alpha: 0.3))),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -451,7 +452,7 @@ class _HiddenWidgetsPanel extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.widgets_outlined, size: 18, color: ConfidiaColors.secondary),
+                  Icon(Icons.widgets_outlined, size: 18, color: context.palette.secondary),
                   const SizedBox(width: 8),
                   Text('Blocs masqués · à réactiver', style: Theme.of(context).textTheme.titleSmall),
                 ],
@@ -462,10 +463,10 @@ class _HiddenWidgetsPanel extends StatelessWidget {
                 runSpacing: 8,
                 children: hidden.map((type) {
                   return ActionChip(
-                    avatar: Icon(_iconForType(type), size: 16, color: ConfidiaColors.primary),
+                    avatar: Icon(_iconForType(type), size: 16, color: context.palette.primary),
                     label: Text(type.label),
-                    backgroundColor: ConfidiaColors.primary.withValues(alpha: 0.1),
-                    side: BorderSide(color: ConfidiaColors.primary.withValues(alpha: 0.25)),
+                    backgroundColor: context.palette.primary.withValues(alpha: 0.1),
+                    side: BorderSide(color: context.palette.primary.withValues(alpha: 0.25)),
                     onPressed: () => onRestore(type),
                   );
                 }).toList(),
@@ -595,7 +596,7 @@ class _CustomizeFabState extends State<_CustomizeFab> {
                     Icon(
                       Icons.dashboard_customize_outlined,
                       size: 20,
-                      color: expanded ? ConfidiaColors.primary : ConfidiaColors.textSecondary(isDark),
+                      color: expanded ? context.palette.primary : ConfidiaColors.textSecondary(isDark),
                     ),
                     AnimatedSize(
                       duration: _duration,
@@ -637,9 +638,9 @@ class _StatsWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return StatsRow(stats: [
-      CompactStat(label: 'Documents', value: '${docs.length}', icon: Icons.folder_copy_rounded, color: ConfidiaColors.primary),
-      CompactStat(label: 'Paiements', value: '$pendingCount', icon: Icons.payments_rounded, color: ConfidiaColors.accent),
-      CompactStat(label: 'Alertes', value: '${notifications.where((n) => !n.read).length}', icon: Icons.notifications_rounded, color: ConfidiaColors.secondary),
+      CompactStat(label: 'Documents', value: '${docs.length}', icon: Icons.folder_copy_rounded, color: context.palette.primary),
+      CompactStat(label: 'Paiements', value: '$pendingCount', icon: Icons.payments_rounded, color: context.palette.accent),
+      CompactStat(label: 'Alertes', value: '${notifications.where((n) => !n.read).length}', icon: Icons.notifications_rounded, color: context.palette.secondary),
       CompactStat(label: 'Emails', value: '${MockEcosystem.emails.length}', icon: Icons.mail_rounded, color: ConfidiaColors.success),
     ]);
   }
@@ -715,7 +716,7 @@ class _PendingPaymentsWidget extends StatelessWidget {
           ...payments.take(3).map((p) => ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(p.icon, color: p.status.color, size: 20),
+                leading: Icon(p.icon, color: p.status.themeColor(context.palette), size: 20),
                 title: Text(p.creditor, maxLines: 1, overflow: TextOverflow.ellipsis),
                 subtitle: Text(p.label, style: Theme.of(context).textTheme.labelSmall),
                 trailing: Text(p.amountFormatted, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700)),
@@ -801,7 +802,7 @@ class _AiAnalyzedWidget extends StatelessWidget {
           Row(
             children: [
               Text('Documents analysés par IA', style: Theme.of(context).textTheme.titleSmall),
-              StatusBadge(label: '${MockEcosystem.analyzedDocumentsCount} docs', color: ConfidiaColors.secondary),
+              StatusBadge(label: '${MockEcosystem.analyzedDocumentsCount} docs', color: context.palette.secondary),
               const Spacer(),
               ConfidiaSeeAllButton(onTap: () => context.go('/documents')),
             ],
@@ -812,10 +813,10 @@ class _AiAnalyzedWidget extends StatelessWidget {
             return ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.auto_awesome_rounded, color: ConfidiaColors.secondary, size: 18),
+              leading: Icon(Icons.auto_awesome_rounded, color: context.palette.secondary, size: 18),
               title: Text(d.title, maxLines: 1, overflow: TextOverflow.ellipsis),
               subtitle: Text(insight.summary, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall),
-              trailing: StatusBadge(label: insight.priority.label, color: insight.priority.color),
+              trailing: StatusBadge(label: insight.priority.label, color: insight.priority.themeColor(context.palette)),
               onTap: () => context.go('/documents/${d.id}'),
             );
           }),
@@ -861,7 +862,7 @@ class _DeadlinesWidget extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Container(width: 3, height: 32, decoration: BoxDecoration(color: e.color ?? ConfidiaColors.primary, borderRadius: BorderRadius.circular(2))),
+                    Container(width: 3, height: 32, decoration: BoxDecoration(color: e.color ?? context.palette.primary, borderRadius: BorderRadius.circular(2))),
                     const SizedBox(width: 10),
                     Expanded(child: Text(e.title, style: Theme.of(context).textTheme.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis)),
                     Text(DateFormat('d MMM', 'fr_FR').format(e.start), style: Theme.of(context).textTheme.labelSmall),
@@ -907,7 +908,7 @@ class _ActivityWidget extends StatelessWidget {
           ...notifications.take(3).map((n) => ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                leading: const Icon(Icons.bolt_rounded, size: 18, color: ConfidiaColors.primary),
+                leading: Icon(Icons.bolt_rounded, size: 18, color: context.palette.primary),
                 title: Text(n.title, style: Theme.of(context).textTheme.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
                 subtitle: Text(n.message, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
               )),
@@ -946,10 +947,10 @@ class _DocRow extends StatelessWidget {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.picture_as_pdf_rounded, color: ConfidiaColors.primary, size: 20),
+      leading: Icon(Icons.picture_as_pdf_rounded, color: context.palette.primary, size: 20),
       title: Text(doc.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text('${doc.category ?? 'Non classé'} · ${doc.fileSizeFormatted}', style: Theme.of(context).textTheme.labelSmall),
-      trailing: doc.isImportant ? const Icon(Icons.star_rounded, color: ConfidiaColors.secondary, size: 16) : null,
+      trailing: doc.isImportant ? Icon(Icons.star_rounded, color: context.palette.secondary, size: 16) : null,
       onTap: () => context.go('/documents/${doc.id}'),
     );
   }

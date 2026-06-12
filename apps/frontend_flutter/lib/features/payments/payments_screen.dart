@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/payment_model.dart';
 import '../../shared/widgets/glass_card.dart';
@@ -117,7 +118,7 @@ class _SummaryBanner extends StatelessWidget {
                 Text('Montant total à régler', style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 4),
                 ShaderMask(
-                  shaderCallback: (b) => ConfidiaColors.brandGradient.createShader(b),
+                  shaderCallback: (b) => context.palette.brandGradient.createShader(b),
                   child: Text(
                     '${total.toStringAsFixed(2)} €',
                     style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
@@ -134,7 +135,7 @@ class _SummaryBanner extends StatelessWidget {
                 Text('Prochaine échéance', style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 4),
                 Text(next!.creditor, style: Theme.of(context).textTheme.titleSmall),
-                Text(DateFormat('d MMM yyyy', 'fr_FR').format(next!.dueDate), style: Theme.of(context).textTheme.labelMedium?.copyWith(color: ConfidiaColors.primary)),
+                Text(DateFormat('d MMM yyyy', 'fr_FR').format(next!.dueDate), style: Theme.of(context).textTheme.labelMedium?.copyWith(color: context.palette.primary)),
               ],
             ),
         ],
@@ -203,10 +204,10 @@ class _PaymentCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [payment.status.color.withValues(alpha: 0.2), payment.status.color.withValues(alpha: 0.05)]),
+                  gradient: LinearGradient(colors: [payment.status.themeColor(context.palette).withValues(alpha: 0.2), payment.status.themeColor(context.palette).withValues(alpha: 0.05)]),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: Icon(payment.icon, color: payment.status.color),
+                child: Icon(payment.icon, color: payment.status.themeColor(context.palette)),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -222,7 +223,7 @@ class _PaymentCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              StatusBadge(label: payment.status.label, color: payment.status.color),
+              StatusBadge(label: payment.status.label, color: payment.status.themeColor(context.palette)),
               const SizedBox(width: 12),
               Text(payment.amountFormatted, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
             ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
-import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
@@ -66,7 +66,7 @@ class _UploadScreenState extends State<UploadScreen> {
                         height: 240,
                         decoration: BoxDecoration(
                           border: Border.all(
-                            color: ConfidiaColors.primary.withValues(alpha: 0.3),
+                            color: context.palette.primary.withValues(alpha: 0.3),
                             width: 2,
                           ),
                           borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusMd),
@@ -77,7 +77,7 @@ class _UploadScreenState extends State<UploadScreen> {
                             Icon(
                               Icons.cloud_upload_outlined,
                               size: 48,
-                              color: ConfidiaColors.primary.withValues(alpha: 0.6),
+                              color: context.palette.primary.withValues(alpha: 0.6),
                             ),
                             const SizedBox(height: ConfidiaSpacing.md),
                             Text(

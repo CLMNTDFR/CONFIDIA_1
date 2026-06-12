@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
+import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/ai_insight_model.dart';
 import '../../shared/widgets/confidia_button.dart';
@@ -139,11 +140,11 @@ class _AiInsightCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.auto_awesome_rounded, color: ConfidiaColors.secondary, size: 20),
+              Icon(Icons.auto_awesome_rounded, color: context.palette.secondary, size: 20),
               const SizedBox(width: 8),
               Text('Résumé IA', style: Theme.of(context).textTheme.titleSmall),
               const Spacer(),
-              StatusBadge(label: 'Priorité ${insight.priority.label}', color: insight.priority.color),
+              StatusBadge(label: 'Priorité ${insight.priority.label}', color: insight.priority.themeColor(context.palette)),
             ],
           ),
           const SizedBox(height: 12),
@@ -178,13 +179,13 @@ class _MetricChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: ConfidiaColors.primary.withValues(alpha: 0.08),
+        color: context.palette.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: ConfidiaColors.primary),
+          Icon(icon, size: 14, color: context.palette.primary),
           const SizedBox(width: 4),
           Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
         ],
@@ -203,7 +204,7 @@ class _ActionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ActionChip(
-      avatar: Icon(icon, size: 16, color: ConfidiaColors.primary),
+      avatar: Icon(icon, size: 16, color: context.palette.primary),
       label: Text(label),
       onPressed: onTap,
     );
