@@ -8,7 +8,7 @@ import '../../core/theme/spacing.dart';
 import '../../features/messaging/messaging_provider.dart';
 import '../../shared/data/mock_data.dart';
 import 'app_top_bar.dart';
-import 'confidia_animated_logo.dart';
+import 'confidia_logo.dart';
 import 'confidia_navigation.dart';
 import 'mesh_background.dart';
 import 'mobile_page_header.dart';
@@ -54,7 +54,7 @@ class _AppShellState extends ConsumerState<AppShell> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                MobilePageHeader(title: routeMeta.$1, subtitle: routeMeta.$2),
+                MobilePageHeader(title: routeMeta.$1, subtitle: routeMeta.$2, path: currentPath),
                 Expanded(
                   child: KeyedSubtree(
                     key: ValueKey<String>(currentPath),
@@ -156,7 +156,7 @@ class _Sidebar extends StatelessWidget {
                       SizedBox(
                         height: 34,
                         child: Center(
-                          child: const ConfidiaAnimatedLogo(layout: ConfidiaAnimatedLogoLayout.sidebarCollapsed),
+                          child: const ConfidiaLogo(size: 22, showText: false),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -166,7 +166,7 @@ class _Sidebar extends StatelessWidget {
                 : Row(
                     children: [
                       const Expanded(
-                        child: ConfidiaAnimatedLogo(layout: ConfidiaAnimatedLogoLayout.sidebarExpanded),
+                        child: ConfidiaLogo(size: 32, showText: true),
                       ),
                       _SidebarToggleButton(collapsed: false, onPressed: onToggle, isDark: isDark),
                     ],

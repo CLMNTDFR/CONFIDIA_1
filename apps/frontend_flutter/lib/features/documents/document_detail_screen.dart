@@ -9,6 +9,7 @@ import '../../shared/data/mock_data.dart';
 import '../../shared/models/ai_insight_model.dart';
 import '../../shared/models/document_model.dart';
 import '../../shared/services/mock_ai_service.dart';
+import '../../shared/widgets/cofid_ia_brand.dart';
 import '../../shared/widgets/ai_streaming_text.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
@@ -115,7 +116,7 @@ class _DocumentHeader extends StatelessWidget {
   }
 }
 
-class _AiAnalysisSection extends StatelessWidget {
+class _AiAnalysisSection extends StatefulWidget {
   final AiInsightModel insight;
   final String analysisText;
   final bool analysisComplete;
@@ -129,6 +130,13 @@ class _AiAnalysisSection extends StatelessWidget {
   });
 
   @override
+  State<_AiAnalysisSection> createState() => _AiAnalysisSectionState();
+}
+
+class _AiAnalysisSectionState extends State<_AiAnalysisSection> {
+  bool _speaking = false;
+
+  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -138,42 +146,41 @@ class _AiAnalysisSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              ShaderMask(
-                shaderCallback: (bounds) => context.palette.brandGradient.createShader(bounds),
-                child: const Icon(Icons.auto_awesome_rounded, color: Colors.white, size: 18),
-              ),
-              const SizedBox(width: 8),
-              Text('Analyse IA', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-              const Spacer(),
-              AnimatedOpacity(
-                opacity: analysisComplete ? 1 : 0,
-                duration: const Duration(milliseconds: 400),
-                child: analysisComplete ? StatusBadge(label: insight.priority.label, color: insight.priority.themeColor(context.palette)) : const SizedBox.shrink(),
-              ),
-            ],
+          CofidIaPanelHeader(
+            speaking: _speaking,
+            trailing: AnimatedOpacity(
+              opacity: widget.analysisComplete ? 1 : 0,
+              duration: const Duration(milliseconds: 400),
+              child: widget.analysisComplete
+                  ? StatusBadge(label: widget.insight.priority.label, color: widget.insight.priority.themeColor(context.palette))
+                  : const SizedBox.shrink(),
+            ),
           ),
           const SizedBox(height: 14),
           AiStreamingText(
-            text: analysisText,
+            text: widget.analysisText,
+            showThinkingRobot: false,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   height: 1.65,
                   color: isDark ? Colors.white.withValues(alpha: 0.92) : ConfidiaColors.lightTextPrimary,
                 ),
-            onComplete: onAnalysisComplete,
+            onStreamStart: () => setState(() => _speaking = true),
+            onComplete: () {
+              setState(() => _speaking = false);
+              widget.onAnalysisComplete();
+            },
           ),
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 450),
             switchInCurve: Curves.easeOutCubic,
-            child: analysisComplete && insight.tags.isNotEmpty
+            child: widget.analysisComplete && widget.insight.tags.isNotEmpty
                 ? Padding(
                     key: const ValueKey('tags'),
                     padding: const EdgeInsets.only(top: 14),
                     child: Wrap(
                       spacing: 6,
                       runSpacing: 6,
-                      children: insight.tags
+                      children: widget.insight.tags
                           .map(
                             (tag) => Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -241,8 +248,8 @@ class _DocumentMetadata extends StatelessWidget {
     final items = [
       _MetaItem(icon: Icons.category_outlined, label: 'Catégorie', value: doc.category ?? 'Non classé'),
       _MetaItem(icon: Icons.description_outlined, label: 'Type', value: doc.documentType ?? 'Non renseigné'),
-      _MetaItem(icon: Icons.person_outline_rounded, label: 'Correspondant', value: doc.correspondent ?? '—'),
-      _MetaItem(icon: Icons.sd_storage_outlined, label: 'Taille', value: doc.fileSizeFormatted.isEmpty ? '—' : doc.fileSizeFormatted),
+      _MetaItem(icon: Icons.person_outline_rounded, label: 'Correspondant', value: doc.correspondent ?? 'N/A'),
+      _MetaItem(icon: Icons.sd_storage_outlined, label: 'Taille', value: doc.fileSizeFormatted.isEmpty ? 'N/A' : doc.fileSizeFormatted),
       _MetaItem(icon: Icons.calendar_today_outlined, label: 'Créé', value: DateFormat('d MMM yyyy', 'fr_FR').format(doc.created)),
       _MetaItem(icon: Icons.update_rounded, label: 'Modifié', value: DateFormat('d MMM yyyy', 'fr_FR').format(doc.modified)),
     ];

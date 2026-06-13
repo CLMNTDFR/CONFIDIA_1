@@ -16,6 +16,8 @@ import '../../shared/widgets/provider_chip.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../payments/payments_provider.dart';
 import '../../shared/models/document_model.dart';
+import '../../shared/widgets/cofid_ia_brand.dart';
+import '../../shared/widgets/confidia_ai_robot.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_chart_card.dart';
@@ -296,7 +298,7 @@ IconData _iconForType(DashboardWidgetType type) => switch (type) {
       DashboardWidgetType.importantDocs => Icons.star_rounded,
       DashboardWidgetType.activity => Icons.history_rounded,
       DashboardWidgetType.connectedAccounts => Icons.hub_rounded,
-      DashboardWidgetType.aiAnalyzed => Icons.auto_awesome_rounded,
+      DashboardWidgetType.aiAnalyzed => Icons.smart_toy_rounded,
     };
 
 class _WidgetEditBar extends StatelessWidget {
@@ -801,9 +803,28 @@ class _AiAnalyzedWidget extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text('Documents analysés par IA', style: Theme.of(context).textTheme.titleSmall),
+              Expanded(
+                child: Text.rich(
+                  TextSpan(
+                    style: Theme.of(context).textTheme.titleSmall,
+                    children: [
+                      const TextSpan(text: 'Documents analysés par '),
+                      WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: CofidIaBrand(
+                          fontSize: Theme.of(context).textTheme.titleSmall?.fontSize,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: ConfidiaSpacing.md),
               StatusBadge(label: '${MockEcosystem.analyzedDocumentsCount} docs', color: context.palette.secondary),
-              const Spacer(),
+              const SizedBox(width: ConfidiaSpacing.sm),
               ConfidiaSeeAllButton(onTap: () => context.go('/documents')),
             ],
           ),
@@ -813,7 +834,7 @@ class _AiAnalyzedWidget extends StatelessWidget {
             return ListTile(
               dense: true,
               contentPadding: EdgeInsets.zero,
-              leading: Icon(Icons.auto_awesome_rounded, color: context.palette.secondary, size: 18),
+              leading: const ConfidiaAiRobot(size: 28),
               title: Text(d.title, maxLines: 1, overflow: TextOverflow.ellipsis),
               subtitle: Text(insight.summary, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall),
               trailing: StatusBadge(label: insight.priority.label, color: insight.priority.themeColor(context.palette)),

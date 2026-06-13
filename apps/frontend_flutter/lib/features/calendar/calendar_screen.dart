@@ -14,6 +14,8 @@ import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/confidia_glow_segmented.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/provider_chip.dart';
+import '../../shared/widgets/confidia_snackbar.dart';
+import '../../shared/widgets/planning_ai_panel.dart';
 import 'calendar_provider.dart';
 import 'event_form_sheet.dart';
 import 'event_type_config.dart';
@@ -48,13 +50,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       ..sort((a, b) => a.start.compareTo(b.start));
   }
 
+  List<CalendarEventModel> _visibleEvents(WidgetRef ref) {
+    ref.watch(calendarProvider);
+    final groups = ref.watch(activeCalendarGroupsProvider);
+    final filter = ref.watch(calendarFilterProvider);
+    return ref.read(calendarProvider.notifier).filtered(type: filter, groups: groups);
+  }
+
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 900;
     final filter = ref.watch(calendarFilterProvider);
-    final allEvents = ref.watch(calendarProvider);
-    final events = filter == null ? allEvents : allEvents.where((e) => e.eventType == filter).toList();
+    final events = _visibleEvents(ref);
     final selectedEvents = _eventsForDay(_selectedDay ?? DateTime.now(), events);
+    final planning = ref.watch(calendarPlanningProvider);
+    final planningNotifier = ref.read(calendarPlanningProvider.notifier);
     final isMobileShell = ConfidiaMobileShell.isMobileShell(context);
     const fabClearance = 56.0;
 
@@ -72,7 +82,22 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                _ViewSelector(view: _view, onChanged: (v) => setState(() => _view = v)),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(child: _ViewSelector(view: _view, onChanged: (v) => setState(() => _view = v))),
+                    if (!isMobileShell) ...[
+                      const SizedBox(width: ConfidiaSpacing.sm),
+                      ConfidiaGlowButton(
+                        label: 'Événement',
+                        icon: Icons.add_rounded,
+                        onPressed: () => showEventFormSheet(context, initialDay: _selectedDay),
+                      ),
+                    ],
+                  ],
+                ),
+                const SizedBox(height: ConfidiaSpacing.sm),
+                const _CalendarGroupBar(),
                 const SizedBox(height: ConfidiaSpacing.sm),
                 const _ConnectedCalendarsBar(),
                 const SizedBox(height: ConfidiaSpacing.sm),
@@ -89,11 +114,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         const SizedBox(width: ConfidiaSpacing.md),
                         Expanded(
                           flex: 2,
-                          child: _EventList(
-                            events: selectedEvents,
-                            title: 'Événements',
-                            onEdit: (e) => showEventFormSheet(context, event: e),
-                            onDelete: (e) => _confirmDelete(e),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              _EventList(
+                                events: selectedEvents,
+                                title: 'Événements',
+                                onEdit: (e) => showEventFormSheet(context, event: e),
+                                onDelete: (e) => _confirmDelete(e),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -115,21 +145,36 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                   ],
+                  const SizedBox(height: ConfidiaSpacing.lg),
+                  PlanningAiPanel(
+                    proposal: planning.proposal,
+                    loading: planning.loading,
+                    analyzeLabel: planningNotifier.analyzeLabel,
+                    onAnalyze: planningNotifier.analyze,
+                    onRegenerate: planningNotifier.regenerate,
+                    onAccept: () {
+                      context.showConfidiaSnack('Proposition appliquée au calendrier', type: ConfidiaSnackType.success);
+                      planningNotifier.clear();
+                    },
+                    onReject: planningNotifier.clear,
+                    onRefine: planningNotifier.refine,
+                  ),
                 ],
               ),
             ),
           );
         },
         ),
-        Positioned(
-          right: ConfidiaSpacing.lg,
-          bottom: ConfidiaMobileShell.fabBottom(context),
-          child: ConfidiaGlowButton(
-            label: 'Événement',
-            icon: Icons.add_rounded,
-            onPressed: () => showEventFormSheet(context, initialDay: _selectedDay),
+        if (isMobileShell)
+          Positioned(
+            right: ConfidiaSpacing.lg,
+            bottom: ConfidiaMobileShell.fabBottom(context),
+            child: ConfidiaGlowButton(
+              label: 'Événement',
+              icon: Icons.add_rounded,
+              onPressed: () => showEventFormSheet(context, initialDay: _selectedDay),
+            ),
           ),
-        ),
       ],
     );
   }
@@ -162,9 +207,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildMonthView() {
-    final filter = ref.watch(calendarFilterProvider);
-    final allEvents = ref.watch(calendarProvider);
-    final events = filter == null ? allEvents : allEvents.where((e) => e.eventType == filter).toList();
+    final events = _visibleEvents(ref);
 
     return GlassCard(
       padding: const EdgeInsets.all(ConfidiaSpacing.md),
@@ -215,9 +258,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Widget _buildWeekView() {
-    final filter = ref.watch(calendarFilterProvider);
-    final allEvents = ref.watch(calendarProvider);
-    final events = filter == null ? allEvents : allEvents.where((e) => e.eventType == filter).toList();
+    final events = _visibleEvents(ref);
     final startOfWeek = _focusedDay.subtract(Duration(days: _focusedDay.weekday - 1));
     final days = List.generate(7, (i) => startOfWeek.add(Duration(days: i)));
 
@@ -323,9 +364,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   Widget _buildDayView() {
     final day = _selectedDay ?? DateTime.now();
-    final filter = ref.watch(calendarFilterProvider);
-    final allEvents = ref.watch(calendarProvider);
-    final events = filter == null ? allEvents : allEvents.where((e) => e.eventType == filter).toList();
+    final events = _visibleEvents(ref);
     final dayEvents = _eventsForDay(day, events);
 
     return GlassCard(
@@ -364,6 +403,62 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   onTap: () => showEventFormSheet(context, event: e),
                   onDelete: () => _confirmDelete(e),
                 )),
+        ],
+      ),
+    );
+  }
+}
+
+class _CalendarGroupBar extends ConsumerWidget {
+  const _CalendarGroupBar();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final active = ref.watch(activeCalendarGroupsProvider);
+
+    return GlassCard(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.calendar_month_rounded, size: 16, color: context.palette.secondary),
+              const SizedBox(width: 8),
+              Text('Agendas CONFIDIA', style: Theme.of(context).textTheme.labelLarge),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: calendarGroups.map((g) {
+              final selected = active.contains(g.id);
+              return ConfidiaGlowChip(
+                label: g.label,
+                icon: g.id == 'family' ? Icons.family_restroom_rounded : Icons.sports_soccer_rounded,
+                selected: selected,
+                onTap: () {
+                  final next = Set<String>.from(active);
+                  if (selected) {
+                    if (next.length > 1) next.remove(g.id);
+                  } else {
+                    next.add(g.id);
+                  }
+                  ref.read(activeCalendarGroupsProvider.notifier).state = next;
+                  ref.read(calendarPlanningProvider.notifier).clear();
+                },
+              );
+            }).toList(),
+          ),
+          if (active.length > 1)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(
+                'Analyse IA disponible sur les ${active.length} agendas sélectionnés',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: context.palette.primary),
+              ),
+            ),
         ],
       ),
     );

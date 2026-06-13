@@ -68,7 +68,7 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
                       _InfoRow(
                         icon: Icons.tag_rounded,
                         label: 'Référence',
-                        value: payment.reference ?? '—',
+                        value: payment.reference ?? 'N/A',
                         isDark: isDark,
                       ),
                       _InfoRow(

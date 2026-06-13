@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
@@ -64,6 +65,18 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+        ),
+        const SizedBox(height: ConfidiaSpacing.md),
+        _SectionTitle(label: 'Organisation & accès'),
+        const SizedBox(height: 6),
+        GlassCard(
+          padding: EdgeInsets.zero,
+          child: _CompactActionTile(
+            icon: Icons.account_tree_rounded,
+            title: 'Gouvernance & accès',
+            subtitle: 'Organigramme, rôles, droits et assistant IA',
+            onTap: () => context.go('/access-control'),
           ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),

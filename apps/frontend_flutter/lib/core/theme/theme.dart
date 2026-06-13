@@ -126,9 +126,19 @@ abstract final class ConfidiaTheme {
         height: 68,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: surfaceVariant,
+        backgroundColor: isDark ? ConfidiaColors.darkSurfaceElevated : ConfidiaColors.lightSurface,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 6,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: border.withValues(alpha: 0.6)),
+        ),
+        contentTextStyle: TextStyle(
+          color: ConfidiaColors.textPrimary(isDark),
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+          height: 1.35,
+        ),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(

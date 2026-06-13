@@ -7,6 +7,9 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/ai_insight_model.dart';
+import '../../shared/widgets/cofid_ia_brand.dart';
+import '../../shared/widgets/confidia_ai_robot.dart';
+import '../../shared/widgets/confidia_snackbar.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/provider_chip.dart';
@@ -91,7 +94,7 @@ class EmailDetailScreen extends ConsumerWidget {
                   children: [
                     if (email.documentId != null)
                       _ActionChip(icon: Icons.description_rounded, label: 'Fiche documentaire', onTap: () => context.go('/documents/${email.documentId}')),
-                    _ActionChip(icon: Icons.auto_awesome_rounded, label: 'Analyser avec l\'IA', onTap: () => _showSnack(context, 'Analyse IA terminée')),
+                    _ActionChip(icon: Icons.smart_toy_rounded, label: 'Analyser avec l\'IA', onTap: () => _showSnack(context, 'Analyse IA terminée', type: ConfidiaSnackType.success)),
                     _ActionChip(icon: Icons.archive_rounded, label: 'Archiver', onTap: () => _showSnack(context, 'Email archivé')),
                     _ActionChip(icon: Icons.notifications_active_rounded, label: 'Créer un rappel', onTap: () => _showSnack(context, 'Rappel créé')),
                     if (email.eventId != null)
@@ -120,8 +123,8 @@ class EmailDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _showSnack(BuildContext context, String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), behavior: SnackBarBehavior.floating));
+  void _showSnack(BuildContext context, String msg, {ConfidiaSnackType type = ConfidiaSnackType.info}) {
+    showConfidiaSnackBar(context, msg, type: type);
   }
 }
 
@@ -140,10 +143,9 @@ class _AiInsightCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.auto_awesome_rounded, color: context.palette.secondary, size: 20),
-              const SizedBox(width: 8),
-              Text('Résumé IA', style: Theme.of(context).textTheme.titleSmall),
-              const Spacer(),
+              const ConfidiaAiRobot(size: 32),
+              const SizedBox(width: 10),
+              const Expanded(child: CofidIaBrand()),
               StatusBadge(label: 'Priorité ${insight.priority.label}', color: insight.priority.themeColor(context.palette)),
             ],
           ),

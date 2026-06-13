@@ -4,14 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/auth/auth_provider.dart';
+import '../navigation/confidia_parent_route.dart';
 import '../navigation/confidia_route_labels.dart';
 import '../../shared/models/user_model.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../features/profile/profile_avatar_provider.dart';
 import '../../shared/data/mock_data.dart';
-import 'confidia_animated_logo.dart';
 import 'confidia_button.dart';
+import 'confidia_logo.dart';
+import 'confidia_page_header.dart';
 import 'theme_toggle_button.dart';
 import 'user_avatar.dart';
 
@@ -47,6 +49,7 @@ class AppTopBar extends ConsumerWidget {
     if (path.startsWith('/notifications')) return (ConfidiaRouteLabels.notifications, 'Centre d\'alertes');
     if (path.startsWith('/profile')) return ('Profil', 'Compte et identité');
     if (path.startsWith('/settings')) return (ConfidiaRouteLabels.settings, 'Préférences');
+    if (path.startsWith('/access-control')) return ('Gouvernance', 'Rôles, droits & IA planning');
     if (path.startsWith('/admin')) return ('Administration', 'Plateforme');
     return ('CONFIDIA', null);
   }
@@ -58,6 +61,8 @@ class AppTopBar extends ConsumerWidget {
     final avatarBase64 = ref.watch(profileAvatarProvider);
     final unread = MockData.notifications.where((n) => !n.read).length;
     final isWide = MediaQuery.of(context).size.width >= 900;
+    final path = GoRouterState.of(context).matchedLocation;
+    final backRoute = confidiaParentRoute(path);
 
     return Container(
       height: ConfidiaSpacing.topBarHeight,
@@ -70,18 +75,28 @@ class AppTopBar extends ConsumerWidget {
         children: [
           Expanded(
             child: isWide
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                ? Row(
                     children: [
-                      Text(title, style: Theme.of(context).textTheme.titleLarge),
-                      if (subtitle != null)
-                        Text(subtitle!, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                      if (backRoute != null) ...[
+                        ConfidiaBackButton(parentRoute: backRoute),
+                        const SizedBox(width: 10),
+                      ],
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(title, style: Theme.of(context).textTheme.titleLarge),
+                            if (subtitle != null)
+                              Text(subtitle!, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          ],
+                        ),
+                      ),
                     ],
                   )
                 : const Align(
                     alignment: Alignment.centerLeft,
-                    child: ConfidiaAnimatedLogo(layout: ConfidiaAnimatedLogoLayout.topBar),
+                    child: ConfidiaLogo(size: 26, showText: true),
                   ),
           ),
           const _TopBarDate(),

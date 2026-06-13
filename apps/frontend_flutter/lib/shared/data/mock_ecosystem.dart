@@ -469,6 +469,62 @@ abstract final class MockEcosystem {
     ),
   ];
 
+  static final clubCalendarEvents = [
+    CalendarEventModel(
+      id: 'evt-club-training',
+      title: 'Entraînement U17',
+      description: 'Terrain synthétique',
+      start: _calDay(3, hour: 18),
+      end: _calDay(3, hour: 19, minute: 30),
+      eventType: EventType.meeting,
+      location: 'Stade municipal',
+      source: CalendarSource.confidia,
+      calendarGroup: 'club',
+    ),
+    CalendarEventModel(
+      id: 'evt-club-staff',
+      title: 'Réunion staff',
+      description: 'Bilan mi-saison',
+      start: _calDay(3, hour: 18),
+      end: _calDay(3, hour: 19),
+      eventType: EventType.meeting,
+      location: 'Salle club house',
+      source: CalendarSource.confidia,
+      calendarGroup: 'club',
+    ),
+    CalendarEventModel(
+      id: 'evt-club-match',
+      title: 'Match championnat U17',
+      start: _calDay(7, hour: 15),
+      end: _calDay(7, hour: 17),
+      eventType: EventType.appointment,
+      location: 'Stade des Lilas',
+      source: CalendarSource.google,
+      calendarGroup: 'club',
+    ),
+    CalendarEventModel(
+      id: 'evt-club-ag',
+      title: 'Assemblée générale club',
+      start: _calDay(14, hour: 19),
+      end: _calDay(14, hour: 21),
+      eventType: EventType.meeting,
+      location: 'Salle polyvalente',
+      source: CalendarSource.confidia,
+      calendarGroup: 'club',
+    ),
+    CalendarEventModel(
+      id: 'evt-club-today',
+      title: 'Collecte licences',
+      start: _calDay(0, hour: 18, minute: 30),
+      end: _calDay(0, hour: 19, minute: 30),
+      eventType: EventType.reminder,
+      source: CalendarSource.confidia,
+      calendarGroup: 'club',
+    ),
+  ];
+
+  static List<CalendarEventModel> get allCalendarEvents => [...calendarEvents, ...clubCalendarEvents];
+
   // ── Comptes connectés ──────────────────────────────────────────────────
   static final connectedAccounts = [
     ConnectedAccountModel(

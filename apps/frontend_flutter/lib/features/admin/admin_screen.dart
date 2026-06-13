@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
@@ -66,7 +67,7 @@ class AdminScreen extends ConsumerWidget {
             const SizedBox(height: ConfidiaSpacing.lg),
             ConfidiaPageReveal(
               index: 2,
-              staggerCount: 3,
+              staggerCount: 4,
               child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
               child: Card(
@@ -83,6 +84,23 @@ class AdminScreen extends ConsumerWidget {
                     const Divider(height: 1),
                     _UserRow(name: 'Marie Martin', email: 'manager@confidia.local', role: 'MANAGER'),
                   ],
+                ),
+              ),
+            ),
+            ),
+            const SizedBox(height: ConfidiaSpacing.lg),
+            ConfidiaPageReveal(
+              index: 3,
+              staggerCount: 4,
+              child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
+              child: Card(
+                child: ListTile(
+                  leading: Icon(Icons.account_tree_rounded, color: context.palette.primary),
+                  title: const Text('Gouvernance & accès'),
+                  subtitle: const Text('Organigramme, rôles, droits et IA planning'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: () => context.go('/access-control'),
                 ),
               ),
             ),

@@ -32,7 +32,7 @@ extension DashboardWidgetTypeX on DashboardWidgetType {
         DashboardWidgetType.importantDocs => 'Documents importants',
         DashboardWidgetType.activity => 'Activité récente',
         DashboardWidgetType.connectedAccounts => 'Comptes connectés',
-        DashboardWidgetType.aiAnalyzed => 'Documents analysés par IA',
+        DashboardWidgetType.aiAnalyzed => 'Documents analysés par Cofid-IA',
       };
 
   bool get isHalfWidth => switch (this) {

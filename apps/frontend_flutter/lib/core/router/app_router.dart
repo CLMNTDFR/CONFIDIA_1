@@ -19,6 +19,7 @@ import '../../features/messaging/email_detail_screen.dart';
 import '../../features/profile/profile_screen.dart';
 import '../../features/settings/settings_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
+import '../../features/access_control/access_control_screen.dart';
 import '../../features/admin/admin_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 
@@ -120,6 +121,10 @@ final routerProvider = Provider<GoRouter>((ref) {
           GoRoute(
             path: '/settings',
             pageBuilder: (context, state) => fadeSlidePage(child: const SettingsScreen()),
+          ),
+          GoRoute(
+            path: '/access-control',
+            pageBuilder: (context, state) => fadeSlidePage(child: const AccessControlScreen()),
           ),
           GoRoute(
             path: '/admin',

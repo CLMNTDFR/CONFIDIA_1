@@ -1,17 +1,16 @@
-import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
-import 'confidia_logo.dart';
+import 'confidia_animated_logo.dart';
 
-/// Profil de vitesse : connexion (boucle modérée) vs accueil (4,5 s).
+/// Profil de vitesse : connexion (boucle modérée) vs chargement post-login (4,5 s).
 enum LogoTransitionProfile { connection, welcome }
 
-/// Animation fluide du logo CONFIDIA : apparition, respiration, disparition.
+/// Overlay de chargement : logo + CONFIDIA + Hub numérique avec anneau animé.
 class LogoAuthTransition extends StatefulWidget {
   final bool active;
   final String? subtitle;
@@ -32,13 +31,11 @@ class LogoAuthTransition extends StatefulWidget {
   State<LogoAuthTransition> createState() => _LogoAuthTransitionState();
 }
 
-class _LogoAuthTransitionState extends State<LogoAuthTransition> with TickerProviderStateMixin {
+class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTickerProviderStateMixin {
   late final AnimationController _main;
-  late final AnimationController _ring;
   late final Animation<double> _logoScale;
   late final Animation<double> _logoOpacity;
   late final Animation<double> _subtitleOpacity;
-  late final Animation<double> _glowPulse;
   bool _completing = false;
   bool _completeFired = false;
 
@@ -48,16 +45,17 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with TickerProv
       ? const Duration(milliseconds: 4500)
       : const Duration(milliseconds: 2400);
 
-  Duration get _ringDuration => _isWelcome
-      ? const Duration(milliseconds: 6000)
-      : const Duration(milliseconds: 5000);
-
   @override
   void initState() {
     super.initState();
     _main = AnimationController(vsync: this, duration: _cycleDuration);
-    _ring = AnimationController(vsync: this, duration: _ringDuration)..repeat();
+    _buildAnimations();
 
+    _main.addStatusListener(_onMainStatus);
+    if (widget.active) _startCycle();
+  }
+
+  void _buildAnimations() {
     if (_isWelcome) {
       _logoScale = TweenSequence<double>([
         TweenSequenceItem(
@@ -133,13 +131,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with TickerProv
         ),
       ]).animate(_main);
     }
-
-    _glowPulse = Tween<double>(begin: 0.3, end: 0.9).animate(
-      CurvedAnimation(parent: _ring, curve: Curves.easeInOut),
-    );
-
-    _main.addStatusListener(_onMainStatus);
-    if (widget.active) _startCycle();
   }
 
   @override
@@ -186,7 +177,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with TickerProv
   void dispose() {
     _main.removeStatusListener(_onMainStatus);
     _main.dispose();
-    _ring.dispose();
     super.dispose();
   }
 
@@ -208,11 +198,8 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with TickerProv
                 color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.88),
                 child: Center(
                   child: AnimatedBuilder(
-                    animation: Listenable.merge([_main, _ring]),
+                    animation: _main,
                     builder: (context, _) {
-                      final breathe = 1 + math.sin(_ring.value * math.pi * 2) * 0.02;
-                      final ringAngle = _ring.value * 2 * math.pi;
-
                       return Padding(
                         padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.xl),
                         child: Column(
@@ -222,59 +209,24 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with TickerProv
                             Opacity(
                               opacity: _logoOpacity.value,
                               child: Transform.scale(
-                                scale: _logoScale.value * breathe,
-                                child: Stack(
-                                  clipBehavior: Clip.none,
-                                  alignment: Alignment.center,
-                                  children: [
-                                    Transform.rotate(
-                                      angle: ringAngle,
-                                      child: Container(
-                                        width: 168,
-                                        height: 168,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          gradient: SweepGradient(
-                                            colors: [
-                                              context.palette.primary.withValues(alpha: _glowPulse.value * 0.12),
-                                              context.palette.secondary.withValues(alpha: _glowPulse.value * 0.5),
-                                              context.palette.accent.withValues(alpha: _glowPulse.value * 0.3),
-                                              context.palette.primary.withValues(alpha: _glowPulse.value * 0.12),
-                                            ],
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Container(
-                                      width: 130,
-                                      height: 130,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: context.palette.secondary.withValues(alpha: 0.2 * _glowPulse.value),
-                                            blurRadius: 48,
-                                            spreadRadius: 2,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    const ConfidiaLogo(size: 68),
-                                  ],
-                                ),
+                                scale: _logoScale.value,
+                                child: const ConfidiaAnimatedLogo(size: 56, showText: true),
                               ),
                             ),
                             if (widget.subtitle != null) ...[
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 28),
                               Opacity(
                                 opacity: _subtitleOpacity.value,
                                 child: Text(
                                   widget.subtitle!,
                                   textAlign: TextAlign.center,
-                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                        color: ConfidiaColors.textSecondary(isDark),
-                                        letterSpacing: 0.4,
-                                      ),
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                    letterSpacing: 0.65,
+                                    height: 1.45,
+                                    color: ConfidiaColors.textSecondary(isDark),
+                                  ),
                                 ),
                               ),
                             ],

@@ -42,6 +42,12 @@ dev_dependencies:
 flutter:
   uses-material-design: true
   assets:
+    - assets/ai/blue-ia.png
+    - assets/ai/pink-ia.png
+    - assets/logo/confidia-logo-blue-128.png
+    - assets/logo/confidia-logo-blue-256.png
+    - assets/logo/confidia-logo-pink-128.png
+    - assets/logo/confidia-logo-pink-256.png
     - brands/gmail.png
     - brands/googlecalendar.png
     - brands/googledocs.png

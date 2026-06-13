@@ -38,6 +38,7 @@ class CalendarEventModel extends Equatable {
   final CalendarSource source;
   final String? paymentId;
   final String? emailId;
+  final String calendarGroup;
 
   const CalendarEventModel({
     required this.id,
@@ -53,6 +54,7 @@ class CalendarEventModel extends Equatable {
     this.source = CalendarSource.confidia,
     this.paymentId,
     this.emailId,
+    this.calendarGroup = 'family',
   });
 
   factory CalendarEventModel.fromJson(Map<String, dynamic> json) {
@@ -76,6 +78,7 @@ class CalendarEventModel extends Equatable {
       ),
       paymentId: json['payment_id'] as String?,
       emailId: json['email_id'] as String?,
+      calendarGroup: json['calendar_group'] as String? ?? 'family',
     );
   }
 
@@ -93,6 +96,7 @@ class CalendarEventModel extends Equatable {
         'source': source.name,
         'payment_id': paymentId,
         'email_id': emailId,
+        'calendar_group': calendarGroup,
       };
 
   CalendarEventModel copyWith({
@@ -109,6 +113,7 @@ class CalendarEventModel extends Equatable {
     CalendarSource? source,
     String? paymentId,
     String? emailId,
+    String? calendarGroup,
   }) {
     return CalendarEventModel(
       id: id ?? this.id,
@@ -124,9 +129,10 @@ class CalendarEventModel extends Equatable {
       source: source ?? this.source,
       paymentId: paymentId ?? this.paymentId,
       emailId: emailId ?? this.emailId,
+      calendarGroup: calendarGroup ?? this.calendarGroup,
     );
   }
 
   @override
-  List<Object?> get props => [id, title, start, end, eventType];
+  List<Object?> get props => [id, title, start, end, eventType, calendarGroup];
 }

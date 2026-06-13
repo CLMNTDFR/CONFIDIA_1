@@ -14,12 +14,13 @@ CONFIDIA orchestre des solutions open source matures (Paperless-ngx, Nextcloud, 
 - Centre de notifications
 - Tableau de bord premium
 - Architecture IA prête (MockAIProvider)
+- **Gouvernance & accès** — organigramme, rôles, droits granulaires, consentement documentaire, assistant IA planning (démo)
 
 ## Stack technique
 
 | Couche | Technologie |
 |--------|-------------|
-| Frontend | Flutter (Android, iOS, Windows, macOS, Linux) |
+| Frontend | Flutter (Android, iOS, Windows, macOS, Linux, Web) |
 | Backend | FastAPI + Python 3.12+ |
 | Auth | Keycloak (OAuth2, OIDC, Refresh Tokens) |
 | Documents | Paperless-ngx |
@@ -48,7 +49,7 @@ CONFIDIA/
 
 ### Prérequis
 
-- Docker & Docker Compose
+- Docker & Docker Compose (ou Colima sur macOS)
 - Flutter SDK (stable)
 - Python 3.12+
 
@@ -58,15 +59,31 @@ CONFIDIA/
 ./scripts/start.sh
 ```
 
-### 2. Lancer le frontend
+Si Docker n'est pas démarré sur macOS :
+
+```bash
+colima start
+./scripts/start.sh
+```
+
+### 2. Lancer le frontend (web local)
 
 ```bash
 cd apps/frontend_flutter
 flutter pub get
-flutter run
+flutter run -d chrome --web-port=8082
 ```
 
-Utilisez **Mode démo** pour tester sans backend, ou connectez-vous avec `user/user`.
+L'application est accessible sur **http://localhost:8082**.
+
+Autres plateformes :
+
+```bash
+flutter run -d macos    # macOS
+flutter run             # appareil / émulateur par défaut
+```
+
+Connectez-vous avec `user` / `user`, ou utilisez le **mode démo** sans backend.
 
 ### 3. API Backend
 
@@ -82,22 +99,43 @@ Utilisez **Mode démo** pour tester sans backend, ou connectez-vous avec `user/u
 | user | user | USER |
 | manager | manager | MANAGER, USER |
 
+## Gouvernance, rôles & droits
+
+CONFIDIA vise des usages **personnels** et **collectifs** (famille, club, association). L'utilisateur configure lui-même :
+
+| Capacité | Description |
+|----------|-------------|
+| **Organigramme** | Hiérarchie visuelle drag-and-drop (directeur → staff → licenciés…) |
+| **Rôles** | Modèles prédéfinis (admin, parent, entraîneur, trésorier…) |
+| **Permissions** | Droits fins : calendrier, pièces d'identité, bulletins de salaire… |
+| **Consentement** | Notification + acceptation/refus avant partage de documents sensibles |
+| **IA Planning** | Détection de conflits calendrier / trajets, proposition ajustable par prompt |
+
+**Dans l'app :** Paramètres → *Gouvernance & accès* (`/access-control`)
+
+**Documentation complète :** [docs/AccessControl.md](docs/AccessControl.md)
+
+**API :** `GET/PUT /api/v1/access-control/*` (voir Swagger)
+
 ## Documentation
 
 - [Architecture](docs/Architecture.md)
 - [Installation](docs/Installation.md)
+- [Gouvernance & accès](docs/AccessControl.md)
+- [Design system Flutter](apps/frontend_flutter/README.md)
 - [Roadmap](docs/Roadmap.md)
 - [Contributing](docs/Contributing.md)
 
 ## Identité visuelle
 
-| Couleur | Hex | Usage |
-|---------|-----|-------|
-| Primary | `#d20050` | Actions, accents |
-| Secondary | `#af73f7` | Highlights |
-| Accent | `#4b96b4` | Informations |
+Deux palettes interchangeables (Paramètres → Apparence) :
 
-Dark mode par défaut, light mode disponible.
+| | Thème bleu (défaut) | Thème rose |
+|---|---|---|
+| Primary | `#015AAB` | `#D20050` |
+| Secondary | `#06E5EF` | `#AF73F7` |
+
+Dark mode par défaut, light mode disponible. Voir le [design system](apps/frontend_flutter/README.md).
 
 ## Licence
 

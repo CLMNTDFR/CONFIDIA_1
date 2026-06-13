@@ -3,6 +3,7 @@ import 'package:file_picker/file_picker.dart';
 
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
+import '../../shared/widgets/confidia_snackbar.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
@@ -39,9 +40,7 @@ class _UploadScreenState extends State<UploadScreen> {
       _files.clear();
     });
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Documents uploadés avec succès')),
-      );
+      context.showConfidiaSnack('Documents uploadés avec succès', type: ConfidiaSnackType.success);
     }
   }
 

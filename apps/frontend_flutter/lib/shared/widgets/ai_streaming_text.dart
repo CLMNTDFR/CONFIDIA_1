@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import 'confidia_ai_robot.dart';
 
 /// Affiche du texte progressivement, comme une réponse IA en cours de rédaction.
 class AiStreamingText extends StatefulWidget {
@@ -9,6 +10,8 @@ class AiStreamingText extends StatefulWidget {
   final TextStyle? style;
   final Duration thinkingDelay;
   final VoidCallback? onComplete;
+  final VoidCallback? onStreamStart;
+  final bool showThinkingRobot;
 
   const AiStreamingText({
     super.key,
@@ -16,6 +19,8 @@ class AiStreamingText extends StatefulWidget {
     this.style,
     this.thinkingDelay = const Duration(milliseconds: 450),
     this.onComplete,
+    this.onStreamStart,
+    this.showThinkingRobot = true,
   });
 
   @override
@@ -43,8 +48,24 @@ class _AiStreamingTextState extends State<AiStreamingText> with TickerProviderSt
     Future<void>.delayed(widget.thinkingDelay, () {
       if (!mounted) return;
       setState(() => _thinking = false);
+      widget.onStreamStart?.call();
       _stream.forward();
     });
+  }
+
+  @override
+  void didUpdateWidget(AiStreamingText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _stream.reset();
+      setState(() => _thinking = true);
+      Future<void>.delayed(widget.thinkingDelay, () {
+        if (!mounted) return;
+        setState(() => _thinking = false);
+        widget.onStreamStart?.call();
+        _stream.forward();
+      });
+    }
   }
 
   @override
@@ -62,6 +83,10 @@ class _AiStreamingTextState extends State<AiStreamingText> with TickerProviderSt
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          if (widget.showThinkingRobot) ...[
+            const ConfidiaAiRobot(size: 28, speaking: true),
+            const SizedBox(width: 8),
+          ],
           _ThinkingDots(style: style),
         ],
       );
