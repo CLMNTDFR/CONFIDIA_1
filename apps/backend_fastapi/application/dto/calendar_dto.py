@@ -11,6 +11,12 @@ class EventType(str, Enum):
     APPOINTMENT = "appointment"
 
 
+class WeekCalendarScope(str, Enum):
+    PERSONAL = "personal"
+    FAMILY = "family"
+    PROFESSIONAL = "professional"
+
+
 class CalendarEventDTO(BaseModel):
     id: str
     title: str
@@ -22,6 +28,7 @@ class CalendarEventDTO(BaseModel):
     all_day: bool = False
     color: str | None = None
     document_id: int | None = None
+    calendar_scope: WeekCalendarScope = WeekCalendarScope.PERSONAL
 
 
 class CalendarEventCreateDTO(BaseModel):

@@ -30,6 +30,7 @@ import '../../shared/widgets/mobile_shell_insets.dart';
 import 'dashboard_chart_widgets.dart';
 import 'dashboard_grid.dart';
 import 'dashboard_provider.dart';
+import 'week_overview_widget.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -129,6 +130,7 @@ class DashboardScreen extends ConsumerWidget {
 
     final content = switch (type) {
       DashboardWidgetType.greeting => const SizedBox.shrink(),
+      DashboardWidgetType.weekOverview => const WeekOverviewWidget(),
       DashboardWidgetType.stats => _StatsWidget(docs: docs, events: events, notifications: notifications, pendingCount: pendingPayments.length),
       DashboardWidgetType.expensesTrend => const ExpensesTrendChartWidget(),
       DashboardWidgetType.paymentsOverview => const PaymentsOverviewChartWidget(),
@@ -286,6 +288,7 @@ class _EditSegmentRow extends StatelessWidget {
 
 IconData _iconForType(DashboardWidgetType type) => switch (type) {
       DashboardWidgetType.greeting => Icons.waving_hand_rounded,
+      DashboardWidgetType.weekOverview => Icons.calendar_view_week_rounded,
       DashboardWidgetType.stats => Icons.insights_rounded,
       DashboardWidgetType.expensesTrend => Icons.trending_up_rounded,
       DashboardWidgetType.paymentsOverview => Icons.bar_chart_rounded,

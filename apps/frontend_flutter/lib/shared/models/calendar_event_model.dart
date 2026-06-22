@@ -2,6 +2,8 @@ import 'package:confidia/core/theme/palette.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
+import 'week_overview_model.dart';
+
 enum EventType { deadline, meeting, reminder, appointment }
 
 enum CalendarSource { confidia, google, outlook, apple, microsoft365 }
@@ -39,6 +41,7 @@ class CalendarEventModel extends Equatable {
   final String? paymentId;
   final String? emailId;
   final String calendarGroup;
+  final WeekCalendarScope? weekScope;
 
   const CalendarEventModel({
     required this.id,
@@ -55,6 +58,7 @@ class CalendarEventModel extends Equatable {
     this.paymentId,
     this.emailId,
     this.calendarGroup = 'family',
+    this.weekScope,
   });
 
   factory CalendarEventModel.fromJson(Map<String, dynamic> json) {
@@ -79,6 +83,9 @@ class CalendarEventModel extends Equatable {
       paymentId: json['payment_id'] as String?,
       emailId: json['email_id'] as String?,
       calendarGroup: json['calendar_group'] as String? ?? 'family',
+      weekScope: json['calendar_scope'] != null
+          ? WeekCalendarScope.values.firstWhere((s) => s.name == json['calendar_scope'])
+          : null,
     );
   }
 
@@ -97,6 +104,7 @@ class CalendarEventModel extends Equatable {
         'payment_id': paymentId,
         'email_id': emailId,
         'calendar_group': calendarGroup,
+        'calendar_scope': weekScope?.name,
       };
 
   CalendarEventModel copyWith({
@@ -114,6 +122,7 @@ class CalendarEventModel extends Equatable {
     String? paymentId,
     String? emailId,
     String? calendarGroup,
+    WeekCalendarScope? weekScope,
   }) {
     return CalendarEventModel(
       id: id ?? this.id,
@@ -130,6 +139,7 @@ class CalendarEventModel extends Equatable {
       paymentId: paymentId ?? this.paymentId,
       emailId: emailId ?? this.emailId,
       calendarGroup: calendarGroup ?? this.calendarGroup,
+      weekScope: weekScope ?? this.weekScope,
     );
   }
 

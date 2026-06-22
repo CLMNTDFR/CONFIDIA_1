@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 enum DashboardWidgetType {
   greeting,
+  weekOverview,
   stats,
   expensesTrend,
   paymentsOverview,
@@ -20,6 +21,7 @@ enum DashboardWidgetType {
 extension DashboardWidgetTypeX on DashboardWidgetType {
   String get label => switch (this) {
         DashboardWidgetType.greeting => 'Bienvenue',
+        DashboardWidgetType.weekOverview => 'Ma semaine en un coup d\'œil',
         DashboardWidgetType.stats => 'Statistiques',
         DashboardWidgetType.expensesTrend => 'Évolution des dépenses',
         DashboardWidgetType.paymentsOverview => 'Vue des paiements',
@@ -55,6 +57,7 @@ extension DashboardWidgetTypeX on DashboardWidgetType {
 
   String get iconName => switch (this) {
         DashboardWidgetType.greeting => 'waving_hand',
+        DashboardWidgetType.weekOverview => 'calendar_view_week',
         DashboardWidgetType.stats => 'analytics',
         DashboardWidgetType.expensesTrend => 'trending_up',
         DashboardWidgetType.paymentsOverview => 'bar_chart',
@@ -102,6 +105,7 @@ class DashboardLayoutNotifier extends StateNotifier<DashboardLayout> {
   DashboardLayoutNotifier()
       : super(const DashboardLayout(
           order: [
+            DashboardWidgetType.weekOverview,
             DashboardWidgetType.stats,
             DashboardWidgetType.expensesTrend,
             DashboardWidgetType.paymentsOverview,
@@ -161,6 +165,7 @@ class DashboardLayoutNotifier extends StateNotifier<DashboardLayout> {
   void reset() {
     state = const DashboardLayout(
       order: [
+        DashboardWidgetType.weekOverview,
         DashboardWidgetType.stats,
         DashboardWidgetType.expensesTrend,
         DashboardWidgetType.paymentsOverview,
