@@ -5,7 +5,7 @@ import '../../core/theme/colors.dart';
 import 'confidia_tooltip.dart';
 import 'glass_card.dart';
 
-/// Bouton compact « Voir tout » — flèche discrète, cohérente sur tout le tableau de bord.
+/// Bouton compact « Voir tout »  -  flèche discrète, cohérente sur tout le tableau de bord.
 class ConfidiaSeeAllButton extends StatelessWidget {
   final VoidCallback onTap;
 

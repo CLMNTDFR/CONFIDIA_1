@@ -1,4 +1,12 @@
+from enum import Enum
+
 from pydantic import BaseModel, Field
+
+
+class HierarchyLinkType(str, Enum):
+    REPORTS_TO = "reportsTo"
+    DOTTED_LINE = "dottedLine"
+    DELEGATE = "delegate"
 
 
 class PermissionDTO(BaseModel):
@@ -23,6 +31,9 @@ class OrgNodeDTO(BaseModel):
     role_id: str
     parent_id: str | None = None
     avatar_initials: str | None = None
+    member_id: str | None = None
+    sort_order: int = 0
+    hierarchy_link_type: HierarchyLinkType = HierarchyLinkType.REPORTS_TO
 
 
 class OrganizationDTO(BaseModel):
@@ -77,6 +88,11 @@ class SharingRespondDTO(BaseModel):
 class OrganizationUpdateDTO(BaseModel):
     scenario: str
     nodes: list[OrgNodeDTO]
+
+
+class OrgNodeReparentDTO(BaseModel):
+    parent_id: str | None = None
+    hierarchy_link_type: HierarchyLinkType | None = None
 
 
 class MemberUpdateDTO(BaseModel):

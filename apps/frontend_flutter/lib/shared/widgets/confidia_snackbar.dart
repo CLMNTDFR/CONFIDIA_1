@@ -7,7 +7,7 @@ import 'mobile_shell_insets.dart';
 
 enum ConfidiaSnackType { success, error, warning, info }
 
-/// Affiche un message flottant lisible sur fond clair et sombre.
+/// Toast flottant compact, centré sur desktop, adapté mobile.
 void showConfidiaSnackBar(
   BuildContext context,
   String message, {
@@ -18,58 +18,66 @@ void showConfidiaSnackBar(
   final palette = context.palette;
   final isMobileShell = ConfidiaMobileShell.isMobileShell(context);
 
-  final (Color background, Color foreground, IconData icon) = switch (type) {
+  final (Color accent, Color surface, IconData icon) = switch (type) {
     ConfidiaSnackType.success => (
-        isDark ? const Color(0xFF0D3D2E) : const Color(0xFFECFDF5),
-        isDark ? const Color(0xFF6EE7B7) : const Color(0xFF047857),
+        ConfidiaColors.success,
+        isDark ? const Color(0xFF0F2E24) : const Color(0xFFECFDF5),
         Icons.check_circle_rounded,
       ),
     ConfidiaSnackType.error => (
-        isDark ? const Color(0xFF451A1A) : const Color(0xFFFEF2F2),
-        isDark ? const Color(0xFFFCA5A5) : const Color(0xFFB91C1C),
+        ConfidiaColors.error,
+        isDark ? const Color(0xFF3F1717) : const Color(0xFFFEF2F2),
         Icons.error_outline_rounded,
       ),
     ConfidiaSnackType.warning => (
-        isDark ? const Color(0xFF422006) : const Color(0xFFFFFBEB),
-        isDark ? const Color(0xFFFCD34D) : const Color(0xFFB45309),
+        ConfidiaColors.warning,
+        isDark ? const Color(0xFF3D2E0A) : const Color(0xFFFFFBEB),
         Icons.warning_amber_rounded,
       ),
     ConfidiaSnackType.info => (
-        isDark ? palette.primary.withValues(alpha: 0.22) : palette.primary.withValues(alpha: 0.1),
-        isDark ? ConfidiaColors.darkTextPrimary : palette.primary,
+        palette.primary,
+        isDark ? const Color(0xFF12182A) : const Color(0xFFEFF6FF),
         Icons.info_outline_rounded,
       ),
   };
 
   final messenger = ScaffoldMessenger.of(context);
+  messenger.clearSnackBars();
   messenger.hideCurrentSnackBar();
 
+  // Flutter interdit width + margin simultanément : width sur desktop (centrage auto), margin sur mobile.
   messenger.showSnackBar(
     SnackBar(
       behavior: SnackBarBehavior.floating,
       duration: duration,
-      backgroundColor: background,
-      elevation: isDark ? 8 : 4,
+      backgroundColor: surface,
+      elevation: isDark ? 10 : 6,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: foreground.withValues(alpha: 0.22)),
+        borderRadius: BorderRadius.circular(14),
+        side: BorderSide(color: accent.withValues(alpha: isDark ? 0.45 : 0.35)),
       ),
-      margin: EdgeInsets.only(
-        left: ConfidiaSpacing.lg,
-        right: ConfidiaSpacing.lg,
-        bottom: isMobileShell ? ConfidiaMobileShell.fabBottom(context) : ConfidiaSpacing.lg,
-      ),
+      width: isMobileShell ? null : 380,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      margin: isMobileShell
+          ? EdgeInsets.only(
+              left: ConfidiaSpacing.md,
+              right: ConfidiaSpacing.md,
+              bottom: ConfidiaMobileShell.fabBottom(context),
+            )
+          : null,
       content: Row(
         children: [
-          Icon(icon, color: foreground, size: 20),
+          Icon(icon, color: accent, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               message,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: foreground,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: isDark ? Colors.white.withValues(alpha: 0.92) : ConfidiaColors.lightTextPrimary,
                     fontWeight: FontWeight.w600,
-                    height: 1.35,
+                    height: 1.25,
                   ),
             ),
           ),

@@ -107,7 +107,7 @@ class ConfidiaBrandText extends StatelessWidget {
   }
 }
 
-/// Logo CONFIDIA statique — utilisé partout dans l'application.
+/// Logo CONFIDIA statique  -  utilisé partout dans l'application.
 class ConfidiaLogo extends StatelessWidget {
   final double size;
   final bool showText;

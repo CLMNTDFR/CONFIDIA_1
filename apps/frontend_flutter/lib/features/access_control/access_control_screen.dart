@@ -6,10 +6,12 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
 import '../../shared/models/access_control_models.dart';
+import '../../shared/widgets/confidia_confirm_dialog.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/confidia_snackbar.dart';
+import 'widgets/member_permissions_picker.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/planning_ai_panel.dart';
 import '../../shared/widgets/status_badge.dart';
@@ -142,7 +144,22 @@ class _OrgTab extends ConsumerWidget {
       children: [
         OrgChartWidget(
           nodes: state.activeData.nodes,
-          onReparent: (pair) => ref.read(accessControlProvider.notifier).reparentNode(pair.$1, pair.$2),
+          members: state.activeData.members,
+          roles: ref.watch(accessRolesProvider),
+          levelLabels: state.activeData.levelLabels,
+          onReparentToLevel: (pair) => ref.read(accessControlProvider.notifier).reparentToLevel(pair.$1, pair.$2),
+          onReparentAboveTop: (id) => ref.read(accessControlProvider.notifier).reparentAboveTop(id),
+          onLinkTypeChanged: (pair) => ref.read(accessControlProvider.notifier).updateNodeLinkType(pair.$1, pair.$2),
+          onUpdateLink: (triple) => ref.read(accessControlProvider.notifier).updateHierarchyLink(
+                childId: triple.$1,
+                parentId: triple.$2,
+                linkType: triple.$3,
+              ),
+          onLevelLabelChanged: (depth, label) => ref.read(accessControlProvider.notifier).setLevelLabel(depth, label),
+          onNodeRoleChanged: (pair) => ref.read(accessControlProvider.notifier).updateNodeRole(pair.$1, pair.$2),
+          onUpsertRole: (role) => ref.read(accessControlProvider.notifier).upsertRole(role),
+          onDeleteRole: (id) => ref.read(accessControlProvider.notifier).deleteCustomRole(id),
+          isBuiltInRole: ref.read(accessControlProvider.notifier).isBuiltInRole,
         ),
         const SizedBox(height: ConfidiaSpacing.md),
         GlassCard(
@@ -173,19 +190,14 @@ class _MembersTab extends ConsumerWidget {
   const _MembersTab({required this.state, required this.permissions, required this.roles});
 
   Future<void> _confirmSave(BuildContext context, WidgetRef ref) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Enregistrer les droits ?'),
-        content: const Text(
+    final ok = await showConfidiaConfirmDialog(
+      context,
+      title: 'Enregistrer les droits ?',
+      message:
           'Les permissions modifiées seront appliquées à tous les membres de cette structure. '
           'Cette action mettra à jour la configuration d\'accès.',
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Enregistrer')),
-        ],
-      ),
+      confirmLabel: 'Enregistrer',
+      icon: Icons.save_rounded,
     );
     if (ok == true) {
       ref.read(accessControlProvider.notifier).saveMembers();
@@ -239,19 +251,11 @@ class _MembersTab extends ConsumerWidget {
                     ),
                     const SizedBox(height: 10),
                     Text('Droits accordés', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 6),
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: permissions.map((p) {
-                        final selected = member.permissions.contains(p.id);
-                        return ConfidiaGlowChip(
-                          label: p.label,
-                          compact: true,
-                          selected: selected,
-                          onTap: () => ref.read(accessControlProvider.notifier).togglePermission(member.id, p.id),
-                        );
-                      }).toList(),
+                    const SizedBox(height: 8),
+                    MemberPermissionsPicker(
+                      permissions: permissions,
+                      selectedIds: member.permissions,
+                      onToggle: (id) => ref.read(accessControlProvider.notifier).togglePermission(member.id, id),
                     ),
                   ],
                 ),

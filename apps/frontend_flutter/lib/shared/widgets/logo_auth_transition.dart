@@ -5,12 +5,15 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
+import '../../core/theme/theme_context.dart';
+import 'ai_streaming_text.dart';
+import 'confidia_ai_robot.dart';
 import 'confidia_animated_logo.dart';
 
 /// Profil de vitesse : connexion (boucle modérée) vs chargement post-login (4,5 s).
 enum LogoTransitionProfile { connection, welcome }
 
-/// Overlay de chargement : logo + CONFIDIA + Hub numérique avec anneau animé.
+/// Overlay de chargement post-login ou pendant la connexion.
 class LogoAuthTransition extends StatefulWidget {
   final bool active;
   final String? subtitle;
@@ -35,9 +38,11 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
   late final AnimationController _main;
   late final Animation<double> _logoScale;
   late final Animation<double> _logoOpacity;
-  late final Animation<double> _subtitleOpacity;
+  late final Animation<double> _aiOpacity;
   bool _completing = false;
   bool _completeFired = false;
+  bool _showAiMessage = false;
+  bool _aiSpeaking = false;
 
   bool get _isWelcome => widget.profile == LogoTransitionProfile.welcome;
 
@@ -59,38 +64,38 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
     if (_isWelcome) {
       _logoScale = TweenSequence<double>([
         TweenSequenceItem(
-          tween: Tween(begin: 0.6, end: 1.0).chain(CurveTween(curve: Curves.easeOutCubic)),
-          weight: 25,
+          tween: Tween(begin: 0.72, end: 1.0).chain(CurveTween(curve: Curves.easeOutCubic)),
+          weight: 28,
         ),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 45),
+        TweenSequenceItem(tween: ConstantTween(1.0), weight: 52),
         TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.92).chain(CurveTween(curve: Curves.easeInCubic)),
-          weight: 30,
+          tween: Tween(begin: 1.0, end: 0.94).chain(CurveTween(curve: Curves.easeInCubic)),
+          weight: 20,
         ),
       ]).animate(_main);
 
       _logoOpacity = TweenSequence<double>([
         TweenSequenceItem(
           tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeOut)),
-          weight: 22,
+          weight: 24,
         ),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 48),
+        TweenSequenceItem(tween: ConstantTween(1.0), weight: 56),
         TweenSequenceItem(
           tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeIn)),
-          weight: 30,
+          weight: 20,
         ),
       ]).animate(_main);
 
-      _subtitleOpacity = TweenSequence<double>([
-        TweenSequenceItem(tween: ConstantTween(0.0), weight: 18),
+      _aiOpacity = TweenSequence<double>([
+        TweenSequenceItem(tween: ConstantTween(0.0), weight: 22),
         TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeOut)),
-          weight: 12,
+          tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeOutCubic)),
+          weight: 14,
         ),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 40),
+        TweenSequenceItem(tween: ConstantTween(1.0), weight: 44),
         TweenSequenceItem(
           tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeIn)),
-          weight: 30,
+          weight: 20,
         ),
       ]).animate(_main);
     } else {
@@ -118,18 +123,7 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
         ),
       ]).animate(_main);
 
-      _subtitleOpacity = TweenSequence<double>([
-        TweenSequenceItem(tween: ConstantTween(0.0), weight: 18),
-        TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeOut)),
-          weight: 12,
-        ),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 50),
-        TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeIn)),
-          weight: 20,
-        ),
-      ]).animate(_main);
+      _aiOpacity = ConstantTween(0.0).animate(_main);
     }
   }
 
@@ -139,6 +133,8 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
     if (widget.active && !oldWidget.active) {
       _completing = false;
       _completeFired = false;
+      _showAiMessage = false;
+      _aiSpeaking = false;
       _startCycle();
     } else if (!widget.active && oldWidget.active && !_completing) {
       _finishAndExit();
@@ -164,7 +160,18 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
 
   void _startCycle() {
     _completeFired = false;
+    _showAiMessage = false;
     _main.forward(from: 0);
+    if (_isWelcome) {
+      Future<void>.delayed(const Duration(milliseconds: 680), () {
+        if (mounted && widget.active) {
+          setState(() {
+            _showAiMessage = true;
+            _aiSpeaking = true;
+          });
+        }
+      });
+    }
   }
 
   void _finishAndExit() {
@@ -189,54 +196,151 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
     return AbsorbPointer(
       child: AnimatedOpacity(
         opacity: widget.active || _completing ? 1 : 0,
-        duration: Duration(milliseconds: _isWelcome ? 250 : 400),
+        duration: Duration(milliseconds: _isWelcome ? 280 : 400),
         child: SizedBox.expand(
-          child: ClipRect(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-              child: ColoredBox(
-                color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.88),
-                child: Center(
-                  child: AnimatedBuilder(
-                    animation: _main,
-                    builder: (context, _) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.xl),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Opacity(
-                              opacity: _logoOpacity.value,
-                              child: Transform.scale(
-                                scale: _logoScale.value,
-                                child: const ConfidiaAnimatedLogo(size: 56, showText: true),
-                              ),
-                            ),
-                            if (widget.subtitle != null) ...[
-                              const SizedBox(height: 28),
-                              Opacity(
-                                opacity: _subtitleOpacity.value,
-                                child: Text(
-                                  widget.subtitle!,
-                                  textAlign: TextAlign.center,
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    letterSpacing: 0.65,
-                                    height: 1.45,
-                                    color: ConfidiaColors.textSecondary(isDark),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      );
-                    },
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                  child: ColoredBox(
+                    color: (isDark ? const Color(0xFF0A0A12) : Colors.white).withValues(alpha: isDark ? 0.42 : 0.38),
                   ),
                 ),
               ),
+              Center(
+                child: AnimatedBuilder(
+                  animation: _main,
+                  builder: (context, _) {
+                    if (_isWelcome) {
+                      return _buildWelcomeContent(context, isDark);
+                    }
+                    return _buildConnectionContent(context, isDark);
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWelcomeContent(BuildContext context, bool isDark) {
+    final message = widget.subtitle ?? 'Chargement de votre espace';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Opacity(
+            opacity: _logoOpacity.value,
+            child: Transform.scale(
+              scale: _logoScale.value,
+              child: const ConfidiaAnimatedLogo(size: 68, showText: false),
+            ),
+          ),
+          const SizedBox(height: 44),
+          Opacity(
+            opacity: _aiOpacity.value,
+            child: _WelcomeAiMessage(
+              visible: _showAiMessage,
+              message: message,
+              speaking: _aiSpeaking,
+              onSpeakingChanged: (v) => setState(() => _aiSpeaking = v),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildConnectionContent(BuildContext context, bool isDark) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.xl),
+      child: Opacity(
+        opacity: _logoOpacity.value,
+        child: Transform.scale(
+          scale: _logoScale.value,
+          child: const ConfidiaAnimatedLogo(size: 56, showText: true),
+        ),
+      ),
+    );
+  }
+}
+
+class _WelcomeAiMessage extends StatelessWidget {
+  final bool visible;
+  final String message;
+  final bool speaking;
+  final ValueChanged<bool> onSpeakingChanged;
+
+  const _WelcomeAiMessage({
+    required this.visible,
+    required this.message,
+    required this.speaking,
+    required this.onSpeakingChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (!visible) return const SizedBox(height: 52);
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final palette = context.palette;
+
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: Container(
+            padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+            decoration: BoxDecoration(
+              color: isDark
+                  ? Colors.white.withValues(alpha: 0.06)
+                  : Colors.white.withValues(alpha: 0.58),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: palette.primary.withValues(alpha: isDark ? 0.22 : 0.14),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: palette.primary.withValues(alpha: isDark ? 0.08 : 0.05),
+                  blurRadius: 28,
+                  offset: const Offset(0, 10),
+                ),
+              ],
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ConfidiaAiRobot(size: 38, speaking: speaking),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Center(
+                    child: AiStreamingText(
+                      key: ValueKey(message),
+                      text: message,
+                      showThinkingRobot: false,
+                      textAlign: TextAlign.center,
+                      thinkingDelay: const Duration(milliseconds: 320),
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        height: 1.55,
+                        letterSpacing: 0.15,
+                        color: isDark ? Colors.white.withValues(alpha: 0.9) : ConfidiaColors.lightTextPrimary,
+                      ),
+                      onStreamStart: () {},
+                      onComplete: () => onSpeakingChanged(false),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

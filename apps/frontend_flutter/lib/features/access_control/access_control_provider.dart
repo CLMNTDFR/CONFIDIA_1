@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'dart:math' as math;
 
 import '../../shared/data/mock_access_control.dart';
 import '../../shared/models/access_control_models.dart';
+import 'widgets/org_chart_layout.dart';
 
 class AccessControlState {
   final String activeStructureId;
@@ -101,14 +103,19 @@ class AccessControlNotifier extends StateNotifier<AccessControlState> {
     state = state.copyWith(activeStructureId: id, membersDirty: false, clearProposal: true);
   }
 
-  void addStructure({required String name, required String description, required StructureTemplate template}) {
+  void addStructure({
+    required String name,
+    required String description,
+    required StructureTemplate template,
+    IconData? icon,
+  }) {
     final id = 'custom_${DateTime.now().millisecondsSinceEpoch}';
     final data = MockAccessControl.dataForTemplate(template, name: name);
     final profile = StructureProfile(
       id: id,
       label: name,
       description: description.isEmpty ? 'Structure personnalisée' : description,
-      icon: Icons.apartment_rounded,
+      icon: icon ?? Icons.apartment_rounded,
       isCustom: true,
     );
     state = state.copyWith(
@@ -133,7 +140,120 @@ class AccessControlNotifier extends StateNotifier<AccessControlState> {
 
   void reparentNode(String nodeId, String? newParentId) {
     if (nodeId == newParentId) return;
-    final nodes = state.activeData.nodes.map((n) => n.id == nodeId ? n.copyWith(parentId: newParentId) : n).toList();
+    final nodes = state.activeData.nodes;
+    if (OrgChartHierarchy.wouldCreateCycle(nodes, nodeId, newParentId)) return;
+    final updated = nodes.map((n) => n.id == nodeId ? n.copyWith(parentId: newParentId) : n).toList();
+    _updateActiveData(state.activeData.copyWith(nodes: updated));
+  }
+
+  /// Repositionne un nœud sur un niveau hiérarchique (0 = racine / niveau 1 affiché).
+  void reparentToLevel(String nodeId, int targetDepth) {
+    final nodes = state.activeData.nodes;
+    final depths = OrgChartLayout.computeDepths(nodes);
+    final currentDepth = depths[nodeId] ?? 0;
+    if (currentDepth == targetDepth) return;
+
+    final maxDepth = depths.values.isEmpty ? 0 : depths.values.reduce(math.max);
+    String? newParentId;
+    if (targetDepth <= 0) {
+      newParentId = null;
+    } else if (targetDepth > maxDepth) {
+      newParentId = OrgChartHierarchy.pickParentAtDepth(nodes, maxDepth, excludeId: nodeId);
+    } else {
+      newParentId = OrgChartHierarchy.parentIdForLevel(nodes, nodeId, targetDepth);
+    }
+
+    if (targetDepth > 0 && newParentId == null) return;
+    if (OrgChartHierarchy.wouldCreateCycle(nodes, nodeId, newParentId)) return;
+
+    reparentNode(nodeId, newParentId);
+  }
+
+  /// Crée un niveau supérieur : le nœud devient responsable des autres racines.
+  void reparentAboveTop(String nodeId) {
+    final nodes = state.activeData.nodes;
+    final depths = OrgChartLayout.computeDepths(nodes);
+    final depth = depths[nodeId] ?? 0;
+    final roots = OrgChartHierarchy.roots(nodes);
+
+    if (depth > 0) {
+      reparentToLevel(nodeId, 0);
+      return;
+    }
+
+    if (roots.length > 1) {
+      final updated = nodes.map((n) {
+        if (n.id == nodeId) return n.copyWith(parentId: null);
+        if (n.parentId == null && n.id != nodeId) return n.copyWith(parentId: nodeId);
+        return n;
+      }).toList();
+      _updateActiveData(state.activeData.copyWith(nodes: updated));
+      return;
+    }
+
+    reparentToLevel(nodeId, 0);
+  }
+
+  void setLevelLabel(int depth, String label) {
+    final trimmed = label.trim();
+    final labels = Map<int, String>.from(state.activeData.levelLabels);
+    if (trimmed.isEmpty) {
+      labels.remove(depth);
+    } else {
+      labels[depth] = trimmed;
+    }
+    _updateActiveData(state.activeData.copyWith(levelLabels: labels));
+  }
+
+  void updateHierarchyLink({
+    required String childId,
+    required String parentId,
+    required OrgHierarchyLinkType linkType,
+  }) {
+    if (childId == parentId) return;
+    final nodes = state.activeData.nodes;
+    if (OrgChartHierarchy.wouldCreateCycle(nodes, childId, parentId)) return;
+    final updated = nodes
+        .map((n) => n.id == childId ? n.copyWith(parentId: parentId, hierarchyLinkType: linkType) : n)
+        .toList();
+    _updateActiveData(state.activeData.copyWith(nodes: updated));
+  }
+
+  void updateNodeRole(String nodeId, String roleId) {
+    final nodes = state.activeData.nodes.map((n) => n.id == nodeId ? n.copyWith(roleId: roleId) : n).toList();
+    final members = state.activeData.members.map((m) {
+      if (m.nodeId == nodeId) return m.copyWith(roleId: roleId);
+      return m;
+    }).toList();
+    _updateActiveData(state.activeData.copyWith(nodes: nodes, members: members));
+  }
+
+  void upsertRole(AccessRoleTemplate role) {
+    final custom = List<AccessRoleTemplate>.from(state.activeData.customRoles);
+    final idx = custom.indexWhere((r) => r.id == role.id);
+    if (idx >= 0) {
+      custom[idx] = role;
+    } else {
+      custom.add(role);
+    }
+    _updateActiveData(state.activeData.copyWith(customRoles: custom));
+  }
+
+  void deleteCustomRole(String roleId) {
+    if (MockAccessControl.roles.any((r) => r.id == roleId)) return;
+    final custom = state.activeData.customRoles.where((r) => r.id != roleId).toList();
+    final nodes = state.activeData.nodes
+        .map((n) => n.roleId == roleId ? n.copyWith(roleId: 'member') : n)
+        .toList();
+    _updateActiveData(state.activeData.copyWith(customRoles: custom, nodes: nodes));
+  }
+
+  bool isBuiltInRole(String roleId) => MockAccessControl.roles.any((r) => r.id == roleId);
+
+  void updateNodeLinkType(String nodeId, OrgHierarchyLinkType type) {
+    final nodes = state.activeData.nodes
+        .map((n) => n.id == nodeId ? n.copyWith(hierarchyLinkType: type) : n)
+        .toList();
     _updateActiveData(state.activeData.copyWith(nodes: nodes));
   }
 
@@ -241,4 +361,12 @@ final accessControlProvider = StateNotifierProvider<AccessControlNotifier, Acces
 );
 
 final accessPermissionsProvider = Provider((ref) => MockAccessControl.permissions);
-final accessRolesProvider = Provider((ref) => MockAccessControl.roles);
+
+final accessRolesProvider = Provider((ref) {
+  final data = ref.watch(accessControlProvider).activeData;
+  final customIds = data.customRoles.map((r) => r.id).toSet();
+  return [
+    ...MockAccessControl.roles.where((r) => !customIds.contains(r.id)),
+    ...data.customRoles,
+  ];
+});

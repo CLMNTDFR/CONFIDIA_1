@@ -15,7 +15,7 @@ class ConfidiaGlowSegment<T> {
   });
 }
 
-/// Sélecteur segmenté premium — indicateur glissant animé, glow sobre.
+/// Sélecteur segmenté premium  -  indicateur glissant animé, glow sobre.
 class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
   final T value;
   final List<ConfidiaGlowSegment<T>> segments;

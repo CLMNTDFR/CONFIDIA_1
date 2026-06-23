@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 
-/// Champ de formulaire premium — typo compacte, bordures sobres.
+/// Champ de formulaire premium  -  typo compacte, bordures sobres.
 class ConfidiaTextFormField extends StatelessWidget {
   final TextEditingController? controller;
   final String? labelText;

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 
-/// Interrupteur premium compact — transparence, reflet et léger glow.
+/// Interrupteur premium compact  -  transparence, reflet et léger glow.
 class ConfidiaSwitch extends StatefulWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;

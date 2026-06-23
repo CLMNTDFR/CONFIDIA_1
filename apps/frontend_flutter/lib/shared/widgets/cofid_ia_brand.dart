@@ -22,8 +22,17 @@ class CofidIaBrand extends StatelessWidget {
     return Text.rich(
       TextSpan(
         children: [
+                    TextSpan(
+            text: 'Confid',
+            style: TextStyle(
+              fontSize: base,
+              fontWeight: fontWeight,
+              color: palette.secondary,
+              letterSpacing: -0.3,
+            ),
+          ),
           TextSpan(
-            text: 'Confid-',
+            text: '•',
             style: TextStyle(
               fontSize: base,
               fontWeight: fontWeight,
@@ -37,7 +46,7 @@ class CofidIaBrand extends StatelessWidget {
               fontSize: base,
               fontWeight: fontWeight,
               color: palette.secondary,
-              letterSpacing: -0.2,
+              letterSpacing: -0.3,
             ),
           ),
         ],

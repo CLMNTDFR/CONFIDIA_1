@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
-import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/calendar_event_model.dart';
+import '../../shared/widgets/confidia_confirm_dialog.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/confidia_modal_sheet.dart';
@@ -136,20 +136,13 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
   }
 
   Future<void> _confirmDelete() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer l\'événement ?'),
-        content: Text('« ${widget.event!.title} » sera définitivement supprimé.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: ConfidiaColors.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Supprimer'),
-          ),
-        ],
-      ),
+    final ok = await showConfidiaConfirmDialog(
+      context,
+      title: 'Supprimer l\'événement ?',
+      message: '« ${widget.event!.title} » sera définitivement supprimé.',
+      confirmLabel: 'Supprimer',
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
     );
     if (ok == true && mounted) {
       ref.read(calendarProvider.notifier).delete(widget.event!.id);
@@ -230,20 +223,22 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
             onTap: () => _pickDateTime(isStart: false),
           ),
           const SizedBox(height: ConfidiaSpacing.lg),
-          ConfidiaGlowButton(
-            label: _isEdit ? 'Enregistrer' : 'Créer l\'événement',
-            icon: Icons.check_rounded,
-            expand: true,
-            onPressed: _save,
+          Center(
+            child: ConfidiaGlowButton(
+              label: _isEdit ? 'Enregistrer' : 'Créer l\'événement',
+              icon: Icons.check_rounded,
+              onPressed: _save,
+            ),
           ),
           if (_isEdit) ...[
             const SizedBox(height: ConfidiaSpacing.sm),
-            ConfidiaGlowButton(
-              label: 'Supprimer',
-              icon: Icons.delete_outline_rounded,
-              primary: false,
-              expand: true,
-              onPressed: _confirmDelete,
+            Center(
+              child: ConfidiaGlowButton(
+                label: 'Supprimer',
+                icon: Icons.delete_outline_rounded,
+                primary: false,
+                onPressed: _confirmDelete,
+              ),
             ),
           ],
         ],

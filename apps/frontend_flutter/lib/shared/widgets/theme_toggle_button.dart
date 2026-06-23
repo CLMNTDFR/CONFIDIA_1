@@ -15,6 +15,37 @@ class ThemeToggleButton extends ConsumerWidget {
     final isDark = ref.watch(themeModeProvider);
     final isDarkTheme = Theme.of(context).brightness == Brightness.dark;
 
+    final decoration = BoxDecoration(
+      color: isDarkTheme ? ConfidiaColors.darkSurfaceVariant : ConfidiaColors.lightSurfaceVariant,
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: isDarkTheme ? ConfidiaColors.darkBorder : ConfidiaColors.lightBorder),
+    );
+
+    if (compact) {
+      return Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => ref.read(themeModeProvider.notifier).state = !isDark,
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            width: 40,
+            height: 40,
+            decoration: decoration,
+            alignment: Alignment.center,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Icon(
+                isDark ? Icons.dark_mode_rounded : Icons.light_mode_rounded,
+                key: ValueKey(isDark),
+                size: 20,
+                color: isDark ? context.palette.secondary : ConfidiaColors.warning,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -22,19 +53,8 @@ class ThemeToggleButton extends ConsumerWidget {
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          padding: EdgeInsets.symmetric(
-            horizontal: compact ? 10 : 14,
-            vertical: compact ? 8 : 10,
-          ),
-          decoration: BoxDecoration(
-            color: isDarkTheme
-                ? ConfidiaColors.darkSurfaceVariant
-                : ConfidiaColors.lightSurfaceVariant,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isDarkTheme ? ConfidiaColors.darkBorder : ConfidiaColors.lightBorder,
-            ),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: decoration,
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -47,13 +67,8 @@ class ThemeToggleButton extends ConsumerWidget {
                   color: isDark ? context.palette.secondary : ConfidiaColors.warning,
                 ),
               ),
-              if (!compact) ...[
-                const SizedBox(width: 8),
-                Text(
-                  isDark ? 'Sombre' : 'Clair',
-                  style: Theme.of(context).textTheme.labelMedium,
-                ),
-              ],
+              const SizedBox(width: 8),
+              Text(isDark ? 'Sombre' : 'Clair', style: Theme.of(context).textTheme.labelMedium),
             ],
           ),
         ),

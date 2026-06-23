@@ -12,6 +12,7 @@ class AiStreamingText extends StatefulWidget {
   final VoidCallback? onComplete;
   final VoidCallback? onStreamStart;
   final bool showThinkingRobot;
+  final TextAlign textAlign;
 
   const AiStreamingText({
     super.key,
@@ -21,6 +22,7 @@ class AiStreamingText extends StatefulWidget {
     this.onComplete,
     this.onStreamStart,
     this.showThinkingRobot = true,
+    this.textAlign = TextAlign.start,
   });
 
   @override
@@ -80,8 +82,9 @@ class _AiStreamingTextState extends State<AiStreamingText> with TickerProviderSt
     final style = widget.style ?? Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.65);
 
     if (_thinking) {
-      return Row(
+      final dots = Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: widget.textAlign == TextAlign.center ? MainAxisAlignment.center : MainAxisAlignment.start,
         children: [
           if (widget.showThinkingRobot) ...[
             const ConfidiaAiRobot(size: 28, speaking: true),
@@ -90,6 +93,10 @@ class _AiStreamingTextState extends State<AiStreamingText> with TickerProviderSt
           _ThinkingDots(style: style),
         ],
       );
+      if (widget.textAlign == TextAlign.center) {
+        return SizedBox(width: double.infinity, child: Center(child: dots));
+      }
+      return dots;
     }
 
     return AnimatedBuilder(
@@ -99,7 +106,8 @@ class _AiStreamingTextState extends State<AiStreamingText> with TickerProviderSt
         final visible = widget.text.characters.take(count).toString();
         final done = _stream.value >= 1;
 
-        return RichText(
+        final rich = RichText(
+          textAlign: widget.textAlign,
           text: TextSpan(
             style: style,
             children: [
@@ -130,6 +138,11 @@ class _AiStreamingTextState extends State<AiStreamingText> with TickerProviderSt
             ],
           ),
         );
+
+        if (widget.textAlign == TextAlign.center) {
+          return SizedBox(width: double.infinity, child: rich);
+        }
+        return rich;
       },
     );
   }

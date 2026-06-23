@@ -13,7 +13,7 @@ enum ConfidiaPaletteId {
       };
 }
 
-/// Couleurs et dégradés de marque — source unique pour les deux thèmes.
+/// Couleurs et dégradés de marque  -  source unique pour les deux thèmes.
 @immutable
 class ConfidiaPalette {
   final ConfidiaPaletteId id;
@@ -115,7 +115,7 @@ class ConfidiaPalette {
       ];
 }
 
-/// Extension Riverpod / thème — exposée via [ThemeData.extensions].
+/// Extension Riverpod / thème  -  exposée via [ThemeData.extensions].
 @immutable
 class ConfidiaPaletteTheme extends ThemeExtension<ConfidiaPaletteTheme> {
   final ConfidiaPalette palette;

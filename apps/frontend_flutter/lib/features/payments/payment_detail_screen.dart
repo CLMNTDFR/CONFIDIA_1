@@ -148,10 +148,12 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
                 ConfidiaPageReveal(
                   index: 3,
                   staggerCount: 4,
-                  child: ConfidiaGlowButton(
-                    label: _paying ? 'Traitement…' : 'Payer maintenant',
-                    icon: Icons.payment_rounded,
-                    onPressed: _paying ? null : () => _simulatePay(payment.id),
+                  child: Center(
+                    child: ConfidiaGlowButton(
+                      label: _paying ? 'Traitement…' : 'Payer maintenant',
+                      icon: Icons.payment_rounded,
+                      onPressed: _paying ? null : () => _simulatePay(payment.id),
+                    ),
                   ),
                 ),
               ],

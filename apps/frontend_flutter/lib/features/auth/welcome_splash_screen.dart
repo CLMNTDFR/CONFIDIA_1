@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../shared/data/mock_data.dart';
 import '../../shared/widgets/logo_auth_transition.dart';
-import '../../shared/widgets/mesh_background.dart';
+import '../../shared/widgets/welcome_ambient_background.dart';
 import '../calendar/calendar_provider.dart';
 import '../dashboard/dashboard_provider.dart';
 
@@ -44,7 +44,7 @@ class _WelcomeSplashScreenState extends ConsumerState<WelcomeSplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return MeshBackground(
+    return WelcomeAmbientBackground(
       child: Scaffold(
         backgroundColor: Colors.transparent,
         body: Stack(
@@ -54,7 +54,7 @@ class _WelcomeSplashScreenState extends ConsumerState<WelcomeSplashScreen> {
               active: _active,
               profile: LogoTransitionProfile.welcome,
               loopUntilInactive: false,
-              subtitle: 'Chargement de votre espace',
+              subtitle: 'Chargement de votre espace…',
               onComplete: () {
                 if (mounted) setState(() => _active = false);
               },

@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/theme_context.dart';
 import 'confidia_logo.dart';
 
-/// Logo avec anneau rotatif — réservé à l'écran de chargement post-login.
+/// Logo avec anneau rotatif  -  réservé à l'écran de chargement post-login.
 class ConfidiaAnimatedLogo extends StatefulWidget {
   final double size;
   final bool showText;
@@ -44,6 +44,7 @@ class _ConfidiaAnimatedLogoState extends State<ConfidiaAnimatedLogo> with Single
   }
 
   Widget _buildRing(double ringSize, double pulse, double ringAngle) {
+    final palette = context.palette;
     return Transform.rotate(
       angle: ringAngle,
       child: Container(
@@ -51,13 +52,20 @@ class _ConfidiaAnimatedLogoState extends State<ConfidiaAnimatedLogo> with Single
         height: ringSize,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
+          border: Border.all(
+            color: palette.secondary.withValues(alpha: 0.08 + pulse * 0.18),
+            width: 1.2,
+          ),
           gradient: SweepGradient(
+            startAngle: ringAngle,
             colors: [
-              context.palette.primary.withValues(alpha: pulse * 0.08),
-              context.palette.secondary.withValues(alpha: pulse * 0.28),
-              context.palette.accent.withValues(alpha: pulse * 0.14),
-              context.palette.primary.withValues(alpha: pulse * 0.08),
+              palette.primary.withValues(alpha: pulse * 0.04),
+              palette.secondary.withValues(alpha: pulse * 0.16),
+              palette.accent.withValues(alpha: pulse * 0.08),
+              Colors.transparent,
+              Colors.transparent,
             ],
+            stops: const [0.0, 0.18, 0.32, 0.55, 1.0],
           ),
         ),
       ),

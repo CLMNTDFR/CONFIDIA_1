@@ -1,7 +1,7 @@
 import '../models/calendar_event_model.dart';
 import '../models/week_overview_model.dart';
 
-/// Événements de la semaine courante — alignés sur le widget tableau de bord.
+/// Événements de la semaine courante  -  alignés sur le widget tableau de bord.
 abstract final class MockWeekOverviewEvents {
   static DateTime _weekDay(int weekday, {int hour = 9, int minute = 0}) {
     final now = DateTime.now();
@@ -20,7 +20,7 @@ abstract final class MockWeekOverviewEvents {
   }
 
   static final events = [
-  // Lundi — chargée
+  // Lundi  -  chargée
   _e(0, EventType.meeting, WeekCalendarScope.professional, 'Stand-up équipe', 9),
   _e(0, EventType.meeting, WeekCalendarScope.professional, 'Revue client', 10),
   _e(0, EventType.deadline, WeekCalendarScope.family, 'Paiement loyer', 11),
@@ -29,12 +29,12 @@ abstract final class MockWeekOverviewEvents {
   _e(0, EventType.reminder, WeekCalendarScope.personal, 'Renouvellement CNI', 16),
   _e(0, EventType.deadline, WeekCalendarScope.family, 'Facture EDF', 17),
   _e(0, EventType.meeting, WeekCalendarScope.professional, 'Comité direction', 18),
-  // Mardi — moyenne
+  // Mardi  -  moyenne
   _e(1, EventType.meeting, WeekCalendarScope.professional, 'Réunion fournisseur', 10),
   _e(1, EventType.deadline, WeekCalendarScope.family, 'Cotisation MAIF', 11),
   _e(1, EventType.appointment, WeekCalendarScope.personal, 'Dentiste', 15),
   _e(1, EventType.reminder, WeekCalendarScope.personal, 'Relance assurance', 17),
-  // Mercredi — chargée
+  // Mercredi  -  chargée
   _e(2, EventType.meeting, WeekCalendarScope.professional, 'Sprint planning', 9),
   _e(2, EventType.meeting, WeekCalendarScope.professional, 'Atelier UX', 10),
   _e(2, EventType.deadline, WeekCalendarScope.family, 'Déclaration CAF', 11),
@@ -44,17 +44,17 @@ abstract final class MockWeekOverviewEvents {
   _e(2, EventType.reminder, WeekCalendarScope.personal, 'Passeport', 16),
   _e(2, EventType.meeting, WeekCalendarScope.professional, 'Call investisseur', 17),
   _e(2, EventType.appointment, WeekCalendarScope.personal, 'Coiffeur', 18),
-  // Jeudi — calme
+  // Jeudi  -  calme
   _e(3, EventType.appointment, WeekCalendarScope.personal, 'Courses', 11),
   _e(3, EventType.reminder, WeekCalendarScope.family, 'Anniversaire', 18),
-  // Vendredi — moyenne
+  // Vendredi  -  moyenne
   _e(4, EventType.meeting, WeekCalendarScope.professional, 'Bilan hebdo', 9),
   _e(4, EventType.deadline, WeekCalendarScope.family, 'Paiement internet', 10),
   _e(4, EventType.meeting, WeekCalendarScope.professional, 'Point RH', 11),
   _e(4, EventType.appointment, WeekCalendarScope.personal, 'Sport', 17),
   _e(4, EventType.reminder, WeekCalendarScope.personal, 'Contrat Orange', 18),
   _e(4, EventType.meeting, WeekCalendarScope.family, 'Réunion parents', 19),
-  // Samedi — calme
+  // Samedi  -  calme
   _e(5, EventType.appointment, WeekCalendarScope.family, 'Marché', 10),
   ];
 

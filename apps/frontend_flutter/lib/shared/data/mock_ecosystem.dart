@@ -293,7 +293,7 @@ abstract final class MockEcosystem {
   }
 
   static final calendarEvents = [
-    // Journée chargée — 4 types différents (J+3)
+    // Journée chargée  -  4 types différents (J+3)
     CalendarEventModel(
       id: 'evt-busy-deadline',
       title: 'Paiement loyer',
@@ -334,7 +334,7 @@ abstract final class MockEcosystem {
       eventType: EventType.reminder,
       source: CalendarSource.confidia,
     ),
-    // J+5 — deux échéances le même jour
+    // J+5  -  deux échéances le même jour
     CalendarEventModel(
       id: 'evt-edf',
       title: 'Paiement EDF',

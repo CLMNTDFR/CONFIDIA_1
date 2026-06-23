@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 
-/// Scène graphique à plans — halo d'ambiance + contenu au premier plan.
+/// Scène graphique à plans  -  halo d'ambiance + contenu au premier plan.
 class PremiumChartStage extends StatelessWidget {
   final Widget child;
   final List<Color> accentColors;

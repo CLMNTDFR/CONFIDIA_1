@@ -1,6 +1,31 @@
 import 'package:flutter/material.dart';
 
-enum StructureTemplate { family, club, enterprise, blank }
+enum StructureTemplate { family, club, enterprise, custom }
+
+/// Type de lien hiérarchique entre un nœud et son parent.
+enum OrgHierarchyLinkType {
+  reportsTo,
+  dottedLine,
+  delegate,
+}
+
+extension OrgHierarchyLinkTypeX on OrgHierarchyLinkType {
+  String get label => switch (this) {
+        OrgHierarchyLinkType.reportsTo => 'Rattachement direct',
+        OrgHierarchyLinkType.dottedLine => 'Lien fonctionnel',
+        OrgHierarchyLinkType.delegate => 'Délégation',
+      };
+
+  bool get isDashed => this == OrgHierarchyLinkType.dottedLine;
+
+  bool get isDelegate => this == OrgHierarchyLinkType.delegate;
+
+  IconData get icon => switch (this) {
+        OrgHierarchyLinkType.reportsTo => Icons.arrow_downward_rounded,
+        OrgHierarchyLinkType.dottedLine => Icons.device_hub_rounded,
+        OrgHierarchyLinkType.delegate => Icons.swap_horiz_rounded,
+      };
+}
 
 class StructureProfile {
   final String id;
@@ -46,6 +71,20 @@ class AccessRoleTemplate {
     required this.level,
     this.defaultPermissions = const [],
   });
+
+  AccessRoleTemplate copyWith({
+    String? label,
+    String? description,
+    int? level,
+    List<String>? defaultPermissions,
+  }) =>
+      AccessRoleTemplate(
+        id: id,
+        label: label ?? this.label,
+        description: description ?? this.description,
+        level: level ?? this.level,
+        defaultPermissions: defaultPermissions ?? this.defaultPermissions,
+      );
 }
 
 class OrgNode {
@@ -55,6 +94,9 @@ class OrgNode {
   final String roleId;
   final String? parentId;
   final String? avatarInitials;
+  final String? memberId;
+  final int sortOrder;
+  final OrgHierarchyLinkType hierarchyLinkType;
 
   const OrgNode({
     required this.id,
@@ -63,15 +105,38 @@ class OrgNode {
     required this.roleId,
     this.parentId,
     this.avatarInitials,
+    this.memberId,
+    this.sortOrder = 0,
+    this.hierarchyLinkType = OrgHierarchyLinkType.reportsTo,
   });
 
-  OrgNode copyWith({String? parentId, String? label, String? subtitle, String? roleId}) => OrgNode(
+  String get firstName {
+    final parts = label.trim().split(RegExp(r'\s+'));
+    return parts.isNotEmpty ? parts.first : label;
+  }
+
+  static const _unset = Object();
+
+  OrgNode copyWith({
+    Object? parentId = _unset,
+    String? label,
+    String? subtitle,
+    String? roleId,
+    String? avatarInitials,
+    String? memberId,
+    int? sortOrder,
+    OrgHierarchyLinkType? hierarchyLinkType,
+  }) =>
+      OrgNode(
         id: id,
         label: label ?? this.label,
         subtitle: subtitle ?? this.subtitle,
         roleId: roleId ?? this.roleId,
-        parentId: parentId ?? this.parentId,
-        avatarInitials: avatarInitials,
+        parentId: parentId == _unset ? this.parentId : parentId as String?,
+        avatarInitials: avatarInitials ?? this.avatarInitials,
+        memberId: memberId ?? this.memberId,
+        sortOrder: sortOrder ?? this.sortOrder,
+        hierarchyLinkType: hierarchyLinkType ?? this.hierarchyLinkType,
       );
 }
 
@@ -94,13 +159,13 @@ class AccessMember {
     this.inheritsFromHierarchy = true,
   });
 
-  AccessMember copyWith({String? roleId, List<String>? permissions, bool? inheritsFromHierarchy}) =>
+  AccessMember copyWith({String? roleId, String? nodeId, List<String>? permissions, bool? inheritsFromHierarchy}) =>
       AccessMember(
         id: id,
         name: name,
         email: email,
         roleId: roleId ?? this.roleId,
-        nodeId: nodeId,
+        nodeId: nodeId ?? this.nodeId,
         permissions: permissions ?? this.permissions,
         inheritsFromHierarchy: inheritsFromHierarchy ?? this.inheritsFromHierarchy,
       );
@@ -173,11 +238,30 @@ class PlanningProposal {
 class StructureData {
   final List<OrgNode> nodes;
   final List<AccessMember> members;
+  final Map<int, String> levelLabels;
+  final List<AccessRoleTemplate> customRoles;
 
-  const StructureData({required this.nodes, required this.members});
+  const StructureData({
+    required this.nodes,
+    required this.members,
+    this.levelLabels = const {},
+    this.customRoles = const [],
+  });
 
-  StructureData copyWith({List<OrgNode>? nodes, List<AccessMember>? members}) =>
-      StructureData(nodes: nodes ?? this.nodes, members: members ?? this.members);
+  StructureData copyWith({
+    List<OrgNode>? nodes,
+    List<AccessMember>? members,
+    Map<int, String>? levelLabels,
+    List<AccessRoleTemplate>? customRoles,
+  }) =>
+      StructureData(
+        nodes: nodes ?? this.nodes,
+        members: members ?? this.members,
+        levelLabels: levelLabels ?? this.levelLabels,
+        customRoles: customRoles ?? this.customRoles,
+      );
+
+  String levelLabel(int depth) => levelLabels[depth] ?? 'Niveau ${depth + 1}';
 }
 
 IconData roleIcon(String roleId) => switch (roleId) {

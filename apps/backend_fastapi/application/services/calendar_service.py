@@ -85,9 +85,9 @@ class CalendarService:
         return week + legacy
 
     def _week_events(self) -> list[CalendarEventDTO]:
-        """Semaine courante — données alignées sur le widget tableau de bord."""
+        """Semaine courante  -  données alignées sur le widget tableau de bord."""
         specs: list[tuple[int, EventType, WeekCalendarScope, str, int]] = [
-            # Lundi — chargée (8)
+            # Lundi  -  chargée (8)
             (0, EventType.MEETING, WeekCalendarScope.PROFESSIONAL, "Stand-up équipe", 9),
             (0, EventType.MEETING, WeekCalendarScope.PROFESSIONAL, "Revue client", 10),
             (0, EventType.DEADLINE, WeekCalendarScope.FAMILY, "Paiement loyer", 11),
@@ -96,12 +96,12 @@ class CalendarService:
             (0, EventType.REMINDER, WeekCalendarScope.PERSONAL, "Renouvellement CNI", 16),
             (0, EventType.DEADLINE, WeekCalendarScope.FAMILY, "Facture EDF", 17),
             (0, EventType.MEETING, WeekCalendarScope.PROFESSIONAL, "Comité direction", 18),
-            # Mardi — moyenne (4)
+            # Mardi  -  moyenne (4)
             (1, EventType.MEETING, WeekCalendarScope.PROFESSIONAL, "Réunion fournisseur", 10),
             (1, EventType.DEADLINE, WeekCalendarScope.FAMILY, "Cotisation MAIF", 11),
             (1, EventType.APPOINTMENT, WeekCalendarScope.PERSONAL, "Dentiste", 15),
             (1, EventType.REMINDER, WeekCalendarScope.PERSONAL, "Relance assurance", 17),
-            # Mercredi — chargée (9)
+            # Mercredi  -  chargée (9)
             (2, EventType.MEETING, WeekCalendarScope.PROFESSIONAL, "Sprint planning", 9),
             (2, EventType.MEETING, WeekCalendarScope.PROFESSIONAL, "Atelier UX", 10),
             (2, EventType.DEADLINE, WeekCalendarScope.FAMILY, "Déclaration CAF", 11),
@@ -111,19 +111,19 @@ class CalendarService:
             (2, EventType.REMINDER, WeekCalendarScope.PERSONAL, "Passeport", 16),
             (2, EventType.MEETING, WeekCalendarScope.PROFESSIONAL, "Call investisseur", 17),
             (2, EventType.APPOINTMENT, WeekCalendarScope.PERSONAL, "Coiffeur", 18),
-            # Jeudi — calme (2)
+            # Jeudi  -  calme (2)
             (3, EventType.APPOINTMENT, WeekCalendarScope.PERSONAL, "Courses", 11),
             (3, EventType.REMINDER, WeekCalendarScope.FAMILY, "Anniversaire", 18),
-            # Vendredi — moyenne (6)
+            # Vendredi  -  moyenne (6)
             (4, EventType.MEETING, WeekCalendarScope.PROFESSIONAL, "Bilan hebdo", 9),
             (4, EventType.DEADLINE, WeekCalendarScope.FAMILY, "Paiement internet", 10),
             (4, EventType.MEETING, WeekCalendarScope.PROFESSIONAL, "Point RH", 11),
             (4, EventType.APPOINTMENT, WeekCalendarScope.PERSONAL, "Sport", 17),
             (4, EventType.REMINDER, WeekCalendarScope.PERSONAL, "Contrat Orange", 18),
             (4, EventType.MEETING, WeekCalendarScope.FAMILY, "Réunion parents", 19),
-            # Samedi — calme (1)
+            # Samedi  -  calme (1)
             (5, EventType.APPOINTMENT, WeekCalendarScope.FAMILY, "Marché", 10),
-            # Dimanche — calme (0)
+            # Dimanche  -  calme (0)
         ]
 
         events: list[CalendarEventDTO] = []

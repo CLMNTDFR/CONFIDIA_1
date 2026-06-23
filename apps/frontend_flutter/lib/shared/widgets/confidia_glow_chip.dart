@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 
-/// Chip / pill glowy sobre — filtres, actions, liens compacts.
+/// Chip / pill glowy sobre  -  filtres, actions, liens compacts.
 class ConfidiaGlowChip extends StatefulWidget {
   final String label;
   final bool selected;
@@ -264,7 +264,7 @@ class ConfidiaGlowChipScroll extends StatelessWidget {
   }
 }
 
-/// Lien compact « Voir tout » — glow sobre.
+/// Lien compact « Voir tout »  -  glow sobre.
 class ConfidiaGlowLink extends StatefulWidget {
   final String label;
   final VoidCallback onTap;

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 
-/// Bouton d'action compact, glassy avec léger glow — style premium sobre.
+/// Bouton d'action compact, glassy avec léger glow. Style premium sobre.
 class ConfidiaGlowButton extends StatefulWidget {
   final String label;
   final IconData icon;
@@ -48,7 +48,7 @@ class _ConfidiaGlowButtonState extends State<ConfidiaGlowButton> with SingleTick
 
     final decoration = widget.primary
         ? BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(9),
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
@@ -62,38 +62,24 @@ class _ConfidiaGlowButtonState extends State<ConfidiaGlowButton> with SingleTick
                       context.palette.secondary.withValues(alpha: 0.35),
                     ],
             ),
-            border: Border.all(color: Colors.white.withValues(alpha: enabled ? 0.18 : 0.08)),
+            border: Border.all(color: Colors.white.withValues(alpha: enabled ? 0.16 : 0.08)),
             boxShadow: enabled
                 ? [
                     BoxShadow(
-                      color: context.palette.primary.withValues(alpha: 0.28),
-                      blurRadius: 14,
+                      color: context.palette.primary.withValues(alpha: 0.22),
+                      blurRadius: 10,
                       spreadRadius: -4,
-                      offset: const Offset(0, 4),
-                    ),
-                    BoxShadow(
-                      color: context.palette.secondary.withValues(alpha: 0.15),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+                      offset: const Offset(0, 3),
                     ),
                   ]
                 : null,
           )
         : BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(9),
             color: (isDark ? Colors.white : Colors.black).withValues(alpha: enabled ? 0.06 : 0.03),
             border: Border.all(
               color: ConfidiaColors.border(isDark).withValues(alpha: enabled ? 0.9 : 0.5),
             ),
-            boxShadow: enabled
-                ? [
-                    BoxShadow(
-                      color: context.palette.secondary.withValues(alpha: isDark ? 0.12 : 0.08),
-                      blurRadius: 10,
-                      spreadRadius: -3,
-                    ),
-                  ]
-                : null,
           );
 
     return GestureDetector(
@@ -105,7 +91,8 @@ class _ConfidiaGlowButtonState extends State<ConfidiaGlowButton> with SingleTick
         scale: _scale,
         child: Container(
           width: widget.expand ? double.infinity : null,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          constraints: const BoxConstraints(minHeight: 34),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: decoration,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -113,21 +100,27 @@ class _ConfidiaGlowButtonState extends State<ConfidiaGlowButton> with SingleTick
             children: [
               Icon(
                 widget.icon,
-                size: 15,
+                size: 14,
                 color: widget.primary
                     ? Colors.white.withValues(alpha: enabled ? 1 : 0.6)
                     : (isDark ? Colors.white70 : context.palette.primary).withValues(alpha: enabled ? 1 : 0.5),
               ),
               const SizedBox(width: 6),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
-                  color: widget.primary
-                      ? Colors.white.withValues(alpha: enabled ? 1 : 0.6)
-                      : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: enabled ? 1 : 0.5),
+              Flexible(
+                child: Text(
+                  widget.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.15,
+                    height: 1.2,
+                    color: widget.primary
+                        ? Colors.white.withValues(alpha: enabled ? 1 : 0.6)
+                        : Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: enabled ? 1 : 0.5),
+                  ),
                 ),
               ),
             ],

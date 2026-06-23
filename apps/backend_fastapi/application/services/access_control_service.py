@@ -4,9 +4,11 @@ import copy
 from datetime import datetime, timezone
 
 from application.dto.access_control_dto import (
+    HierarchyLinkType,
     MemberDTO,
     MemberUpdateDTO,
     OrgNodeDTO,
+    OrgNodeReparentDTO,
     OrganizationDTO,
     OrganizationUpdateDTO,
     PermissionDTO,
@@ -48,7 +50,7 @@ _FAMILY_ORG = OrganizationDTO(
     id="org_family",
     name="Famille Martin",
     scenario="family",
-    description="Partage conjoint — calendrier familial et assistant IA de planning",
+    description="Partage conjoint  -  calendrier familial et assistant IA de planning",
     nodes=[
         OrgNodeDTO(id="n_sophie", label="Sophie Martin", subtitle="Mère · Admin", role_id="admin", parent_id=None, avatar_initials="SM"),
         OrgNodeDTO(id="n_marc", label="Marc Martin", subtitle="Père", role_id="parent", parent_id="n_sophie", avatar_initials="MM"),
@@ -61,12 +63,12 @@ _CLUB_ORG = OrganizationDTO(
     id="org_club",
     name="FC CONFIDIA",
     scenario="club",
-    description="Club de football — organigramme et droits fins par rôle",
+    description="Club de football  -  organigramme et droits fins par rôle",
     nodes=[
         OrgNodeDTO(id="n_dir", label="Pierre Lambert", subtitle="Directeur", role_id="director", parent_id=None, avatar_initials="PL"),
         OrgNodeDTO(id="n_coach", label="Karim Benali", subtitle="Entraîneur U17", role_id="coach", parent_id="n_dir", avatar_initials="KB"),
         OrgNodeDTO(id="n_treas", label="Nadia Roche", subtitle="Trésorier", role_id="treasurer", parent_id="n_dir", avatar_initials="NR"),
-        OrgNodeDTO(id="n_sec", label="Julie Moreau", subtitle="Secrétaire", role_id="secretary", parent_id="n_dir", avatar_initials="JM"),
+        OrgNodeDTO(id="n_sec", label="Julie Moreau", subtitle="Secrétaire", role_id="secretary", parent_id="n_dir", avatar_initials="JM", member_id="m_sec", sort_order=2, hierarchy_link_type=HierarchyLinkType.DOTTED_LINE),
         OrgNodeDTO(id="n_u17", label="Licenciés U17", subtitle="18 joueurs", role_id="member", parent_id="n_coach", avatar_initials="U17"),
         OrgNodeDTO(id="n_staff", label="Staff technique", subtitle="4 personnes", role_id="member", parent_id="n_coach", avatar_initials="ST"),
     ],
@@ -123,7 +125,7 @@ class AccessControlService:
                 target_name="Licenciés U17",
                 document_type="Pièces d'identité",
                 permission="documents.id_card",
-                message="Obligation fédérale — vérification des pièces pour la saison.",
+                message="Obligation fédérale  -  vérification des pièces pour la saison.",
                 status="pending",
                 created_at=datetime.now(timezone.utc).isoformat(),
             ),
@@ -152,6 +154,33 @@ class AccessControlService:
             nodes=data.nodes,
         )
         return copy.deepcopy(self._orgs[data.scenario])
+
+    def reparent_node(self, node_id: str, data: OrgNodeReparentDTO, scenario: str | None = None) -> OrganizationDTO:
+        key = scenario or self._scenario
+        org = self._orgs[key]
+        nodes = []
+        found = False
+        for node in org.nodes:
+            if node.id != node_id:
+                nodes.append(node)
+                continue
+            found = True
+            nodes.append(
+                node.model_copy(
+                    update={
+                        k: v
+                        for k, v in {
+                            "parent_id": data.parent_id,
+                            "hierarchy_link_type": data.hierarchy_link_type,
+                        }.items()
+                        if v is not None
+                    }
+                )
+            )
+        if not found:
+            raise ValueError(f"Node {node_id} not found")
+        self._orgs[key] = org.model_copy(update={"nodes": nodes})
+        return copy.deepcopy(self._orgs[key])
 
     def list_members(self, scenario: str | None = None) -> list[MemberDTO]:
         key = scenario or self._scenario
@@ -217,7 +246,7 @@ class AccessControlService:
                 proposal=(
                     "L'IA détecte un chevauchement sur le terrain synthétique à 18h00. "
                     "Proposition : décaler la réunion staff à 19h30 (après l'entraînement) "
-                    "ou déplacer l'entraînement U17 au créneau 16h30–17h45."
+                    "ou déplacer l'entraînement U17 au créneau 16h30-17h45."
                 ),
                 alternatives=["Décaler réunion staff → 19h30", "Entraînement U17 → 16h30"],
             )
@@ -242,7 +271,7 @@ class AccessControlService:
                 "(45 min de trajet depuis La Défense en heure de pointe).\n\n"
                 "Proposition : Marc décale sa réunion client à 15h00 en visio. "
                 "Sophie conserve le RDV pédiatre pour Tom à 14h00. "
-                "Marc récupère Léa à 15h30 — trajet réaliste si la réunion se termine à 15h00."
+                "Marc récupère Léa à 15h30  -  trajet réaliste si la réunion se termine à 15h00."
             ),
             alternatives=[
                 "Sophie récupère Léa, Marc garde son RDV client",

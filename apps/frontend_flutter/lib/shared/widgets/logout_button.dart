@@ -4,24 +4,17 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
+import 'confidia_confirm_dialog.dart';
 
-Future<bool> confirmLogout(BuildContext context) async {
-  final ok = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      title: const Text('Se déconnecter ?'),
-      content: const Text('Vous allez quitter votre espace CONFIDIA. Vos données locales restent sur cet appareil.'),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-        FilledButton(
-          style: FilledButton.styleFrom(backgroundColor: ConfidiaColors.error),
-          onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Déconnexion'),
-        ),
-      ],
-    ),
+Future<bool> confirmLogout(BuildContext context) {
+  return showConfidiaConfirmDialog(
+    context,
+    title: 'Se déconnecter ?',
+    message: 'Vous allez quitter votre espace CONFIDIA. Vos données locales restent sur cet appareil.',
+    confirmLabel: 'Déconnexion',
+    icon: Icons.logout_rounded,
+    destructive: true,
   );
-  return ok == true;
 }
 
 Future<void> performLogout(BuildContext context, WidgetRef ref) async {

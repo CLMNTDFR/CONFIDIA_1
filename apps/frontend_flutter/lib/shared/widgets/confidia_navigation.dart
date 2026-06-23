@@ -30,7 +30,7 @@ bool confidiaNavIsActive(String path, String currentPath) {
   return currentPath == path || currentPath.startsWith('$path/');
 }
 
-/// Item de sidebar desktop — sobre, typographie comme signal d'état.
+/// Item de sidebar desktop  -  sobre, typographie comme signal d'état.
 class ConfidiaSidebarNavItem extends StatefulWidget {
   final ConfidiaNavDestination destination;
   final bool isActive;
@@ -126,7 +126,7 @@ class _NavBadge extends StatelessWidget {
   }
 }
 
-/// Bottom bar mobile — sobre, lisible.
+/// Bottom bar mobile  -  sobre, lisible.
 class ConfidiaMobileNavBar extends StatelessWidget {
   final String currentPath;
   final List<ConfidiaNavDestination> destinations;

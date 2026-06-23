@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/dashboard/dashboard_chart_data.dart';
 
-/// Anneau fin premium — arcs arrondis (`StrokeCap.round`), surbrillance au survol.
+/// Anneau fin premium  -  arcs arrondis (`StrokeCap.round`), surbrillance au survol.
 class PremiumDonutChart extends StatelessWidget {
   final List<ChartSlice> slices;
   final double size;

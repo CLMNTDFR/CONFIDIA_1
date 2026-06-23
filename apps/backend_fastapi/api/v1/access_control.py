@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from application.dto.access_control_dto import (
     MemberDTO,
     MemberUpdateDTO,
+    OrgNodeReparentDTO,
     OrganizationDTO,
     OrganizationUpdateDTO,
     PermissionDTO,
@@ -51,6 +52,19 @@ async def update_organization(
     token: TokenPayload = Depends(decode_token),
 ):
     return _service.update_organization(data)
+
+
+@router.patch("/organization/nodes/{node_id}/reparent", response_model=OrganizationDTO)
+async def reparent_node(
+    node_id: str,
+    data: OrgNodeReparentDTO,
+    scenario: str = Query(default="family"),
+    token: TokenPayload = Depends(decode_token),
+):
+    try:
+        return _service.reparent_node(node_id, data, scenario)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
 
 
 @router.get("/members", response_model=list[MemberDTO])

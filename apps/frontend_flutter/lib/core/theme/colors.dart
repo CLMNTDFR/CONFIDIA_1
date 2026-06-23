@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Couleurs sémantiques et surfaces — indépendantes du thème de marque.
+/// Couleurs sémantiques et surfaces  -  indépendantes du thème de marque.
 /// Pour primary / secondary / gradients : [ConfidiaPalette] via `context.palette`.
 abstract final class ConfidiaColors {
   static const Color darkBackground = Color(0xFF06060B);

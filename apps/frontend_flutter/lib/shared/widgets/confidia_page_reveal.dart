@@ -12,7 +12,7 @@ class ConfidiaPageRevealTiming {
     this.slideOffset = 72,
   });
 
-  /// Fast cascade — entire first viewport settles in ~800 ms with heavy overlap.
+  /// Fast cascade  -  entire first viewport settles in ~800 ms with heavy overlap.
   static const standard = ConfidiaPageRevealTiming(
     targetTotal: Duration(milliseconds: 800),
     itemDuration: Duration(milliseconds: 400),

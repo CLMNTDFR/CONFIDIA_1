@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'premium_chart_motion.dart';
 
-/// Barre à deux plans — socle large atténué + tige lumineuse au premier plan.
+/// Barre à deux plans  -  socle large atténué + tige lumineuse au premier plan.
 BarChartRodData premiumBarRod({
   required double toY,
   required Color color,

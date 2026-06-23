@@ -7,7 +7,10 @@ import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import 'mobile_shell_insets.dart';
 
-/// Affiche une modale / bottom sheet au style CONFIDIA (glass, glow sobre).
+enum ConfidiaSheetLayout { bottom, centered }
+
+/// Affiche une modale au style CONFIDIA (glass, glow sobre).
+/// Mobile : ancrée en bas. Desktop : centrée verticalement.
 Future<T?> showConfidiaSheet<T>({
   required BuildContext context,
   required String title,
@@ -15,16 +18,38 @@ Future<T?> showConfidiaSheet<T>({
   List<Widget>? actions,
   bool isScrollControlled = true,
 }) {
+  final isMobile = ConfidiaMobileShell.isMobileShell(context);
+
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: isScrollControlled,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.45),
-    builder: (ctx) => ConfidiaSheet(
-      title: title,
-      actions: actions,
-      child: child,
-    ),
+    builder: (ctx) {
+      final sheet = ConfidiaSheet(
+        title: title,
+        actions: actions,
+        layout: isMobile ? ConfidiaSheetLayout.bottom : ConfidiaSheetLayout.centered,
+        child: child,
+      );
+
+      if (isMobile) return sheet;
+
+      final viewInsets = MediaQuery.viewInsetsOf(ctx);
+      return Padding(
+        padding: EdgeInsets.fromLTRB(24, 32 + viewInsets.top * 0.15, 24, 32 + viewInsets.bottom),
+        child: Align(
+          alignment: Alignment.center,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: 520,
+              maxHeight: MediaQuery.sizeOf(ctx).height * 0.86,
+            ),
+            child: sheet,
+          ),
+        ),
+      );
+    },
   );
 }
 
@@ -32,13 +57,17 @@ class ConfidiaSheet extends StatelessWidget {
   final String title;
   final Widget child;
   final List<Widget>? actions;
+  final ConfidiaSheetLayout layout;
 
   const ConfidiaSheet({
     super.key,
     required this.title,
     required this.child,
     this.actions,
+    this.layout = ConfidiaSheetLayout.bottom,
   });
+
+  bool get _centered => layout == ConfidiaSheetLayout.centered;
 
   @override
   Widget build(BuildContext context) {
@@ -47,18 +76,18 @@ class ConfidiaSheet extends StatelessWidget {
     final shellBottom = ConfidiaMobileShell.isMobileShell(context)
         ? ConfidiaMobileShell.bottomScrollInset(context)
         : 0.0;
+    final radius = BorderRadius.circular(22);
 
     return Padding(
-      padding: EdgeInsets.only(bottom: keyboardBottom),
+      padding: EdgeInsets.only(bottom: _centered ? 0 : keyboardBottom),
       child: ClipRRect(
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+        borderRadius: radius,
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
           child: Container(
-            margin: EdgeInsets.fromLTRB(10, 0, 10, 10 + shellBottom),
-            constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.92),
+            margin: _centered ? EdgeInsets.zero : EdgeInsets.fromLTRB(10, 0, 10, 10 + shellBottom),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(22),
+              borderRadius: radius,
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -78,24 +107,27 @@ class ConfidiaSheet extends StatelessWidget {
                   color: context.palette.primary.withValues(alpha: 0.12),
                   blurRadius: 32,
                   spreadRadius: -8,
-                  offset: const Offset(0, -4),
+                  offset: Offset(0, _centered ? 8 : -4),
                 ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 8),
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: ConfidiaColors.border(isDark),
-                    borderRadius: BorderRadius.circular(2),
+                if (!_centered) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: ConfidiaColors.border(isDark),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                ),
+                ] else
+                  const SizedBox(height: 14),
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, 14, 8, 0),
+                  padding: EdgeInsets.fromLTRB(ConfidiaSpacing.lg, _centered ? 4 : 14, 8, 0),
                   child: Row(
                     children: [
                       Expanded(
@@ -133,7 +165,7 @@ class ConfidiaSheet extends StatelessWidget {
                       ConfidiaSpacing.lg,
                       ConfidiaSpacing.lg,
                       ConfidiaSpacing.lg,
-                      ConfidiaSpacing.lg + shellBottom,
+                      ConfidiaSpacing.lg + (_centered ? 0 : shellBottom),
                     ),
                     child: child,
                   ),
@@ -143,7 +175,7 @@ class ConfidiaSheet extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.all(ConfidiaSpacing.md),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: actions!,
                     ),
                   ),

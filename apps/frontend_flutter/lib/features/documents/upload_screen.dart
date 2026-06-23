@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
+import '../../shared/widgets/confidia_dropdown_field.dart';
+import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_snackbar.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
+import 'document_categories.dart';
+import 'widgets/document_ingest_widgets.dart';
 
 class UploadScreen extends StatefulWidget {
   const UploadScreen({super.key});
@@ -38,6 +41,7 @@ class _UploadScreenState extends State<UploadScreen> {
     setState(() {
       _isUploading = false;
       _files.clear();
+      _selectedCategory = null;
     });
     if (mounted) {
       context.showConfidiaSnack('Documents uploadés avec succès', type: ConfidiaSnackType.success);
@@ -46,101 +50,91 @@ class _UploadScreenState extends State<UploadScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isWide = MediaQuery.of(context).size.width >= 700;
+    final zoneHeight = isWide ? 300.0 : 240.0;
+
     return SingleChildScrollView(
       padding: ConfidiaInsets.page(context),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 800),
+          constraints: const BoxConstraints(maxWidth: 560),
           child: ConfidiaPageReveal(
             index: 0,
             staggerCount: 1,
             child: GlassCard(
-            child: Column(
-              children: [
-                  InkWell(
-                      onTap: _pickFiles,
-                      borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusMd),
-                      child: Container(
-                        width: double.infinity,
-                        height: 240,
-                        decoration: BoxDecoration(
-                          border: Border.all(
-                            color: context.palette.primary.withValues(alpha: 0.3),
-                            width: 2,
-                          ),
-                          borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusMd),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.cloud_upload_outlined,
-                              size: 48,
-                              color: context.palette.primary.withValues(alpha: 0.6),
-                            ),
-                            const SizedBox(height: ConfidiaSpacing.md),
-                            Text(
-                              'Glissez vos fichiers ici',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: ConfidiaSpacing.sm),
-                            Text(
-                              'ou cliquez pour parcourir',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                            ),
-                            const SizedBox(height: ConfidiaSpacing.sm),
-                            Text(
-                              'PDF, images, Word, Excel · max 50 Mo',
-                              style: Theme.of(context).textTheme.bodySmall,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  if (_files.isNotEmpty) ...[
-                    const SizedBox(height: ConfidiaSpacing.lg),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text('${_files.length} fichier(s) sélectionné(s)',
-                          style: Theme.of(context).textTheme.titleMedium),
-                    ),
-                    const SizedBox(height: ConfidiaSpacing.sm),
-                    ..._files.map((f) => ListTile(
-                          leading: const Icon(Icons.insert_drive_file_outlined),
-                          title: Text(f.name),
-                          subtitle: Text('${(f.size / 1024).toStringAsFixed(1)} KB'),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () => setState(() => _files.remove(f)),
-                          ),
-                        )),
-                  ],
+              child: Column(
+                children: [
+                  const DocumentIngestHeader(
+                    icon: Icons.upload_rounded,
+                    title: 'Importer un document',
+                    subtitle: 'Ajoutez PDF, images, Word ou Excel depuis votre appareil',
+                  ),
                   const SizedBox(height: ConfidiaSpacing.lg),
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(labelText: 'Catégorie'),
+                  DocumentIngestPreviewZone(
+                    height: zoneHeight,
+                    emptyIcon: Icons.cloud_upload_outlined,
+                    emptyTitle: 'Glissez vos fichiers ici',
+                    emptySubtitle: 'ou cliquez pour parcourir · max 50 Mo',
+                    onTap: _pickFiles,
+                    child: _files.isNotEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Text(
+                                  '${_files.length} fichier(s) sélectionné(s)',
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                                ),
+                                const SizedBox(height: 10),
+                                Expanded(
+                                  child: ListView(
+                                    children: _files
+                                        .map(
+                                          (f) => DocumentFileRow(
+                                            name: f.name,
+                                            sizeLabel: '${(f.size / 1024).toStringAsFixed(1)} Ko',
+                                            onRemove: () => setState(() => _files.remove(f)),
+                                          ),
+                                        )
+                                        .toList(),
+                                  ),
+                                ),
+                                Center(
+                                  child: ConfidiaGlowButton(
+                                    label: 'Ajouter des fichiers',
+                                    icon: Icons.add_rounded,
+                                    primary: false,
+                                    onPressed: _pickFiles,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        : null,
+                  ),
+                  const SizedBox(height: ConfidiaSpacing.lg),
+                  ConfidiaDropdownField<String>(
                     value: _selectedCategory,
-                    items: ['Énergie', 'Assurance', 'Fiscal', 'Emploi', 'Identité', 'Banque']
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
+                    labelText: 'Catégorie',
+                    hintText: 'Choisir une catégorie',
+                    prefixIcon: Icons.folder_outlined,
+                    items: DocumentCategories.values,
+                    itemLabel: (c) => c,
                     onChanged: (v) => setState(() => _selectedCategory = v),
                   ),
                   const SizedBox(height: ConfidiaSpacing.lg),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
+                  Center(
+                    child: ConfidiaGlowButton(
+                      label: _isUploading ? 'Envoi…' : 'Importer',
+                      icon: Icons.cloud_done_rounded,
                       onPressed: _files.isEmpty || _isUploading ? null : _upload,
-                      child: _isUploading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                            )
-                          : const Text('Uploader'),
                     ),
                   ),
-              ],
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ),

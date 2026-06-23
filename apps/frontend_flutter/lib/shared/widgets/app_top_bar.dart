@@ -148,20 +148,29 @@ class _ProfileChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final showName = MediaQuery.of(context).size.width >= 1100;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 40,
+          padding: EdgeInsets.symmetric(horizontal: showName ? 8 : 4),
+          decoration: BoxDecoration(
+            color: isDark ? ConfidiaColors.darkSurfaceVariant : ConfidiaColors.lightSurfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: ConfidiaColors.border(isDark)),
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              UserAvatar(user: user, radius: 16, imageBase64: imageBase64),
-              if (MediaQuery.of(context).size.width >= 1100) ...[
+              UserAvatar(user: user, radius: 14, imageBase64: imageBase64),
+              if (showName) ...[
                 const SizedBox(width: 8),
-                Text(user.firstName, style: Theme.of(context).textTheme.labelLarge),
+                Text(user.firstName, style: Theme.of(context).textTheme.labelMedium),
               ],
             ],
           ),

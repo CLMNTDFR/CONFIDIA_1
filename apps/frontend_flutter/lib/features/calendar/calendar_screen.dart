@@ -8,6 +8,7 @@ import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/calendar_event_model.dart';
+import '../../shared/widgets/confidia_confirm_dialog.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
@@ -180,20 +181,13 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 
   Future<void> _confirmDelete(CalendarEventModel event) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Supprimer l\'événement ?'),
-        content: Text('« ${event.title} » sera définitivement supprimé.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Annuler')),
-          FilledButton(
-            style: FilledButton.styleFrom(backgroundColor: ConfidiaColors.error),
-            onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Supprimer'),
-          ),
-        ],
-      ),
+    final ok = await showConfidiaConfirmDialog(
+      context,
+      title: 'Supprimer l\'événement ?',
+      message: '« ${event.title} » sera définitivement supprimé.',
+      confirmLabel: 'Supprimer',
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
     );
     if (ok == true) ref.read(calendarProvider.notifier).delete(event.id);
   }

@@ -36,19 +36,19 @@ abstract final class MockAccessControl {
   ];
 
   static List<OrgNode> familyNodes() => const [
-        OrgNode(id: 'n_sophie', label: 'Sophie Martin', subtitle: 'Mère · Admin', roleId: 'admin', avatarInitials: 'SM'),
-        OrgNode(id: 'n_marc', label: 'Marc Martin', subtitle: 'Père', roleId: 'parent', parentId: 'n_sophie', avatarInitials: 'MM'),
-        OrgNode(id: 'n_lea', label: 'Léa Martin', subtitle: '12 ans', roleId: 'child', parentId: 'n_sophie', avatarInitials: 'LM'),
-        OrgNode(id: 'n_tom', label: 'Tom Martin', subtitle: '9 ans', roleId: 'child', parentId: 'n_sophie', avatarInitials: 'TM'),
+        OrgNode(id: 'n_sophie', label: 'Sophie Martin', subtitle: 'Mère · Admin', roleId: 'admin', avatarInitials: 'SM', memberId: 'm_sophie', sortOrder: 0),
+        OrgNode(id: 'n_marc', label: 'Marc Martin', subtitle: 'Père', roleId: 'parent', avatarInitials: 'MM', memberId: 'm_marc', sortOrder: 1),
+        OrgNode(id: 'n_lea', label: 'Léa Martin', subtitle: '12 ans', roleId: 'child', parentId: 'n_sophie', avatarInitials: 'LM', memberId: 'm_lea', sortOrder: 1),
+        OrgNode(id: 'n_tom', label: 'Tom Martin', subtitle: '9 ans', roleId: 'child', parentId: 'n_sophie', avatarInitials: 'TM', memberId: 'm_tom', sortOrder: 2),
       ];
 
   static List<OrgNode> clubNodes() => const [
-        OrgNode(id: 'n_dir', label: 'Pierre Lambert', subtitle: 'Directeur', roleId: 'director', avatarInitials: 'PL'),
-        OrgNode(id: 'n_coach', label: 'Karim Benali', subtitle: 'Entraîneur U17', roleId: 'coach', parentId: 'n_dir', avatarInitials: 'KB'),
-        OrgNode(id: 'n_treas', label: 'Nadia Roche', subtitle: 'Trésorier', roleId: 'treasurer', parentId: 'n_dir', avatarInitials: 'NR'),
-        OrgNode(id: 'n_sec', label: 'Julie Moreau', subtitle: 'Secrétaire', roleId: 'secretary', parentId: 'n_dir', avatarInitials: 'JM'),
-        OrgNode(id: 'n_u17', label: 'Licenciés U17', subtitle: '18 joueurs', roleId: 'member', parentId: 'n_coach', avatarInitials: 'U17'),
-        OrgNode(id: 'n_staff', label: 'Staff technique', subtitle: '4 personnes', roleId: 'member', parentId: 'n_coach', avatarInitials: 'ST'),
+        OrgNode(id: 'n_dir', label: 'Pierre Lambert', subtitle: 'Directeur', roleId: 'director', avatarInitials: 'PL', memberId: 'm_dir', sortOrder: 0),
+        OrgNode(id: 'n_coach', label: 'Karim Benali', subtitle: 'Entraîneur U17', roleId: 'coach', parentId: 'n_dir', avatarInitials: 'KB', memberId: 'm_coach', sortOrder: 0),
+        OrgNode(id: 'n_treas', label: 'Nadia Roche', subtitle: 'Trésorier', roleId: 'treasurer', parentId: 'n_dir', avatarInitials: 'NR', memberId: 'm_treas', sortOrder: 1),
+        OrgNode(id: 'n_sec', label: 'Julie Moreau', subtitle: 'Secrétaire', roleId: 'secretary', parentId: 'n_dir', avatarInitials: 'JM', memberId: 'm_sec', sortOrder: 2, hierarchyLinkType: OrgHierarchyLinkType.dottedLine),
+        OrgNode(id: 'n_u17', label: 'Licenciés U17', subtitle: '18 joueurs', roleId: 'member', parentId: 'n_coach', avatarInitials: 'U17', memberId: 'm_u17', sortOrder: 0),
+        OrgNode(id: 'n_staff', label: 'Staff technique', subtitle: '4 personnes', roleId: 'member', parentId: 'n_coach', avatarInitials: 'ST', sortOrder: 1),
       ];
 
   static List<OrgNode> enterpriseNodes(String rootName) => [
@@ -91,7 +91,7 @@ abstract final class MockAccessControl {
       StructureTemplate.family => dataFor('family'),
       StructureTemplate.club => dataFor('club'),
       StructureTemplate.enterprise => dataFor('custom', customName: name ?? 'Mon entreprise'),
-      StructureTemplate.blank => StructureData(
+      StructureTemplate.custom => StructureData(
           nodes: [OrgNode(id: 'n_root', label: name ?? 'Nouvelle structure', subtitle: 'Admin', roleId: 'admin', avatarInitials: 'N')],
           members: [AccessMember(id: 'm_root', name: name ?? 'Admin', email: 'admin@structure.local', roleId: 'admin', nodeId: 'n_root')],
         ),

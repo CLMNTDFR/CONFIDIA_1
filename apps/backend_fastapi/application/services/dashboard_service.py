@@ -34,7 +34,7 @@ _MONTH_LABELS = [
 
 
 class DashboardService:
-    """Tableau de bord — synthèse hebdomadaire calculée depuis le calendrier."""
+    """Tableau de bord  -  synthèse hebdomadaire calculée depuis le calendrier."""
 
     def __init__(self, calendar_service: CalendarService | None = None):
         self._calendar = calendar_service or CalendarService()
@@ -49,7 +49,7 @@ class DashboardService:
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
 
-        events = self._calendar._events  # mock interne — prêt pour agrégation CalDAV
+        events = self._calendar._events  # mock interne  -  prêt pour agrégation CalDAV
         week_events = [
             e
             for e in events

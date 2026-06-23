@@ -9,6 +9,7 @@ import 'cofid_ia_brand.dart';
 import 'confidia_glow_button.dart';
 import 'confidia_text_field.dart';
 import 'glass_card.dart';
+import 'mobile_shell_insets.dart';
 
 class PlanningAiPanel extends StatefulWidget {
   final PlanningProposal? proposal;
@@ -87,30 +88,54 @@ class _PlanningAiPanelState extends State<PlanningAiPanel> {
     final proposal = widget.proposal;
     final hasResult = proposal != null;
     final isActive = widget.loading || _streaming;
+    final isMobile = ConfidiaMobileShell.isMobileShell(context);
+
+    final analyzeButton = ConfidiaGlowButton(
+      label: widget.loading ? 'Analyse en cours…' : widget.analyzeLabel,
+      icon: Icons.psychology_rounded,
+      onPressed: widget.loading ? null : widget.onAnalyze,
+    );
 
     return GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          CofidIaPanelHeader(
-            speaking: isActive,
-            subtitle: hasResult
-                ? null
-                : 'Détecte les conflits et propose des réajustements sur l\'agenda affiché.',
-          ),
-          if (!hasResult) ...[
-            const SizedBox(height: 14),
-            ConfidiaGlowButton(
-              label: widget.loading ? 'Analyse en cours…' : widget.analyzeLabel,
-              icon: Icons.psychology_rounded,
-              expand: true,
-              onPressed: widget.loading ? null : widget.onAnalyze,
+          if (!hasResult && !isMobile) ...[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: CofidIaPanelHeader(
+                    speaking: isActive,
+                    subtitle: 'Détecte les conflits et propose des réajustements sur l\'agenda affiché.',
+                  ),
+                ),
+                const SizedBox(width: 12),
+                analyzeButton,
+              ],
             ),
             if (widget.loading)
               const Padding(
                 padding: EdgeInsets.only(top: 16),
                 child: Center(child: CircularProgressIndicator()),
               ),
+          ]
+          else ...[
+            CofidIaPanelHeader(
+              speaking: isActive,
+              subtitle: hasResult
+                  ? null
+                  : 'Détecte les conflits et propose des réajustements sur l\'agenda affiché.',
+            ),
+            if (!hasResult) ...[
+              const SizedBox(height: 14),
+              Center(child: analyzeButton),
+              if (widget.loading)
+                const Padding(
+                  padding: EdgeInsets.only(top: 16),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+            ],
           ],
           if (hasResult) ...[
             const SizedBox(height: ConfidiaSpacing.md),

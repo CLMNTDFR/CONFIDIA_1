@@ -1,4 +1,4 @@
-/// Libellés de pages unifiés — menu, top bar et en-têtes mobile.
+/// Libellés de pages unifiés  -  menu, top bar et en-têtes mobile.
 abstract final class ConfidiaRouteLabels {
   static const home = 'Accueil';
   static const messaging = 'Messagerie';

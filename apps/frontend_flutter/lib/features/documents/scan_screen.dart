@@ -2,12 +2,16 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
+import '../../core/theme/theme_context.dart';
+import '../../shared/widgets/confidia_dropdown_field.dart';
+import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_snackbar.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
+import 'document_categories.dart';
+import 'widgets/document_ingest_widgets.dart';
 
 class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
@@ -21,7 +25,7 @@ class _ScanScreenState extends State<ScanScreen> {
   XFile? _captured;
   Uint8List? _bytes;
   bool _isProcessing = false;
-  String? _selectedCategory = 'Administratif';
+  String _selectedCategory = DocumentCategories.values.first;
 
   Future<void> _capture(ImageSource source) async {
     try {
@@ -43,6 +47,11 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
+  void _reset() => setState(() {
+        _captured = null;
+        _bytes = null;
+      });
+
   Future<void> _upload() async {
     if (_captured == null) return;
     setState(() => _isProcessing = true);
@@ -60,190 +69,126 @@ class _ScanScreenState extends State<ScanScreen> {
   @override
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 700;
+    final previewHeight = isWide ? 360.0 : 260.0;
 
     return SingleChildScrollView(
       padding: ConfidiaInsets.page(context),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900),
+          constraints: const BoxConstraints(maxWidth: 560),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ConfidiaPageReveal(
                 index: 0,
-                staggerCount: 2,
+                staggerCount: _captured != null ? 2 : 1,
                 child: GlassCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          decoration: BoxDecoration(
-                            gradient: context.palette.accentGradient,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(Icons.document_scanner_rounded, color: Colors.white, size: 22),
-                        ),
-                        const SizedBox(width: ConfidiaSpacing.md),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Scanner un document', style: Theme.of(context).textTheme.titleLarge),
-                              Text(
-                                'Capturez factures, contrats et pièces d\'identité',
-                                style: Theme.of(context).textTheme.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: ConfidiaSpacing.lg),
-                    if (_bytes != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusMd),
-                        child: Image.memory(_bytes!, height: isWide ? 400 : 260, width: double.infinity, fit: BoxFit.cover),
-                      )
-                    else
-                      Container(
-                        height: isWide ? 360 : 240,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusMd),
-                          border: Border.all(color: context.palette.primary.withValues(alpha: 0.25), width: 2),
-                          gradient: LinearGradient(
-                            colors: [
-                              context.palette.primary.withValues(alpha: 0.05),
-                              context.palette.secondary.withValues(alpha: 0.05),
-                            ],
-                          ),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.camera_alt_rounded, size: 56, color: context.palette.primary.withValues(alpha: 0.5)),
-                            const SizedBox(height: ConfidiaSpacing.md),
-                            Text('Cadrez votre document', style: Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: ConfidiaSpacing.xs),
-                            Text('Éclairage uniforme recommandé', style: Theme.of(context).textTheme.bodySmall),
-                          ],
-                        ),
-                      ),
-                    const SizedBox(height: ConfidiaSpacing.lg),
-                    if (isWide)
-                      Row(
-                        children: [
-                          Expanded(child: _CaptureButton(icon: Icons.photo_camera_rounded, label: 'Appareil photo', onTap: () => _capture(ImageSource.camera))),
-                          const SizedBox(width: ConfidiaSpacing.md),
-                          Expanded(child: _CaptureButton(icon: Icons.photo_library_rounded, label: 'Galerie', onTap: () => _capture(ImageSource.gallery), outlined: true)),
-                        ],
-                      )
-                    else
-                      Column(
-                        children: [
-                          _CaptureButton(icon: Icons.photo_camera_rounded, label: 'Prendre une photo', onTap: () => _capture(ImageSource.camera)),
-                          const SizedBox(height: ConfidiaSpacing.sm),
-                          _CaptureButton(icon: Icons.photo_library_rounded, label: 'Choisir depuis la galerie', onTap: () => _capture(ImageSource.gallery), outlined: true),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-              ),
-              const SizedBox(height: ConfidiaSpacing.md),
-              if (_captured != null) ...[
-                ConfidiaPageReveal(
-                  index: 1,
-                  staggerCount: 2,
-                  child: GlassCard(
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Options d\'import', style: Theme.of(context).textTheme.titleMedium),
-                      const SizedBox(height: ConfidiaSpacing.md),
-                      Text('Fichier · ${_captured!.name}', style: Theme.of(context).textTheme.bodySmall),
-                      const SizedBox(height: ConfidiaSpacing.md),
-                      DropdownButtonFormField<String>(
-                        value: _selectedCategory,
-                        decoration: const InputDecoration(labelText: 'Catégorie'),
-                        items: ['Administratif', 'Énergie', 'Assurance', 'Fiscal', 'Identité', 'Banque']
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                            .toList(),
-                        onChanged: (v) => setState(() => _selectedCategory = v),
+                      const DocumentIngestHeader(
+                        icon: Icons.document_scanner_rounded,
+                        title: 'Scanner un document',
+                        subtitle: 'Capturez factures, contrats et pièces d\'identité',
                       ),
                       const SizedBox(height: ConfidiaSpacing.lg),
-                      Row(
+                      DocumentIngestPreviewZone(
+                        height: previewHeight,
+                        emptyIcon: Icons.camera_alt_rounded,
+                        emptyTitle: 'Cadrez votre document',
+                        emptySubtitle: 'Éclairage uniforme recommandé',
+                        child: _bytes != null
+                            ? Image.memory(_bytes!, width: double.infinity, height: previewHeight, fit: BoxFit.cover)
+                            : null,
+                      ),
+                      const SizedBox(height: ConfidiaSpacing.lg),
+                      Wrap(
+                        alignment: WrapAlignment.center,
+                        spacing: 10,
+                        runSpacing: 10,
                         children: [
-                          Expanded(
-                            child: OutlinedButton(
-                              onPressed: () => setState(() { _captured = null; _bytes = null; }),
-                              child: const Text('Reprendre'),
-                            ),
+                          ConfidiaGlowButton(
+                            label: isWide ? 'Appareil photo' : 'Prendre une photo',
+                            icon: Icons.photo_camera_rounded,
+                            onPressed: () => _capture(ImageSource.camera),
                           ),
-                          const SizedBox(width: ConfidiaSpacing.md),
-                          Expanded(
-                            flex: 2,
-                            child: ElevatedButton.icon(
-                              onPressed: _isProcessing ? null : _upload,
-                              icon: _isProcessing
-                                  ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                                  : const Icon(Icons.cloud_upload_rounded, size: 18),
-                              label: Text(_isProcessing ? 'Envoi...' : 'Envoyer le scan'),
-                            ),
+                          ConfidiaGlowButton(
+                            label: isWide ? 'Galerie' : 'Depuis la galerie',
+                            icon: Icons.photo_library_rounded,
+                            primary: false,
+                            onPressed: () => _capture(ImageSource.gallery),
                           ),
                         ],
                       ),
                     ],
                   ),
                 ),
-                ),
-              ],
-              if (kIsWeb)
-                Padding(
-                  padding: const EdgeInsets.only(top: ConfidiaSpacing.md),
-                  child: Text(
-                    'Sur le web, la galerie est utilisée par défaut. La caméra nécessite HTTPS.',
-                    style: Theme.of(context).textTheme.bodySmall,
-                    textAlign: TextAlign.center,
+              ),
+              if (_captured != null) ...[
+                const SizedBox(height: ConfidiaSpacing.md),
+                ConfidiaPageReveal(
+                  index: 1,
+                  staggerCount: 2,
+                  child: GlassCard(
+                    child: Column(
+                      children: [
+                        Text(
+                          'Options d\'import',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _captured!.name,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: context.palette.primary,
+                              ),
+                        ),
+                        const SizedBox(height: ConfidiaSpacing.md),
+                        ConfidiaDropdownField<String>(
+                          value: _selectedCategory,
+                          labelText: 'Catégorie',
+                          prefixIcon: Icons.folder_outlined,
+                          items: DocumentCategories.values,
+                          itemLabel: (c) => c,
+                          onChanged: (v) {
+                            if (v != null) setState(() => _selectedCategory = v);
+                          },
+                        ),
+                        const SizedBox(height: ConfidiaSpacing.lg),
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            ConfidiaGlowButton(
+                              label: 'Reprendre',
+                              icon: Icons.refresh_rounded,
+                              primary: false,
+                              onPressed: _reset,
+                            ),
+                            ConfidiaGlowButton(
+                              label: _isProcessing ? 'Envoi…' : 'Envoyer le scan',
+                              icon: Icons.cloud_upload_rounded,
+                              onPressed: _isProcessing ? null : _upload,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
+              ],
+              if (kIsWeb) ...[
+                const SizedBox(height: ConfidiaSpacing.md),
+                Text(
+                  'Sur le web, la galerie est utilisée par défaut. La caméra nécessite HTTPS.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ],
           ),
         ),
       ),
     );
-  }
-}
-
-class _CaptureButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final bool outlined;
-
-  const _CaptureButton({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.outlined = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final child = Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 20),
-        const SizedBox(width: 8),
-        Text(label),
-      ],
-    );
-
-    if (outlined) {
-      return OutlinedButton(onPressed: onTap, child: child);
-    }
-    return ElevatedButton(onPressed: onTap, child: child);
   }
 }
