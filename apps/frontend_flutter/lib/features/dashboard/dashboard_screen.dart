@@ -141,13 +141,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     VoidCallback? onMoveDown,
   }) {
     final docs = MockEcosystem.documents;
-    final events = ref.watch(calendarProvider);
     final notifications = MockEcosystem.notifications;
-    ref.watch(paymentsProvider);
-    final paymentsNotifier = ref.read(paymentsProvider.notifier);
-    final pendingPayments = paymentsNotifier.pending;
-    final totalPending = paymentsNotifier.totalPending;
-    final nextPayment = paymentsNotifier.nextDue;
 
     final content = switch (type) {
       DashboardWidgetType.greeting => const SizedBox.shrink(),
@@ -159,15 +153,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             key: OnboardingTargets.weekOverview,
             child: const WeekOverviewWidget(),
           ),
-      DashboardWidgetType.stats => _StatsWidget(docs: docs, events: events, notifications: notifications, pendingCount: pendingPayments.length),
+      DashboardWidgetType.stats => const _StatsWidget(),
       DashboardWidgetType.expensesTrend => const ExpensesTrendChartWidget(),
       DashboardWidgetType.paymentsOverview => const PaymentsOverviewChartWidget(),
       DashboardWidgetType.documentsBreakdown => const DocumentsCategoryChartWidget(),
       DashboardWidgetType.hubActivity => const HubActivityChartWidget(),
       DashboardWidgetType.quickActions => const _QuickActionsWidget(),
-      DashboardWidgetType.pendingPayments => _PendingPaymentsWidget(payments: pendingPayments, total: totalPending, next: nextPayment),
+      DashboardWidgetType.pendingPayments => const _PendingPaymentsWidget(),
       DashboardWidgetType.recentDocs => _RecentDocsWidget(docs: docs),
-      DashboardWidgetType.deadlines => _DeadlinesWidget(events: events),
+      DashboardWidgetType.deadlines => const _DeadlinesWidget(),
       DashboardWidgetType.importantDocs => _ImportantDocsWidget(docs: docs.where((d) => d.isImportant).toList()),
       DashboardWidgetType.activity => _ActivityWidget(notifications: notifications),
       DashboardWidgetType.connectedAccounts => const _ConnectedAccountsWidget(),
@@ -692,15 +686,17 @@ class _CustomizeFabState extends State<_CustomizeFab> {
   }
 }
 
-class _StatsWidget extends StatelessWidget {
-  final List<DocumentModel> docs;
-  final List events;
-  final List notifications;
-  final int pendingCount;
-  const _StatsWidget({required this.docs, required this.events, required this.notifications, required this.pendingCount});
+class _StatsWidget extends ConsumerWidget {
+  const _StatsWidget();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final docs = MockEcosystem.documents;
+    final notifications = MockEcosystem.notifications;
+    final pendingCount = ref.watch(paymentsProvider.select((list) => list
+        .where((p) => p.status == PaymentStatus.pending || p.status == PaymentStatus.waiting)
+        .length));
+
     return StatsRow(stats: [
       CompactStat(label: 'Documents', value: '${docs.length}', icon: Icons.folder_copy_rounded, color: context.palette.primary),
       CompactStat(label: 'Paiements', value: '$pendingCount', icon: Icons.payments_rounded, color: context.palette.accent),
@@ -741,15 +737,17 @@ class _QuickActionsWidget extends StatelessWidget {
   }
 }
 
-class _PendingPaymentsWidget extends StatelessWidget {
-  final List<PaymentModel> payments;
-  final double total;
-  final PaymentModel? next;
-
-  const _PendingPaymentsWidget({required this.payments, required this.total, this.next});
+class _PendingPaymentsWidget extends ConsumerWidget {
+  const _PendingPaymentsWidget();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(paymentsProvider);
+    final paymentsNotifier = ref.read(paymentsProvider.notifier);
+    final payments = paymentsNotifier.pending;
+    final total = paymentsNotifier.totalPending;
+    final next = paymentsNotifier.nextDue;
+
     return GlassCard(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -764,7 +762,7 @@ class _PendingPaymentsWidget extends StatelessWidget {
                   children: [
                     Text('${total.toStringAsFixed(2)} € à régler', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
                     if (next != null)
-                      Text('Prochaine · ${next!.creditor} · ${DateFormat('d MMM', 'fr_FR').format(next!.dueDate)}', style: Theme.of(context).textTheme.bodySmall),
+                      Text('Prochaine · ${next.creditor} · ${DateFormat('d MMM', 'fr_FR').format(next.dueDate)}', style: Theme.of(context).textTheme.bodySmall),
                   ],
                 ),
               ),
@@ -772,7 +770,7 @@ class _PendingPaymentsWidget extends StatelessWidget {
                 ConfidiaGlowButton(
                   label: 'Payer',
                   icon: Icons.payment_rounded,
-                  onPressed: () => context.go('/payments/${next!.id}'),
+                  onPressed: () => context.go('/payments/${next.id}'),
                 ),
             ],
           ),
@@ -927,12 +925,12 @@ class _RecentDocsWidget extends StatelessWidget {
   }
 }
 
-class _DeadlinesWidget extends StatelessWidget {
-  final List events;
-  const _DeadlinesWidget({required this.events});
+class _DeadlinesWidget extends ConsumerWidget {
+  const _DeadlinesWidget();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final events = ref.watch(calendarProvider);
     final sorted = List.from(events)..sort((a, b) => a.start.compareTo(b.start));
 
     return GlassCard(

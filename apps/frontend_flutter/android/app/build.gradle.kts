@@ -8,7 +8,8 @@ plugins {
 android {
     namespace = "com.confidia.confidia"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Aligné sur les plugins (file_picker, secure_storage, etc.) — NDK 27 est rétrocompatible.
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

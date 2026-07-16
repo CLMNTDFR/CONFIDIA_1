@@ -76,7 +76,7 @@ class GuidedTourStep {
   bool get isThemeBrowser => id == GuidedTourStepId.appearance;
 }
 
-List<GuidedTourStep> get guidedTourSteps => [
+final List<GuidedTourStep> guidedTourSteps = [
       const GuidedTourStep(
         id: GuidedTourStepId.welcome,
         message:

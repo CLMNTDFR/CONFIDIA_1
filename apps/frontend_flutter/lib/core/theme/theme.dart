@@ -7,8 +7,13 @@ import 'spacing.dart';
 import 'typography.dart';
 
 abstract final class ConfidiaTheme {
-  static ThemeData dark(ConfidiaPalette palette) => _buildTheme(isDark: true, palette: palette);
-  static ThemeData light(ConfidiaPalette palette) => _buildTheme(isDark: false, palette: palette);
+  static final Map<String, ThemeData> _cache = {};
+
+  static ThemeData dark(ConfidiaPalette palette) =>
+      _cache.putIfAbsent('d-${palette.id.name}', () => _buildTheme(isDark: true, palette: palette));
+
+  static ThemeData light(ConfidiaPalette palette) =>
+      _cache.putIfAbsent('l-${palette.id.name}', () => _buildTheme(isDark: false, palette: palette));
 
   static ThemeData _buildTheme({required bool isDark, required ConfidiaPalette palette}) {
     final surface = isDark ? ConfidiaColors.darkSurface : ConfidiaColors.lightSurface;

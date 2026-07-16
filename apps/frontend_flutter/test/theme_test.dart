@@ -15,4 +15,9 @@ void main() {
     expect(ConfidiaPalette.rose.secondary, const Color(0xFFAF73F7));
     expect(ConfidiaPalette.rose.accent, const Color(0xFF4B96B4));
   });
+
+  test('byId resolves known palettes', () {
+    expect(ConfidiaPalette.byId(ConfidiaPaletteId.blue), ConfidiaPalette.blue);
+    expect(ConfidiaPalette.byId(ConfidiaPaletteId.rose), ConfidiaPalette.rose);
+  });
 }

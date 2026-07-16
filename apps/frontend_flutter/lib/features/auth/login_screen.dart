@@ -53,7 +53,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final auth = ref.watch(authStateProvider);
+    final auth = ref.watch(
+      authStateProvider.select((s) => AuthState(isLoading: s.isLoading, error: s.error)),
+    );
     final isWide = MediaQuery.of(context).size.width >= 900;
     return MeshBackground(
       child: Scaffold(

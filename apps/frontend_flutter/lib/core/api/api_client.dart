@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import 'api_config.dart';
@@ -16,10 +17,12 @@ class ApiClient {
           headers: {'Content-Type': 'application/json'},
         )) {
     _dio.interceptors.add(_AuthInterceptor(_storage, _dio));
-    _dio.interceptors.add(LogInterceptor(
-      requestBody: true,
-      responseBody: true,
-    ));
+    if (kDebugMode) {
+      _dio.interceptors.add(LogInterceptor(
+        requestBody: true,
+        responseBody: true,
+      ));
+    }
   }
 
   Dio get dio => _dio;

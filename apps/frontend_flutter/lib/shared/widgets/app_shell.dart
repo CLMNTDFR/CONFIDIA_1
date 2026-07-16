@@ -35,8 +35,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     final isWide = MediaQuery.of(context).size.width >= 900;
     final currentPath = GoRouterState.of(context).matchedLocation;
     final unreadCount = MockData.notifications.where((n) => !n.read).length;
-    ref.watch(messagingProvider);
-    final mailUnread = ref.read(messagingProvider.notifier).unreadCount;
+    final mailUnread = ref.watch(messagingUnreadCountProvider);
     final routeMeta = AppTopBar.routeMeta(currentPath);
     final topBar = AppTopBar.fromRoute(context, showNotifications: true);
     final tourActive = ref.watch(guidedTourProvider.select((s) => s.active));

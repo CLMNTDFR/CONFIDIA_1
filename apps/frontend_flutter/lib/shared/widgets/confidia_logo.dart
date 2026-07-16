@@ -51,11 +51,13 @@ class ConfidiaLogoMark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final palette = context.palette;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
     return Image.asset(
       ConfidiaLogoAssets.forPalette(palette, displaySize: size),
       width: size,
       height: size,
       fit: BoxFit.contain,
+      cacheWidth: (size * dpr).round().clamp(1, 512),
       filterQuality: size >= 36 ? FilterQuality.high : FilterQuality.medium,
       gaplessPlayback: true,
       errorBuilder: (_, __, ___) => Icon(Icons.shield_rounded, size: size * 0.72, color: palette.primary),

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:equatable/equatable.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -11,7 +12,7 @@ final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(apiClientProvider));
 });
 
-class AuthState {
+class AuthState extends Equatable {
   final bool isAuthenticated;
   final bool isLoading;
   final UserModel? user;
@@ -37,6 +38,9 @@ class AuthState {
       error: error,
     );
   }
+
+  @override
+  List<Object?> get props => [isAuthenticated, isLoading, user, error];
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {

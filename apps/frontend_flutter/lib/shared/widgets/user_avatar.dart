@@ -6,6 +6,13 @@ import 'package:flutter/material.dart';
 import '../../core/theme/theme_context.dart';
 import '../models/user_model.dart';
 
+final Map<String, Uint8List> _avatarBytesCache = {};
+
+Uint8List? decodeAvatarBase64(String? imageBase64) {
+  if (imageBase64 == null || imageBase64.isEmpty) return null;
+  return _avatarBytesCache.putIfAbsent(imageBase64, () => base64Decode(imageBase64));
+}
+
 class UserAvatar extends StatelessWidget {
   final UserModel user;
   final double radius;
@@ -20,12 +27,12 @@ class UserAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = imageBase64 != null && imageBase64!.isNotEmpty;
+    final bytes = decodeAvatarBase64(imageBase64);
 
-    if (hasPhoto) {
+    if (bytes != null) {
       return CircleAvatar(
         radius: radius,
-        backgroundImage: MemoryImage(base64Decode(imageBase64!)),
+        backgroundImage: MemoryImage(bytes),
       );
     }
 
@@ -61,7 +68,7 @@ class UserAvatarLarge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = imageBase64 != null && imageBase64!.isNotEmpty;
+    final bytes = decodeAvatarBase64(imageBase64);
 
     Widget avatar = Container(
       decoration: BoxDecoration(
@@ -75,10 +82,10 @@ class UserAvatarLarge extends StatelessWidget {
           ),
         ],
       ),
-      child: hasPhoto
+      child: bytes != null
           ? CircleAvatar(
               radius: radius,
-              backgroundImage: MemoryImage(Uint8List.fromList(base64Decode(imageBase64!))),
+              backgroundImage: MemoryImage(bytes),
             )
           : CircleAvatar(
               radius: radius,

@@ -28,7 +28,8 @@ class CalendarNotifier extends StateNotifier<List<CalendarEventModel>> {
 
   final Ref _ref;
 
-  ConfidiaPalette get _palette => ConfidiaPalette.byId(_ref.watch(colorPaletteProvider));
+  /// Use [read] so palette changes do not rebuild the whole calendar event list.
+  ConfidiaPalette get _palette => ConfidiaPalette.byId(_ref.read(colorPaletteProvider));
 
   List<CalendarEventModel> eventsForDay(DateTime day, {Set<String>? groups}) {
     return _filtered(groups: groups).where((e) =>

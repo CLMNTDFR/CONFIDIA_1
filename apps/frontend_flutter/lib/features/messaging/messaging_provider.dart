@@ -42,4 +42,9 @@ final messagingProvider = StateNotifierProvider<MessagingNotifier, List<EmailMod
   return MessagingNotifier();
 });
 
+/// Narrow rebuilds for mail badges (shell) without watching the full inbox list identity elsewhere.
+final messagingUnreadCountProvider = Provider<int>((ref) {
+  return ref.watch(messagingProvider).where((e) => !e.isRead).length;
+});
+
 final mailFilterProvider = StateProvider<MailProvider?>((ref) => null);
