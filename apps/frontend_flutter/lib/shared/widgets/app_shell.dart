@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../features/messaging/messaging_provider.dart';
+import '../../features/onboarding/guided_tour_overlay.dart';
+import '../../features/onboarding/guided_tour_provider.dart';
+import '../../features/onboarding/onboarding_targets.dart';
 import '../../shared/data/mock_data.dart';
 import 'app_top_bar.dart';
 import 'confidia_logo.dart';
@@ -35,76 +39,93 @@ class _AppShellState extends ConsumerState<AppShell> {
     final mailUnread = ref.read(messagingProvider.notifier).unreadCount;
     final routeMeta = AppTopBar.routeMeta(currentPath);
     final topBar = AppTopBar.fromRoute(context, showNotifications: true);
+    final tourActive = ref.watch(guidedTourProvider.select((s) => s.active));
 
+    ref.listen(authStateProvider, (prev, next) {
+      if (prev?.isAuthenticated == true && !next.isAuthenticated) {
+        ref.read(guidedTourProvider.notifier).reset();
+      }
+    });
+
+    Widget shell;
     if (!isWide) {
       final topInset = MediaQuery.viewPaddingOf(context).top;
-      return MeshBackground(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          extendBody: true,
-          appBar: PreferredSize(
-            preferredSize: Size.fromHeight(ConfidiaSpacing.topBarHeight + topInset),
-            child: SafeArea(
-              bottom: false,
-              child: topBar,
+      shell = Scaffold(
+        backgroundColor: Colors.transparent,
+        extendBody: true,
+        appBar: PreferredSize(
+          preferredSize: Size.fromHeight(ConfidiaSpacing.topBarHeight + topInset),
+          child: SafeArea(
+            bottom: false,
+            child: topBar,
+          ),
+        ),
+        body: MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            padding: MediaQuery.paddingOf(context).copyWith(
+              bottom: ConfidiaMobileShell.bottomScrollInset(context),
             ),
           ),
-          body: MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              padding: MediaQuery.paddingOf(context).copyWith(
-                bottom: ConfidiaMobileShell.bottomScrollInset(context),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                MobilePageHeader(title: routeMeta.$1, subtitle: routeMeta.$2, path: currentPath),
-                Expanded(
-                  child: KeyedSubtree(
-                    key: ValueKey<String>(currentPath),
-                    child: widget.child,
-                  ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              MobilePageHeader(title: routeMeta.$1, subtitle: routeMeta.$2, path: currentPath),
+              Expanded(
+                child: KeyedSubtree(
+                  key: ValueKey<String>(currentPath),
+                  child: widget.child,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          bottomNavigationBar: ConfidiaMobileNavBar(
-            currentPath: currentPath,
-            destinations: ConfidiaNavDestinations.mobileBar(
-              mailBadge: mailUnread > 0 ? mailUnread : null,
-            ),
+        ),
+        bottomNavigationBar: ConfidiaMobileNavBar(
+          key: OnboardingTargets.mobileNav,
+          currentPath: currentPath,
+          destinations: ConfidiaNavDestinations.mobileBar(
+            mailBadge: mailUnread > 0 ? mailUnread : null,
           ),
         ),
       );
-    }
-
-    return MeshBackground(
-      child: Scaffold(
+    } else {
+      shell = Scaffold(
         backgroundColor: Colors.transparent,
         body: Row(
           children: [
-            _Sidebar(
-              collapsed: _sidebarCollapsed,
-              currentPath: currentPath,
-              unreadCount: unreadCount,
-              mailUnread: mailUnread,
-              onToggle: () => setState(() => _sidebarCollapsed = !_sidebarCollapsed),
+            KeyedSubtree(
+              key: OnboardingTargets.sidebarNav,
+              child: _Sidebar(
+                collapsed: _sidebarCollapsed,
+                currentPath: currentPath,
+                unreadCount: unreadCount,
+                mailUnread: mailUnread,
+                onToggle: () => setState(() => _sidebarCollapsed = !_sidebarCollapsed),
+              ),
             ),
             Expanded(
               child: Column(
                 children: [
                   topBar,
                   Expanded(
-                  child: KeyedSubtree(
-                    key: ValueKey<String>(currentPath),
-                    child: widget.child,
+                    child: KeyedSubtree(
+                      key: ValueKey<String>(currentPath),
+                      child: widget.child,
+                    ),
                   ),
-                ),
                 ],
               ),
             ),
           ],
         ),
+      );
+    }
+
+    return MeshBackground(
+      child: Stack(
+        children: [
+          shell,
+          if (tourActive) const GuidedTourOverlay(),
+        ],
       ),
     );
   }
@@ -197,10 +218,13 @@ class _Sidebar extends StatelessWidget {
               children: [
                 Divider(height: 1, color: ConfidiaColors.border(isDark).withValues(alpha: 0.5)),
                 const SizedBox(height: 4),
-                ConfidiaSidebarNavItem(
-                  destination: ConfidiaNavDestinations.settings(),
-                  isActive: confidiaNavIsActive('/settings', currentPath),
-                  collapsed: collapsed,
+                KeyedSubtree(
+                  key: OnboardingTargets.settingsNav,
+                  child: ConfidiaSidebarNavItem(
+                    destination: ConfidiaNavDestinations.settings(),
+                    isActive: confidiaNavIsActive('/settings', currentPath),
+                    collapsed: collapsed,
+                  ),
                 ),
               ],
             ),

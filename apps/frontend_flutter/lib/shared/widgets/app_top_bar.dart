@@ -9,6 +9,7 @@ import '../navigation/confidia_route_labels.dart';
 import '../../shared/models/user_model.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
+import '../../features/onboarding/onboarding_targets.dart';
 import '../../features/profile/profile_avatar_provider.dart';
 import '../../shared/data/mock_data.dart';
 import 'confidia_button.dart';
@@ -102,11 +103,14 @@ class AppTopBar extends ConsumerWidget {
           const _TopBarDate(),
           const SizedBox(width: 12),
           if (showNotifications)
-            ConfidiaIconButton(
-              icon: Icons.notifications_none_rounded,
-              tooltip: 'Notifications',
-              showBadge: unread > 0,
-              onPressed: () => context.go('/notifications'),
+            KeyedSubtree(
+              key: OnboardingTargets.notifications,
+              child: ConfidiaIconButton(
+                icon: Icons.notifications_none_rounded,
+                tooltip: 'Notifications',
+                showBadge: unread > 0,
+                onPressed: () => context.go('/notifications'),
+              ),
             ),
           const SizedBox(width: 6),
           const ThemeToggleButton(compact: true),

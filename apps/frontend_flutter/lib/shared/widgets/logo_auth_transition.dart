@@ -230,6 +230,9 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
   Widget _buildWelcomeContent(BuildContext context, bool isDark) {
     final message = widget.subtitle ?? 'Chargement de votre espace';
 
+    // Hauteur réservée pour la bulle : le logo reste fixe quand le message apparaît.
+    const messageSlotHeight = 96.0;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.xl),
       child: Column(
@@ -242,14 +245,23 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
               child: const ConfidiaAnimatedLogo(size: 68, showText: false),
             ),
           ),
-          const SizedBox(height: 44),
-          Opacity(
-            opacity: _aiOpacity.value,
-            child: _WelcomeAiMessage(
-              visible: _showAiMessage,
-              message: message,
-              speaking: _aiSpeaking,
-              onSpeakingChanged: (v) => setState(() => _aiSpeaking = v),
+          const SizedBox(height: 36),
+          SizedBox(
+            height: messageSlotHeight,
+            child: Opacity(
+              opacity: _aiOpacity.value,
+              child: Transform.translate(
+                offset: Offset(0, (1 - _aiOpacity.value) * 8),
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: _WelcomeAiMessage(
+                    visible: _showAiMessage,
+                    message: message,
+                    speaking: _aiSpeaking,
+                    onSpeakingChanged: (v) => setState(() => _aiSpeaking = v),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -286,7 +298,7 @@ class _WelcomeAiMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!visible) return const SizedBox(height: 52);
+    if (!visible) return const SizedBox.shrink();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final palette = context.palette;
@@ -298,7 +310,7 @@ class _WelcomeAiMessage extends StatelessWidget {
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 14, 16, 14),
+            padding: const EdgeInsets.fromLTRB(14, 12, 16, 12),
             decoration: BoxDecoration(
               color: isDark
                   ? Colors.white.withValues(alpha: 0.06)
@@ -318,7 +330,7 @@ class _WelcomeAiMessage extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                ConfidiaAiRobot(size: 38, speaking: speaking),
+                ConfidiaAiRobot(size: 34, speaking: speaking),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Center(
@@ -327,11 +339,11 @@ class _WelcomeAiMessage extends StatelessWidget {
                       text: message,
                       showThinkingRobot: false,
                       textAlign: TextAlign.center,
-                      thinkingDelay: const Duration(milliseconds: 320),
+                      thinkingDelay: const Duration(milliseconds: 120),
                       style: GoogleFonts.inter(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
-                        height: 1.55,
+                        height: 1.45,
                         letterSpacing: 0.15,
                         color: isDark ? Colors.white.withValues(alpha: 0.9) : ConfidiaColors.lightTextPrimary,
                       ),

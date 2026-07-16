@@ -18,6 +18,7 @@ import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/logout_button.dart';
 import '../../shared/widgets/provider_chip.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../onboarding/onboarding_targets.dart';
 
 void _noop(bool _) {}
 
@@ -34,49 +35,55 @@ class SettingsScreen extends ConsumerWidget {
       children: [
         _SectionTitle(label: 'Organisation & accès'),
         const SizedBox(height: 6),
-        GlassCard(
-          padding: EdgeInsets.zero,
-          child: _CompactActionTile(
-            icon: Icons.account_tree_rounded,
-            title: 'Gouvernance & accès',
-            subtitle: 'Organigramme, rôles, droits et assistant IA',
-            onTap: () => context.go('/access-control'),
+        KeyedSubtree(
+          key: OnboardingTargets.gouvernanceTile,
+          child: GlassCard(
+            padding: EdgeInsets.zero,
+            child: _CompactActionTile(
+              icon: Icons.account_tree_rounded,
+              title: 'Gouvernance & accès',
+              subtitle: 'Organigramme, rôles, droits et assistant IA',
+              onTap: () => context.go('/access-control'),
+            ),
           ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Apparence'),
         const SizedBox(height: 6),
-        GlassCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            children: [
-              ConfidiaSwitchTile(
-                title: 'Mode sombre',
-                subtitle: 'Thème clair ou sombre',
-                value: isDark,
-                onChanged: (v) => ref.read(themeModeProvider.notifier).state = v,
-              ),
-              Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark).withValues(alpha: 0.5)),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Thème couleur',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                    ),
-                    const SizedBox(height: 2),
-                    Text('Palette de marque bleu ou rose', style: Theme.of(context).textTheme.labelSmall),
-                    const SizedBox(height: 10),
-                    ConfidiaPalettePicker(
-                      value: paletteId,
-                      onChanged: (id) => ref.read(colorPaletteProvider.notifier).state = id,
-                    ),
-                  ],
+        KeyedSubtree(
+          key: OnboardingTargets.appearanceSection,
+          child: GlassCard(
+            padding: EdgeInsets.zero,
+            child: Column(
+              children: [
+                ConfidiaSwitchTile(
+                  title: 'Mode sombre',
+                  subtitle: 'Thème clair ou sombre',
+                  value: isDark,
+                  onChanged: (v) => ref.read(themeModeProvider.notifier).state = v,
                 ),
-              ),
-            ],
+                Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark).withValues(alpha: 0.5)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Thème couleur',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                      ),
+                      const SizedBox(height: 2),
+                      Text('Palette de marque bleu ou rose', style: Theme.of(context).textTheme.labelSmall),
+                      const SizedBox(height: 10),
+                      ConfidiaPalettePicker(
+                        value: paletteId,
+                        onChanged: (id) => ref.read(colorPaletteProvider.notifier).state = id,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),

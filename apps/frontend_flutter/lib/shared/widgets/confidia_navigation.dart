@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import '../../features/onboarding/onboarding_targets.dart';
 import '../navigation/confidia_route_labels.dart';
 import 'confidia_tooltip.dart';
 
@@ -170,12 +171,15 @@ class ConfidiaMobileNavBar extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
                 child: Row(
                   children: List.generate(destinations.length, (i) {
-                    return Expanded(
-                      child: _MobileNavItem(
-                        destination: destinations[i],
-                        isActive: i == selected,
-                      ),
+                    final destination = destinations[i];
+                    Widget item = _MobileNavItem(
+                      destination: destination,
+                      isActive: i == selected,
                     );
+                    if (destination.path == '/settings') {
+                      item = KeyedSubtree(key: OnboardingTargets.settingsNav, child: item);
+                    }
+                    return Expanded(child: item);
                   }),
                 ),
               ),

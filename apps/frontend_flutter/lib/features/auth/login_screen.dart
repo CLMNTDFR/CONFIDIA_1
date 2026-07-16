@@ -10,6 +10,7 @@ import '../../shared/widgets/confidia_text_field.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/mesh_background.dart';
 import '../../shared/widgets/theme_toggle_button.dart';
+import '../onboarding/guided_tour_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -32,10 +33,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _handleLogin({bool demo = false}) async {
+  Future<void> _handleLogin({bool demo = false, bool guidedTour = false}) async {
     setState(() => _authenticating = true);
     try {
-      if (demo) {
+      if (guidedTour) {
+        await ref.read(authStateProvider.notifier).loginDemoGuidedTour();
+        ref.read(guidedTourProvider.notifier).arm();
+      } else if (demo) {
         await ref.read(authStateProvider.notifier).loginDemo();
       } else {
         if (!_formKey.currentState!.validate()) return;
@@ -176,6 +180,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               loading: busy,
               loadingLabel: 'Connexion…',
               onPressed: busy ? null : () => _handleLogin(demo: true),
+            ),
+            const SizedBox(height: ConfidiaSpacing.sm),
+            ConfidiaButton(
+              label: 'Visite guidée',
+              outlined: true,
+              loading: busy,
+              loadingLabel: 'Connexion…',
+              onPressed: busy ? null : () => _handleLogin(guidedTour: true),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Simule une première connexion avec tutoriel Confid•IA',
+              style: Theme.of(context).textTheme.labelSmall,
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: ConfidiaSpacing.md),
             Text(

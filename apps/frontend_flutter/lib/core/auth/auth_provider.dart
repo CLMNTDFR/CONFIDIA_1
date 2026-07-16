@@ -131,6 +131,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
+  /// Mode démo « Visite guidée » : simule une première connexion utilisateur.
+  Future<void> loginDemoGuidedTour() async {
+    state = state.copyWith(
+      isAuthenticated: true,
+      user: const UserModel(
+        id: 'demo-first-visit',
+        email: 'premiere.visite@confidia.local',
+        firstName: 'Camille',
+        lastName: 'Martin',
+        roles: ['USER'],
+        organization: 'Particulier',
+      ),
+    );
+  }
+
   Future<void> logout() async {
     await _storage.deleteAll();
     state = const AuthState();

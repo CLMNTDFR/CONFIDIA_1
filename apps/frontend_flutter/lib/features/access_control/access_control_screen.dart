@@ -15,6 +15,8 @@ import 'widgets/member_permissions_picker.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/planning_ai_panel.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../onboarding/guided_tour_access_bridge.dart';
+import '../onboarding/onboarding_targets.dart';
 import 'access_control_provider.dart';
 import 'structure_form_sheet.dart';
 import 'widgets/org_chart_widget.dart';
@@ -58,40 +60,54 @@ class _AccessControlScreenState extends ConsumerState<AccessControlScreen> with 
     final permissions = ref.watch(accessPermissionsProvider);
     final roles = ref.watch(accessRolesProvider);
 
+    ref.listen<bool?>(accessTourHeaderExpandedProvider, (prev, next) {
+      if (next != null && next != _headerExpanded) {
+        setState(() => _headerExpanded = next);
+      }
+    });
+    ref.listen<int?>(accessTourTabIndexProvider, (prev, next) {
+      if (next != null && next >= 0 && next < _tabs.length && _tabs.index != next) {
+        _tabs.animateTo(next);
+      }
+    });
+
     return Column(
       children: [
-        Padding(
-          padding: ConfidiaInsets.page(context).copyWith(bottom: 0),
-          child: InkWell(
-            onTap: () => setState(() => _headerExpanded = !_headerExpanded),
-            borderRadius: BorderRadius.circular(10),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          'Gouvernance & accès',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                        ),
-                        if (!_headerExpanded)
+        KeyedSubtree(
+          key: OnboardingTargets.accessHeader,
+          child: Padding(
+            padding: ConfidiaInsets.page(context).copyWith(bottom: 0),
+            child: InkWell(
+              onTap: () => setState(() => _headerExpanded = !_headerExpanded),
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
                           Text(
-                            state.activeProfile.label,
-                            style: Theme.of(context).textTheme.labelSmall,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            'Gouvernance & accès',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
                           ),
-                      ],
+                          if (!_headerExpanded)
+                            Text(
+                              state.activeProfile.label,
+                              style: Theme.of(context).textTheme.labelSmall,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Icon(
-                    _headerExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
-                    color: context.palette.secondary,
-                  ),
-                ],
+                    Icon(
+                      _headerExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                      color: context.palette.secondary,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -115,54 +131,60 @@ class _AccessControlScreenState extends ConsumerState<AccessControlScreen> with 
               ),
               Padding(
                 padding: ConfidiaInsets.page(context).copyWith(bottom: 0, top: ConfidiaSpacing.sm),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        ...state.allProfiles.map(
-                          (p) => ConfidiaGlowChip(
-                            label: p.label,
-                            icon: p.icon,
-                            selected: state.activeStructureId == p.id,
-                            onTap: () => ref.read(accessControlProvider.notifier).setStructure(p.id),
+                child: KeyedSubtree(
+                  key: OnboardingTargets.structureChips,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 6,
+                        children: [
+                          ...state.allProfiles.map(
+                            (p) => ConfidiaGlowChip(
+                              label: p.label,
+                              icon: p.icon,
+                              selected: state.activeStructureId == p.id,
+                              onTap: () => ref.read(accessControlProvider.notifier).setStructure(p.id),
+                            ),
                           ),
-                        ),
-                        ConfidiaGlowChip(
-                          label: 'Nouvelle structure',
-                          icon: Icons.add_rounded,
-                          selected: false,
-                          onTap: () => showStructureFormSheet(context),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      state.activeProfile.description,
-                      style: Theme.of(context).textTheme.labelSmall,
-                    ),
-                  ],
+                          ConfidiaGlowChip(
+                            label: 'Nouvelle structure',
+                            icon: Icons.add_rounded,
+                            selected: false,
+                            onTap: () => showStructureFormSheet(context),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        state.activeProfile.description,
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
           ),
           secondChild: const SizedBox.shrink(),
         ),
-        Material(
-          color: Colors.transparent,
-          child: TabBar(
-            controller: _tabs,
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
-            tabs: const [
-              Tab(text: 'Organigramme'),
-              Tab(text: 'Membres & droits'),
-              Tab(text: 'Demandes'),
-              Tab(text: 'IA Planning'),
-            ],
+        KeyedSubtree(
+          key: OnboardingTargets.accessTabs,
+          child: Material(
+            color: Colors.transparent,
+            child: TabBar(
+              controller: _tabs,
+              isScrollable: true,
+              tabAlignment: TabAlignment.start,
+              labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+              tabs: const [
+                Tab(text: 'Organigramme'),
+                Tab(text: 'Membres & droits'),
+                Tab(text: 'Demandes'),
+                Tab(text: 'IA Planning'),
+              ],
+            ),
           ),
         ),
         Expanded(
@@ -193,24 +215,27 @@ class _OrgTab extends ConsumerWidget {
     return ListView(
       padding: ConfidiaInsets.page(context),
       children: [
-        OrgChartWidget(
-          nodes: state.activeData.nodes,
-          members: state.activeData.members,
-          roles: ref.watch(accessRolesProvider),
-          levelLabels: state.activeData.levelLabels,
-          onReparentToLevel: (pair) => ref.read(accessControlProvider.notifier).reparentToLevel(pair.$1, pair.$2),
-          onReparentAboveTop: (id) => ref.read(accessControlProvider.notifier).reparentAboveTop(id),
-          onLinkTypeChanged: (pair) => ref.read(accessControlProvider.notifier).updateNodeLinkType(pair.$1, pair.$2),
-          onUpdateLink: (triple) => ref.read(accessControlProvider.notifier).updateHierarchyLink(
-                childId: triple.$1,
-                parentId: triple.$2,
-                linkType: triple.$3,
-              ),
-          onLevelLabelChanged: (depth, label) => ref.read(accessControlProvider.notifier).setLevelLabel(depth, label),
-          onNodeRoleChanged: (pair) => ref.read(accessControlProvider.notifier).updateNodeRole(pair.$1, pair.$2),
-          onUpsertRole: (role) => ref.read(accessControlProvider.notifier).upsertRole(role),
-          onDeleteRole: (id) => ref.read(accessControlProvider.notifier).deleteCustomRole(id),
-          isBuiltInRole: ref.read(accessControlProvider.notifier).isBuiltInRole,
+        KeyedSubtree(
+          key: OnboardingTargets.orgChart,
+          child: OrgChartWidget(
+            nodes: state.activeData.nodes,
+            members: state.activeData.members,
+            roles: ref.watch(accessRolesProvider),
+            levelLabels: state.activeData.levelLabels,
+            onReparentToLevel: (pair) => ref.read(accessControlProvider.notifier).reparentToLevel(pair.$1, pair.$2),
+            onReparentAboveTop: (id) => ref.read(accessControlProvider.notifier).reparentAboveTop(id),
+            onLinkTypeChanged: (pair) => ref.read(accessControlProvider.notifier).updateNodeLinkType(pair.$1, pair.$2),
+            onUpdateLink: (triple) => ref.read(accessControlProvider.notifier).updateHierarchyLink(
+                  childId: triple.$1,
+                  parentId: triple.$2,
+                  linkType: triple.$3,
+                ),
+            onLevelLabelChanged: (depth, label) => ref.read(accessControlProvider.notifier).setLevelLabel(depth, label),
+            onNodeRoleChanged: (pair) => ref.read(accessControlProvider.notifier).updateNodeRole(pair.$1, pair.$2),
+            onUpsertRole: (role) => ref.read(accessControlProvider.notifier).upsertRole(role),
+            onDeleteRole: (id) => ref.read(accessControlProvider.notifier).deleteCustomRole(id),
+            isBuiltInRole: ref.read(accessControlProvider.notifier).isBuiltInRole,
+          ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),
         GlassCard(
@@ -265,54 +290,57 @@ class _MembersTab extends ConsumerWidget {
 
     return Stack(
       children: [
-        ListView(
-          padding: () {
-            final pagePad = ConfidiaInsets.page(context);
-            final extra = state.membersDirty ? (isDesktop ? 56.0 : 72.0) : 0.0;
-            return pagePad.copyWith(bottom: pagePad.bottom + extra);
-          }(),
-          children: members.map((member) {
-            final role = roles.firstWhere((r) => r.id == member.roleId, orElse: () => roles.last);
-            return Padding(
-              padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
-              child: GlassCard(
-                padding: const EdgeInsets.all(12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 16,
-                          backgroundColor: context.palette.primary.withValues(alpha: 0.12),
-                          child: Icon(roleIcon(member.roleId), size: 16, color: context.palette.primary),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(member.name, style: Theme.of(context).textTheme.titleSmall),
-                              Text(member.email, style: Theme.of(context).textTheme.labelSmall),
-                            ],
+        KeyedSubtree(
+          key: OnboardingTargets.membersPanel,
+          child: ListView(
+            padding: () {
+              final pagePad = ConfidiaInsets.page(context);
+              final extra = state.membersDirty ? (isDesktop ? 56.0 : 72.0) : 0.0;
+              return pagePad.copyWith(bottom: pagePad.bottom + extra);
+            }(),
+            children: members.map((member) {
+              final role = roles.firstWhere((r) => r.id == member.roleId, orElse: () => roles.last);
+              return Padding(
+                padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
+                child: GlassCard(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 16,
+                            backgroundColor: context.palette.primary.withValues(alpha: 0.12),
+                            child: Icon(roleIcon(member.roleId), size: 16, color: context.palette.primary),
                           ),
-                        ),
-                        StatusBadge(label: role.label, color: context.palette.secondary),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Text('Droits accordés', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 8),
-                    MemberPermissionsPicker(
-                      permissions: permissions,
-                      selectedIds: member.permissions,
-                      onToggle: (id) => ref.read(accessControlProvider.notifier).togglePermission(member.id, id),
-                    ),
-                  ],
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(member.name, style: Theme.of(context).textTheme.titleSmall),
+                                Text(member.email, style: Theme.of(context).textTheme.labelSmall),
+                              ],
+                            ),
+                          ),
+                          StatusBadge(label: role.label, color: context.palette.secondary),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text('Droits accordés', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600)),
+                      const SizedBox(height: 8),
+                      MemberPermissionsPicker(
+                        permissions: permissions,
+                        selectedIds: member.permissions,
+                        onToggle: (id) => ref.read(accessControlProvider.notifier).togglePermission(member.id, id),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          }).toList(),
+              );
+            }).toList(),
+          ),
         ),
         if (state.membersDirty)
           Positioned(

@@ -26,6 +26,8 @@ import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/stat_card.dart';
 import '../../shared/widgets/stagger_fade.dart';
 import '../calendar/calendar_provider.dart';
+import '../onboarding/guided_tour_provider.dart';
+import '../onboarding/onboarding_targets.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import 'dashboard_chart_widgets.dart';
 import 'dashboard_grid.dart';
@@ -33,11 +35,27 @@ import 'dashboard_provider.dart';
 import 'serenity_briefing_widget.dart';
 import 'week_overview_widget.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Future<void>.delayed(const Duration(milliseconds: 450), () {
+        if (!mounted) return;
+        ref.read(guidedTourProvider.notifier).startIfArmed();
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final layout = ref.watch(dashboardLayoutProvider);
     final editActionsClearance = layout.editMode
         ? (layout.hidden.isNotEmpty ? _HiddenWidgetsPanel.panelHeight + 88.0 : 88.0)
@@ -133,8 +151,14 @@ class DashboardScreen extends ConsumerWidget {
 
     final content = switch (type) {
       DashboardWidgetType.greeting => const SizedBox.shrink(),
-      DashboardWidgetType.serenityBriefing => const SerenityBriefingWidget(),
-      DashboardWidgetType.weekOverview => const WeekOverviewWidget(),
+      DashboardWidgetType.serenityBriefing => KeyedSubtree(
+            key: OnboardingTargets.serenity,
+            child: const SerenityBriefingWidget(),
+          ),
+      DashboardWidgetType.weekOverview => KeyedSubtree(
+            key: OnboardingTargets.weekOverview,
+            child: const WeekOverviewWidget(),
+          ),
       DashboardWidgetType.stats => _StatsWidget(docs: docs, events: events, notifications: notifications, pendingCount: pendingPayments.length),
       DashboardWidgetType.expensesTrend => const ExpensesTrendChartWidget(),
       DashboardWidgetType.paymentsOverview => const PaymentsOverviewChartWidget(),
@@ -592,6 +616,7 @@ class _CustomizeFabState extends State<_CustomizeFab> {
     final supportsHover = MediaQuery.sizeOf(context).width >= 600;
     final expanded = !supportsHover || _hovered;
 
+    // Clé sur le bouton réel (pas le Align) pour un spotlight juste en desktop.
     return Align(
       alignment: Alignment.centerRight,
       child: MouseRegion(
@@ -602,58 +627,61 @@ class _CustomizeFabState extends State<_CustomizeFab> {
           onTapUp: (_) => setState(() => _pressed = false),
           onTapCancel: () => setState(() => _pressed = false),
           onTap: widget.onPressed,
-          child: AnimatedScale(
-            scale: _pressed ? 0.97 : 1,
-            duration: const Duration(milliseconds: 120),
-            child: AnimatedSize(
-              duration: _duration,
-              curve: Curves.easeInOutCubic,
-              alignment: Alignment.centerRight,
-              child: AnimatedContainer(
+          child: KeyedSubtree(
+            key: OnboardingTargets.customizeFab,
+            child: AnimatedScale(
+              scale: _pressed ? 0.97 : 1,
+              duration: const Duration(milliseconds: 120),
+              child: AnimatedSize(
                 duration: _duration,
                 curve: Curves.easeInOutCubic,
-                height: 44,
-                padding: EdgeInsets.symmetric(horizontal: expanded ? 16 : 12),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(22),
-                  color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
-                  border: Border.all(color: ConfidiaColors.border(isDark)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.dashboard_customize_outlined,
-                      size: 20,
-                      color: expanded ? context.palette.primary : ConfidiaColors.textSecondary(isDark),
-                    ),
-                    AnimatedSize(
-                      duration: _duration,
-                      curve: Curves.easeInOutCubic,
-                      alignment: Alignment.centerLeft,
-                      child: expanded
-                          ? Padding(
-                              padding: const EdgeInsets.only(left: 8),
-                              child: Text(
-                                'Personnaliser',
-                                maxLines: 1,
-                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                      color: ConfidiaColors.textPrimary(isDark),
-                                      letterSpacing: 0.1,
-                                    ),
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
-                  ],
+                alignment: Alignment.centerRight,
+                child: AnimatedContainer(
+                  duration: _duration,
+                  curve: Curves.easeInOutCubic,
+                  height: 44,
+                  padding: EdgeInsets.symmetric(horizontal: expanded ? 16 : 12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                    color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
+                    border: Border.all(color: ConfidiaColors.border(isDark)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.dashboard_customize_outlined,
+                        size: 20,
+                        color: expanded ? context.palette.primary : ConfidiaColors.textSecondary(isDark),
+                      ),
+                      AnimatedSize(
+                        duration: _duration,
+                        curve: Curves.easeInOutCubic,
+                        alignment: Alignment.centerLeft,
+                        child: expanded
+                            ? Padding(
+                                padding: const EdgeInsets.only(left: 8),
+                                child: Text(
+                                  'Personnaliser',
+                                  maxLines: 1,
+                                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: ConfidiaColors.textPrimary(isDark),
+                                        letterSpacing: 0.1,
+                                      ),
+                                ),
+                              )
+                            : const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
