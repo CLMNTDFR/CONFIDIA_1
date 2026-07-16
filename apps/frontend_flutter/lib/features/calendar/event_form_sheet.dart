@@ -14,6 +14,18 @@ import '../../shared/widgets/confidia_text_field.dart';
 import 'calendar_provider.dart';
 import 'event_type_config.dart';
 
+Future<void> showEventDetailSheet(
+  BuildContext context, {
+  required CalendarEventModel event,
+}) {
+  return showConfidiaSheet<void>(
+    context: context,
+    title: 'Détail de l\'événement',
+    child: _EventDetailContent(event: event),
+    actions: null,
+  );
+}
+
 Future<void> showEventFormSheet(
   BuildContext context, {
   CalendarEventModel? event,
@@ -25,6 +37,86 @@ Future<void> showEventFormSheet(
     child: _EventFormContent(event: event, initialDay: initialDay),
     actions: null,
   );
+}
+
+class _EventDetailContent extends StatelessWidget {
+  final CalendarEventModel event;
+
+  const _EventDetailContent({required this.event});
+
+  @override
+  Widget build(BuildContext context) {
+    final cfg = configFor(event.eventType, context.palette);
+    final dateFmt = DateFormat('EEEE d MMMM yyyy · HH:mm', 'fr_FR');
+    final endFmt = DateFormat('HH:mm', 'fr_FR');
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(cfg.icon, size: 18, color: cfg.color),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(event.title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+            ),
+          ],
+        ),
+        const SizedBox(height: ConfidiaSpacing.md),
+        _DetailRow(icon: Icons.schedule_rounded, label: 'Horaire', value: event.allDay
+            ? DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(event.start)
+            : '${dateFmt.format(event.start)} – ${endFmt.format(event.end)}'),
+        if (event.location != null && event.location!.isNotEmpty)
+          _DetailRow(icon: Icons.place_outlined, label: 'Lieu', value: event.location!),
+        if (event.description != null && event.description!.isNotEmpty) ...[
+          const SizedBox(height: ConfidiaSpacing.sm),
+          Text('Description', style: Theme.of(context).textTheme.labelLarge),
+          const SizedBox(height: 4),
+          Text(event.description!, style: Theme.of(context).textTheme.bodySmall),
+        ],
+        const SizedBox(height: ConfidiaSpacing.lg),
+        ConfidiaGlowButton(
+          label: 'Modifier',
+          icon: Icons.edit_outlined,
+          onPressed: () {
+            Navigator.of(context).pop();
+            showEventFormSheet(context, event: event);
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _DetailRow({required this.icon, required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 16, color: context.palette.secondary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: Theme.of(context).textTheme.labelSmall),
+                Text(value, style: Theme.of(context).textTheme.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _EventFormContent extends ConsumerStatefulWidget {

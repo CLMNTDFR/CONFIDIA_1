@@ -21,8 +21,6 @@ import 'calendar_provider.dart';
 import 'event_form_sheet.dart';
 import 'event_type_config.dart';
 
-enum CalendarView { month, week, day }
-
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
 
@@ -86,7 +84,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(child: _ViewSelector(view: _view, onChanged: (v) => setState(() => _view = v))),
+                    Expanded(
+                      child: _ViewSelector(
+                        view: _view,
+                        onChanged: (v) {
+                          setState(() => _view = v);
+                          ref.read(calendarViewProvider.notifier).state = v;
+                        },
+                      ),
+                    ),
                     if (!isMobileShell) ...[
                       const SizedBox(width: ConfidiaSpacing.sm),
                       ConfidiaGlowButton(
@@ -121,7 +127,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                               _EventList(
                                 events: selectedEvents,
                                 title: 'Événements',
-                                onEdit: (e) => showEventFormSheet(context, event: e),
+                                onEdit: (e) => showEventDetailSheet(context, event: e),
                                 onDelete: (e) => _confirmDelete(e),
                               ),
                             ],
@@ -131,13 +137,15 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                     )
                   else ...[
                     _buildCalendarWidget(),
-                    const SizedBox(height: ConfidiaSpacing.md),
-                    _EventList(
-                      events: selectedEvents,
-                      title: 'Événements du jour',
-                      onEdit: (e) => showEventFormSheet(context, event: e),
-                      onDelete: (e) => _confirmDelete(e),
-                    ),
+                    if (_view != CalendarView.day) ...[
+                      const SizedBox(height: ConfidiaSpacing.md),
+                      _EventList(
+                        events: selectedEvents,
+                        title: _view == CalendarView.week ? 'Événements de la semaine' : 'Événements',
+                        onEdit: (e) => showEventDetailSheet(context, event: e),
+                        onDelete: (e) => _confirmDelete(e),
+                      ),
+                    ],
                   ],
                   if (filter != null) ...[
                     const SizedBox(height: ConfidiaSpacing.md),
@@ -150,7 +158,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                   PlanningAiPanel(
                     proposal: planning.proposal,
                     loading: planning.loading,
-                    analyzeLabel: planningNotifier.analyzeLabel,
+                    analyzeLabel: planningNotifier.analyzeLabelFor(_view),
                     onAnalyze: planningNotifier.analyze,
                     onRegenerate: planningNotifier.regenerate,
                     onAccept: () {
@@ -320,7 +328,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                                       .map((e) {
                                         final typeColor = eventColor(e, context.palette);
                                         return GestureDetector(
-                                          onTap: () => showEventFormSheet(context, event: e),
+                                          onTap: () => showEventDetailSheet(context, event: e),
                                           child: Container(
                                             margin: const EdgeInsets.only(bottom: 2),
                                             padding: const EdgeInsets.only(left: 4, right: 3, top: 3, bottom: 3),
@@ -394,7 +402,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           else
             ...dayEvents.map((e) => _EventTile(
                   event: e,
-                  onTap: () => showEventFormSheet(context, event: e),
+                  onTap: () => showEventDetailSheet(context, event: e),
                   onDelete: () => _confirmDelete(e),
                 )),
         ],

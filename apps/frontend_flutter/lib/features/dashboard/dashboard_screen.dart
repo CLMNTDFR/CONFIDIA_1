@@ -30,6 +30,7 @@ import '../../shared/widgets/mobile_shell_insets.dart';
 import 'dashboard_chart_widgets.dart';
 import 'dashboard_grid.dart';
 import 'dashboard_provider.dart';
+import 'serenity_briefing_widget.dart';
 import 'week_overview_widget.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -38,7 +39,9 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final layout = ref.watch(dashboardLayoutProvider);
-    final editActionsClearance = layout.editMode ? (layout.hidden.isNotEmpty ? 168.0 : 88.0) : 0.0;
+    final editActionsClearance = layout.editMode
+        ? (layout.hidden.isNotEmpty ? _HiddenWidgetsPanel.panelHeight + 88.0 : 88.0)
+        : 0.0;
     final padding = ConfidiaInsets.pageWithExtra(context, extraBottom: editActionsClearance);
     final visibleCount = layout.visible.length;
     final notifier = ref.read(dashboardLayoutProvider.notifier);
@@ -82,7 +85,7 @@ class DashboardScreen extends ConsumerWidget {
             left: ConfidiaSpacing.lg,
             right: ConfidiaSpacing.lg,
             bottom: ConfidiaMobileShell.bottomScrollInset(context) +
-                (layout.hidden.isNotEmpty ? 88.0 : ConfidiaSpacing.lg),
+                (layout.hidden.isNotEmpty ? _HiddenWidgetsPanel.panelHeight : ConfidiaSpacing.lg),
             child: _EditModeActions(
               onReset: () => ref.read(dashboardLayoutProvider.notifier).reset(),
               onDone: () => ref.read(dashboardLayoutProvider.notifier).toggleEditMode(),
@@ -92,7 +95,7 @@ class DashboardScreen extends ConsumerWidget {
             Positioned(
               left: 0,
               right: 0,
-              bottom: 0,
+              bottom: ConfidiaMobileShell.bottomScrollInset(context),
               child: _HiddenWidgetsPanel(
                 hidden: layout.hidden.toList(),
                 onRestore: (type) => ref.read(dashboardLayoutProvider.notifier).toggleWidget(type),
@@ -130,6 +133,7 @@ class DashboardScreen extends ConsumerWidget {
 
     final content = switch (type) {
       DashboardWidgetType.greeting => const SizedBox.shrink(),
+      DashboardWidgetType.serenityBriefing => const SerenityBriefingWidget(),
       DashboardWidgetType.weekOverview => const WeekOverviewWidget(),
       DashboardWidgetType.stats => _StatsWidget(docs: docs, events: events, notifications: notifications, pendingCount: pendingPayments.length),
       DashboardWidgetType.expensesTrend => const ExpensesTrendChartWidget(),
@@ -288,6 +292,7 @@ class _EditSegmentRow extends StatelessWidget {
 
 IconData _iconForType(DashboardWidgetType type) => switch (type) {
       DashboardWidgetType.greeting => Icons.waving_hand_rounded,
+      DashboardWidgetType.serenityBriefing => Icons.psychology_rounded,
       DashboardWidgetType.weekOverview => Icons.calendar_view_week_rounded,
       DashboardWidgetType.stats => Icons.insights_rounded,
       DashboardWidgetType.expensesTrend => Icons.trending_up_rounded,
@@ -426,6 +431,8 @@ class _EditActionChip extends StatelessWidget {
 }
 
 class _HiddenWidgetsPanel extends StatelessWidget {
+  static const double panelHeight = 104;
+
   final List<DashboardWidgetType> hidden;
   final ValueChanged<DashboardWidgetType> onRestore;
 
@@ -435,48 +442,72 @@ class _HiddenWidgetsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [
-                (isDark ? const Color(0xFF14141E) : Colors.white).withValues(alpha: 0.85),
-                (isDark ? const Color(0xFF0E0E16) : const Color(0xFFF8F6FC)).withValues(alpha: 0.95),
-              ],
+    return Material(
+      color: Colors.transparent,
+      child: SizedBox(
+        height: panelHeight,
+        child: ClipRRect(
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    (isDark ? const Color(0xFF14141E) : Colors.white).withValues(alpha: 0.92),
+                    (isDark ? const Color(0xFF0E0E16) : const Color(0xFFF8F6FC)).withValues(alpha: 0.98),
+                  ],
+                ),
+                border: Border(top: BorderSide(color: context.palette.secondary.withValues(alpha: 0.35))),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.widgets_outlined, size: 16, color: context.palette.secondary),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text('Blocs masqués · à réactiver', style: Theme.of(context).textTheme.labelLarge),
+                        ),
+                        Text(
+                          '${hidden.length}',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: context.palette.secondary,
+                                fontWeight: FontWeight.w700,
+                              ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: hidden.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 8),
+                        itemBuilder: (context, index) {
+                          final type = hidden[index];
+                          return ActionChip(
+                            avatar: Icon(_iconForType(type), size: 16, color: context.palette.primary),
+                            label: Text(type.label),
+                            labelStyle: Theme.of(context).textTheme.labelMedium,
+                            backgroundColor: isDark
+                                ? context.palette.primary.withValues(alpha: 0.18)
+                                : context.palette.primary.withValues(alpha: 0.12),
+                            side: BorderSide(color: context.palette.primary.withValues(alpha: 0.35)),
+                            onPressed: () => onRestore(type),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
-            border: Border(top: BorderSide(color: context.palette.secondary.withValues(alpha: 0.3))),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Icon(Icons.widgets_outlined, size: 18, color: context.palette.secondary),
-                  const SizedBox(width: 8),
-                  Text('Blocs masqués · à réactiver', style: Theme.of(context).textTheme.titleSmall),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: hidden.map((type) {
-                  return ActionChip(
-                    avatar: Icon(_iconForType(type), size: 16, color: context.palette.primary),
-                    label: Text(type.label),
-                    backgroundColor: context.palette.primary.withValues(alpha: 0.1),
-                    side: BorderSide(color: context.palette.primary.withValues(alpha: 0.25)),
-                    onPressed: () => onRestore(type),
-                  );
-                }).toList(),
-              ),
-            ],
           ),
         ),
       ),

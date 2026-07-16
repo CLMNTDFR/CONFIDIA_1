@@ -58,6 +58,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login(String username, String password) async {
     state = state.copyWith(isLoading: true, error: null);
     try {
+      await _apiClient.ensureConfigured();
       final response = await _apiClient.dio.post('/auth/login', data: {
         'username': username,
         'password': password,
@@ -75,15 +76,22 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(isAuthenticated: true, isLoading: false);
       await _loadUser();
     } on DioException catch (e) {
+      final connectionFailed = e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.sendTimeout ||
+          e.type == DioExceptionType.receiveTimeout;
       state = state.copyWith(
         isLoading: false,
-        error: e.response?.data?['detail']?.toString() ?? 'Échec de connexion',
+        error: connectionFailed
+            ? 'Impossible de joindre le serveur. Vérifiez que le backend est démarré et accessible.'
+            : e.response?.data?['detail']?.toString() ?? 'Échec de connexion',
       );
     }
   }
 
   Future<void> _loadUser() async {
     try {
+      await _apiClient.ensureConfigured();
       final response = await _apiClient.dio.get('/auth/me');
       final data = response.data as Map<String, dynamic>;
       state = state.copyWith(

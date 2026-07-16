@@ -33,3 +33,18 @@ def test_week_overview_scope_filter():
     assert data["active_scopes"] == ["personal"]
     monday = data["days"][0]
     assert monday["meeting_count"] == 0
+
+
+def test_serenity_briefing_endpoint():
+    response = client.get("/api/v1/dashboard/serenity-briefing", headers=_auth_headers())
+    assert response.status_code == 200
+    data = response.json()
+    assert 0 <= data["score"] <= 100
+    assert data["level"] in {"excellent", "good", "moderate", "attention"}
+    assert data["greeting"].startswith("Bonjour")
+    assert len(data["metrics"]) >= 3
+    assert len(data["factors"]) >= 1
+    assert len(data["actions"]) >= 1
+    assert data["actions"][0]["route"].startswith("/")
+    assert len(data["score_history"]) == 14
+    assert data["score_history"][-1]["score"] == data["score"]

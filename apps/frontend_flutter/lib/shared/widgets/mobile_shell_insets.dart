@@ -25,7 +25,8 @@ abstract final class ConfidiaMobileShell {
 /// Padding de page cohérent avec le shell mobile.
 abstract final class ConfidiaInsets {
   static EdgeInsets page(BuildContext context) {
-    const side = ConfidiaSpacing.lg;
+    final isMobile = ConfidiaMobileShell.isMobileShell(context);
+    final side = isMobile ? ConfidiaSpacing.md : ConfidiaSpacing.lg;
     return EdgeInsets.fromLTRB(side, side, side, side + ConfidiaMobileShell.bottomScrollInset(context));
   }
 

@@ -28,11 +28,22 @@ class AccessControlScreen extends ConsumerStatefulWidget {
 
 class _AccessControlScreenState extends ConsumerState<AccessControlScreen> with SingleTickerProviderStateMixin {
   late final TabController _tabs;
+  bool _headerExpanded = true;
+  bool _headerDefaultApplied = false;
 
   @override
   void initState() {
     super.initState();
     _tabs = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_headerDefaultApplied) {
+      _headerExpanded = MediaQuery.sizeOf(context).width >= 900;
+      _headerDefaultApplied = true;
+    }
   }
 
   @override
@@ -51,53 +62,93 @@ class _AccessControlScreenState extends ConsumerState<AccessControlScreen> with 
       children: [
         Padding(
           padding: ConfidiaInsets.page(context).copyWith(bottom: 0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Gouvernance & accès',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Hiérarchies, rôles, droits et partage • configurable par l\'utilisateur',
-                style: Theme.of(context).textTheme.bodySmall,
-              ),
-            ],
-          ),
-        ),
-        Padding(
-          padding: ConfidiaInsets.page(context).copyWith(bottom: 0, top: ConfidiaSpacing.sm),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
+          child: InkWell(
+            onTap: () => setState(() => _headerExpanded = !_headerExpanded),
+            borderRadius: BorderRadius.circular(10),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
                 children: [
-                  ...state.allProfiles.map(
-                    (p) => ConfidiaGlowChip(
-                      label: p.label,
-                      icon: p.icon,
-                      selected: state.activeStructureId == p.id,
-                      onTap: () => ref.read(accessControlProvider.notifier).setStructure(p.id),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Gouvernance & accès',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                        if (!_headerExpanded)
+                          Text(
+                            state.activeProfile.label,
+                            style: Theme.of(context).textTheme.labelSmall,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                      ],
                     ),
                   ),
-                  ConfidiaGlowChip(
-                    label: 'Nouvelle structure',
-                    icon: Icons.add_rounded,
-                    selected: false,
-                    onTap: () => showStructureFormSheet(context),
+                  Icon(
+                    _headerExpanded ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+                    color: context.palette.secondary,
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                state.activeProfile.description,
-                style: Theme.of(context).textTheme.labelSmall,
+            ),
+          ),
+        ),
+        AnimatedCrossFade(
+          duration: const Duration(milliseconds: 220),
+          crossFadeState: _headerExpanded ? CrossFadeState.showFirst : CrossFadeState.showSecond,
+          firstChild: Column(
+            children: [
+              Padding(
+                padding: ConfidiaInsets.page(context).copyWith(bottom: 0, top: 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      'Hiérarchies, rôles, droits et partage • configurable par l\'utilisateur',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: ConfidiaInsets.page(context).copyWith(bottom: 0, top: ConfidiaSpacing.sm),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        ...state.allProfiles.map(
+                          (p) => ConfidiaGlowChip(
+                            label: p.label,
+                            icon: p.icon,
+                            selected: state.activeStructureId == p.id,
+                            onTap: () => ref.read(accessControlProvider.notifier).setStructure(p.id),
+                          ),
+                        ),
+                        ConfidiaGlowChip(
+                          label: 'Nouvelle structure',
+                          icon: Icons.add_rounded,
+                          selected: false,
+                          onTap: () => showStructureFormSheet(context),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      state.activeProfile.description,
+                      style: Theme.of(context).textTheme.labelSmall,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
+          secondChild: const SizedBox.shrink(),
         ),
         Material(
           color: Colors.transparent,

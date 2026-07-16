@@ -32,6 +32,18 @@ class SettingsScreen extends ConsumerWidget {
     return ListView(
       padding: ConfidiaInsets.page(context),
       children: [
+        _SectionTitle(label: 'Organisation & accès'),
+        const SizedBox(height: 6),
+        GlassCard(
+          padding: EdgeInsets.zero,
+          child: _CompactActionTile(
+            icon: Icons.account_tree_rounded,
+            title: 'Gouvernance & accès',
+            subtitle: 'Organigramme, rôles, droits et assistant IA',
+            onTap: () => context.go('/access-control'),
+          ),
+        ),
+        const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Apparence'),
         const SizedBox(height: 6),
         GlassCard(
@@ -65,18 +77,6 @@ class SettingsScreen extends ConsumerWidget {
                 ),
               ),
             ],
-          ),
-        ),
-        const SizedBox(height: ConfidiaSpacing.md),
-        _SectionTitle(label: 'Organisation & accès'),
-        const SizedBox(height: 6),
-        GlassCard(
-          padding: EdgeInsets.zero,
-          child: _CompactActionTile(
-            icon: Icons.account_tree_rounded,
-            title: 'Gouvernance & accès',
-            subtitle: 'Organigramme, rôles, droits et assistant IA',
-            onTap: () => context.go('/access-control'),
           ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),

@@ -26,6 +26,8 @@ class OrgChartWidget extends StatefulWidget {
   final ValueChanged<AccessRoleTemplate> onUpsertRole;
   final ValueChanged<String> onDeleteRole;
   final bool Function(String roleId) isBuiltInRole;
+  final bool enablePinchZoom;
+  final bool showFullscreenAction;
 
   const OrgChartWidget({
     super.key,
@@ -42,6 +44,8 @@ class OrgChartWidget extends StatefulWidget {
     required this.onUpsertRole,
     required this.onDeleteRole,
     required this.isBuiltInRole,
+    this.enablePinchZoom = false,
+    this.showFullscreenAction = true,
   });
 
   @override
@@ -135,6 +139,49 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
     );
   }
 
+  void _openFullscreen(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (ctx) => Scaffold(
+          appBar: AppBar(
+            title: const Text('Organigramme'),
+            leading: IconButton(
+              icon: const Icon(Icons.close_rounded),
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ),
+          body: Column(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(ConfidiaSpacing.sm),
+                  child: OrgChartWidget(
+                nodes: widget.nodes,
+                members: widget.members,
+                roles: widget.roles,
+                levelLabels: widget.levelLabels,
+                onReparentToLevel: widget.onReparentToLevel,
+                onReparentAboveTop: widget.onReparentAboveTop,
+                onLinkTypeChanged: widget.onLinkTypeChanged,
+                onUpdateLink: widget.onUpdateLink,
+                onLevelLabelChanged: widget.onLevelLabelChanged,
+                onNodeRoleChanged: widget.onNodeRoleChanged,
+                onUpsertRole: widget.onUpsertRole,
+                onDeleteRole: widget.onDeleteRole,
+                isBuiltInRole: widget.isBuiltInRole,
+                enablePinchZoom: true,
+                showFullscreenAction: false,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final dragging = _draggingId != null;
@@ -153,20 +200,164 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
       );
     }
 
+    final chartHeight = widget.enablePinchZoom
+        ? layout.canvasSize.height + 48.0
+        : math.min(520.0, layout.canvasSize.height + 24.0);
+
+    Widget chartBody = SizedBox(
+      height: widget.enablePinchZoom ? null : chartHeight,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final viewportWidth = constraints.maxWidth;
+
+          final scrollable = Scrollbar(
+            thumbVisibility: true,
+            child: SingleChildScrollView(
+              child: Scrollbar(
+                thumbVisibility: true,
+                notificationPredicate: (n) => n.depth == 1,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minWidth: viewportWidth),
+                    child: Center(
+                      child: SizedBox(
+                        width: layout.canvasSize.width,
+                        height: layout.canvasSize.height,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            CustomPaint(
+                              size: layout.canvasSize,
+                              painter: _OrgLevelGridPainter(
+                                levelBands: layout.levelBands,
+                                hoverDepth: _hoverLevel,
+                                isDark: isDark,
+                                lineColor: ConfidiaColors.border(isDark),
+                                accentColor: palette.primary,
+                              ),
+                            ),
+                            CustomPaint(
+                              size: layout.canvasSize,
+                              painter: _OrgConnectorPainter(
+                                connectors: layout.connectors,
+                                lineColor: ConfidiaColors.border(isDark),
+                                primaryColor: palette.primary,
+                                secondaryColor: palette.secondary,
+                                accentColor: palette.accent,
+                              ),
+                            ),
+                            ...layout.levelBands.where((b) => !b.isExtension).map(
+                                  (band) => Positioned(
+                                    left: 10,
+                                    top: band.rect.top + 6,
+                                    child: IgnorePointer(
+                                      child: Text(
+                                        _levelLabel(band.depth, layout.maxDepth),
+                                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                              color: ConfidiaColors.textSecondary(isDark),
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ...layout.nodeRects.entries.map((entry) {
+                              final node = widget.nodes.firstWhere((n) => n.id == entry.key);
+                              final member = _memberFor(node);
+                              final role = _roleFor(node.roleId);
+                              final isDragging = _draggingId == node.id;
+
+                              return Positioned.fromRect(
+                                rect: entry.value,
+                                child: _OrgNodeCard(
+                                  node: node,
+                                  initials: _initials(node, member),
+                                  roleLabel: role?.label ?? node.roleId,
+                                  roleColor: _roleColor(node.roleId, palette),
+                                  isDragging: isDragging,
+                                  onTap: () => _showNodeSheet(node),
+                                  onDragStarted: () => setState(() => _draggingId = node.id),
+                                  onDragEnded: () => setState(() {
+                                    _draggingId = null;
+                                    _hoverLevel = null;
+                                  }),
+                                ),
+                              );
+                            }),
+                            if (dragging)
+                              ...layout.levelBands.map(
+                                (band) => Positioned.fromRect(
+                                  rect: band.rect,
+                                  child: _LevelDropZone(
+                                    label: _levelLabel(band.depth, layout.maxDepth),
+                                    isExtension: band.isExtension,
+                                    active: _hoverLevel == band.depth,
+                                    onWillAccept: (id) => _canDropOnBand(id, band, layout.maxDepth),
+                                    onAccept: (id) => _acceptDrop(id, band, layout.maxDepth),
+                                    onHover: (hover) => setState(() {
+                                      _hoverLevel = hover ? band.depth : (_hoverLevel == band.depth ? null : _hoverLevel);
+                                    }),
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+
+          if (widget.enablePinchZoom) {
+            return InteractiveViewer(
+              boundaryMargin: const EdgeInsets.all(120),
+              minScale: 0.35,
+              maxScale: 4,
+              child: scrollable,
+            );
+          }
+          return scrollable;
+        },
+      ),
+    );
+
+    if (widget.enablePinchZoom) {
+      chartBody = Expanded(child: chartBody);
+    }
+
     return GlassCard(
       clipContent: false,
       padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.md, ConfidiaSpacing.md, ConfidiaSpacing.md, ConfidiaSpacing.sm),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Icon(Icons.account_tree_rounded, size: 16, color: palette.secondary),
-              const SizedBox(width: 6),
-              Text('Organigramme', style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700)),
-            ],
-          ),
-          const SizedBox(height: 8),
+          if (!widget.enablePinchZoom) ...[
+            Row(
+              children: [
+                Icon(Icons.account_tree_rounded, size: 16, color: palette.secondary),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Organigramme',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                ),
+                if (widget.showFullscreenAction)
+                  IconButton(
+                    icon: const Icon(Icons.fullscreen_rounded, size: 20),
+                    tooltip: 'Plein écran',
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    onPressed: () => _openFullscreen(context),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
           _OrgToolbar(
             onEditLink: () => OrgChartSheets.showEditLink(
               context: context,
@@ -190,115 +381,7 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
           const SizedBox(height: ConfidiaSpacing.sm),
           _LinkLegend(isDark: isDark),
           const SizedBox(height: ConfidiaSpacing.sm),
-          SizedBox(
-            height: math.min(520, layout.canvasSize.height + 24),
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final viewportWidth = constraints.maxWidth;
-
-                return Scrollbar(
-                  thumbVisibility: true,
-                  child: SingleChildScrollView(
-                    child: Scrollbar(
-                      thumbVisibility: true,
-                      notificationPredicate: (n) => n.depth == 1,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(minWidth: viewportWidth),
-                          child: Center(
-                            child: SizedBox(
-                              width: layout.canvasSize.width,
-                              height: layout.canvasSize.height,
-                              child: Stack(
-                                clipBehavior: Clip.none,
-                                children: [
-                                  CustomPaint(
-                                    size: layout.canvasSize,
-                                    painter: _OrgLevelGridPainter(
-                                      levelBands: layout.levelBands,
-                                      hoverDepth: _hoverLevel,
-                                      isDark: isDark,
-                                      lineColor: ConfidiaColors.border(isDark),
-                                      accentColor: palette.primary,
-                                    ),
-                                  ),
-                                  CustomPaint(
-                                    size: layout.canvasSize,
-                                    painter: _OrgConnectorPainter(
-                                      connectors: layout.connectors,
-                                      lineColor: ConfidiaColors.border(isDark),
-                                      primaryColor: palette.primary,
-                                      secondaryColor: palette.secondary,
-                                      accentColor: palette.accent,
-                                    ),
-                                  ),
-                                  ...layout.levelBands.where((b) => !b.isExtension).map(
-                                        (band) => Positioned(
-                                          left: 10,
-                                          top: band.rect.top + 6,
-                                          child: IgnorePointer(
-                                            child: Text(
-                                              _levelLabel(band.depth, layout.maxDepth),
-                                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                                    color: ConfidiaColors.textSecondary(isDark),
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                  ...layout.nodeRects.entries.map((entry) {
-                                    final node = widget.nodes.firstWhere((n) => n.id == entry.key);
-                                    final member = _memberFor(node);
-                                    final role = _roleFor(node.roleId);
-                                    final isDragging = _draggingId == node.id;
-
-                                    return Positioned.fromRect(
-                                      rect: entry.value,
-                                      child: _OrgNodeCard(
-                                        node: node,
-                                        initials: _initials(node, member),
-                                        roleLabel: role?.label ?? node.roleId,
-                                        roleColor: _roleColor(node.roleId, palette),
-                                        isDragging: isDragging,
-                                        onTap: () => _showNodeSheet(node),
-                                        onDragStarted: () => setState(() => _draggingId = node.id),
-                                        onDragEnded: () => setState(() {
-                                          _draggingId = null;
-                                          _hoverLevel = null;
-                                        }),
-                                      ),
-                                    );
-                                  }),
-                                  if (dragging)
-                                    ...layout.levelBands.map(
-                                      (band) => Positioned.fromRect(
-                                        rect: band.rect,
-                                        child: _LevelDropZone(
-                                          label: _levelLabel(band.depth, layout.maxDepth),
-                                          isExtension: band.isExtension,
-                                          active: _hoverLevel == band.depth,
-                                          onWillAccept: (id) => _canDropOnBand(id, band, layout.maxDepth),
-                                          onAccept: (id) => _acceptDrop(id, band, layout.maxDepth),
-                                          onHover: (hover) => setState(() {
-                                            _hoverLevel = hover ? band.depth : (_hoverLevel == band.depth ? null : _hoverLevel);
-                                          }),
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
+          chartBody,
         ],
       ),
     );

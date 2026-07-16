@@ -33,6 +33,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.3
   flutter_lints: ^5.0.0
   build_runner: ^2.4.14
   json_serializable: ^6.9.0
@@ -46,6 +47,7 @@ flutter:
     - assets/ai/pink-ia.png
     - assets/logo/confidia-logo-blue-128.png
     - assets/logo/confidia-logo-blue-256.png
+    - assets/logo/confidia-launcher-icon.png
     - assets/logo/confidia-logo-pink-128.png
     - assets/logo/confidia-logo-pink-256.png
     - brands/gmail.png
@@ -55,3 +57,8 @@ flutter:
     - brands/nextcloud.png
     - brands/paperlessngx.png
     - brands/proton.png
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/logo/confidia-launcher-icon.png

@@ -63,7 +63,7 @@ _CLUB_ORG = OrganizationDTO(
     id="org_club",
     name="FC CONFIDIA",
     scenario="club",
-    description="Club de football  -  organigramme et droits fins par rôle",
+    description="Club de football - organigramme et droits fins par rôle",
     nodes=[
         OrgNodeDTO(id="n_dir", label="Pierre Lambert", subtitle="Directeur", role_id="director", parent_id=None, avatar_initials="PL"),
         OrgNodeDTO(id="n_coach", label="Karim Benali", subtitle="Entraîneur U17", role_id="coach", parent_id="n_dir", avatar_initials="KB"),
@@ -125,7 +125,7 @@ class AccessControlService:
                 target_name="Licenciés U17",
                 document_type="Pièces d'identité",
                 permission="documents.id_card",
-                message="Obligation fédérale  -  vérification des pièces pour la saison.",
+                message="Obligation fédérale - vérification des pièces pour la saison.",
                 status="pending",
                 created_at=datetime.now(timezone.utc).isoformat(),
             ),
@@ -246,7 +246,7 @@ class AccessControlService:
                 proposal=(
                     "L'IA détecte un chevauchement sur le terrain synthétique à 18h00. "
                     "Proposition : décaler la réunion staff à 19h30 (après l'entraînement) "
-                    "ou déplacer l'entraînement U17 au créneau 16h30-17h45."
+                    "ou déplacer l'entraînement U17 au créneau 16h30–17h45."
                 ),
                 alternatives=["Décaler réunion staff → 19h30", "Entraînement U17 → 16h30"],
             )
@@ -271,7 +271,7 @@ class AccessControlService:
                 "(45 min de trajet depuis La Défense en heure de pointe).\n\n"
                 "Proposition : Marc décale sa réunion client à 15h00 en visio. "
                 "Sophie conserve le RDV pédiatre pour Tom à 14h00. "
-                "Marc récupère Léa à 15h30  -  trajet réaliste si la réunion se termine à 15h00."
+                "Marc récupère Léa à 15h30 - trajet réaliste si la réunion se termine à 15h00."
             ),
             alternatives=[
                 "Sophie récupère Léa, Marc garde son RDV client",

@@ -7,6 +7,10 @@ import '../../shared/models/access_control_models.dart';
 import '../../shared/models/calendar_event_model.dart';
 import 'event_type_config.dart';
 
+enum CalendarView { month, week, day }
+
+final calendarViewProvider = StateProvider<CalendarView>((ref) => CalendarView.month);
+
 class CalendarGroupInfo {
   final String id;
   final String label;
@@ -118,14 +122,16 @@ class CalendarPlanningNotifier extends StateNotifier<CalendarPlanningState> {
   Future<void> analyze() async {
     state = state.copyWith(loading: true, clearProposal: true, variantIndex: 0);
     await Future<void>.delayed(const Duration(milliseconds: 900));
-    state = state.copyWith(loading: false, proposal: _proposalFor(0));
+    final view = _ref.read(calendarViewProvider);
+    state = state.copyWith(loading: false, proposal: _proposalFor(0, view));
   }
 
   Future<void> regenerate() async {
+    final view = _ref.read(calendarViewProvider);
     final next = (state.variantIndex + 1) % _variantCount;
     state = state.copyWith(loading: true, variantIndex: next, clearProposal: true);
     await Future<void>.delayed(const Duration(milliseconds: 700));
-    state = state.copyWith(loading: false, proposal: _proposalFor(next));
+    state = state.copyWith(loading: false, proposal: _proposalFor(next, view));
   }
 
   Future<void> refine(String prompt) async {
@@ -154,10 +160,15 @@ class CalendarPlanningNotifier extends StateNotifier<CalendarPlanningState> {
     return calendarGroups.where((g) => groups.contains(g.id)).map((g) => g.label).join(' + ');
   }
 
-  PlanningProposal _proposalFor(int index) {
+  PlanningProposal _proposalFor(int index, CalendarView view) {
     final events = _visibleEvents;
     final groups = _ref.read(activeCalendarGroupsProvider);
     final multi = groups.length > 1;
+    final periodLabel = switch (view) {
+      CalendarView.day => 'ce jour',
+      CalendarView.week => 'cette semaine',
+      CalendarView.month => 'ce mois',
+    };
 
     if (multi) {
       final variants = [
@@ -171,7 +182,7 @@ class CalendarPlanningNotifier extends StateNotifier<CalendarPlanningState> {
             ),
           ],
           proposal:
-              'Analyse multi-agendas ($_groupsLabel) : la journée J+3 concentre des événements familiaux le matin '
+              'Analyse multi-agendas ($_groupsLabel) sur $periodLabel : la journée J+3 concentre des événements familiaux le matin '
               'et un chevauchement club à 18h00 (entraînement U17 / réunion staff).\n\n'
               'Proposition : décaler la réunion staff à 19h30 et conserver l\'entraînement.',
           alternatives: ['Déléguer la récupération scolaire', 'Activer le mode co-parentalité'],
@@ -186,14 +197,14 @@ class CalendarPlanningNotifier extends StateNotifier<CalendarPlanningState> {
             ),
           ],
           proposal:
-              'Alternative : regrouper les déplacements famille le matin et bloquer 17h30-19h30 pour le club, '
+              'Alternative pour $periodLabel : regrouper les déplacements famille le matin et bloquer 17h30-19h30 pour le club, '
               'avec notification automatique aux deux agendas.',
           alternatives: ['Synchroniser les rappels CONFIDIA', 'Exporter le planning partagé'],
         ),
         PlanningProposal(
           conflicts: const [],
           proposal:
-              'Aucun conflit bloquant détecté entre les agendas sélectionnés sur les 7 prochains jours. '
+              'Aucun conflit bloquant détecté entre les agendas sélectionnés sur $periodLabel. '
               'Surveillance recommandée le mercredi soir (créneau club récurrent).',
           alternatives: ['Planifier une analyse hebdomadaire'],
         ),
@@ -203,19 +214,20 @@ class CalendarPlanningNotifier extends StateNotifier<CalendarPlanningState> {
 
     if (groups.contains('club')) {
       final clubVariants = [
-        const PlanningProposal(
-          conflicts: [
+        PlanningProposal(
+          conflicts: const [
             PlanningConflict(id: 'c1', title: 'Double réservation terrain', severity: 'high', events: ['Entraînement U17 · 18h00', 'Réunion staff · 18h00']),
           ],
-          proposal: 'Chevauchement sur le terrain synthétique à 18h00. Proposition : décaler la réunion staff à 19h30.',
-          alternatives: ['Réunion staff → 19h30', 'Entraînement → 16h30'],
+          proposal: 'Chevauchement sur le terrain synthétique à 18h00 ($periodLabel). Proposition : décaler la réunion staff à 19h30.',
+          alternatives: const ['Réunion staff → 19h30', 'Entraînement → 16h30'],
         ),
-        const PlanningProposal(
-          conflicts: [
+        PlanningProposal(
+          conflicts: const [
             PlanningConflict(id: 'c1', title: 'Double réservation terrain', severity: 'high', events: ['Entraînement U17 · 18h00', 'Réunion staff · 18h00']),
           ],
-          proposal: 'Alternative : déplacer l\'entraînement U17 au créneau 16h30 et conserver la réunion staff à 18h00.',
-          alternatives: ['Prévenir les parents par notification', 'Réserver le terrain annexe'],
+          proposal:
+              'Alternative pour $periodLabel : déplacer l\'entraînement U17 au créneau 16h30 et conserver la réunion staff à 18h00.',
+          alternatives: const ['Prévenir les parents par notification', 'Réserver le terrain annexe'],
         ),
       ];
       return clubVariants[index % clubVariants.length];
@@ -227,7 +239,7 @@ class CalendarPlanningNotifier extends StateNotifier<CalendarPlanningState> {
           PlanningConflict(id: 'c1', title: 'Journée dense', severity: 'medium', events: ['4 événements le même jour']),
         ],
         proposal:
-            'L\'agenda famille affiche ${events.length} événement(s) sur la période visible. '
+            'L\'agenda famille affiche ${events.length} événement(s) sur $periodLabel. '
             'La journée J+3 est particulièrement chargée (échéance, RDV, réunion, rappel).\n\n'
             'Proposition : regrouper les rappels administratifs en une session de 30 min le matin.',
         alternatives: ['Décaler le RDV médical', 'Activer les rappels CONFIDIA groupés'],
@@ -237,7 +249,7 @@ class CalendarPlanningNotifier extends StateNotifier<CalendarPlanningState> {
           PlanningConflict(id: 'c2', title: 'Échéances proches', severity: 'low', events: ['Paiement EDF · J+5', 'Déclaration CAF · J+5']),
         ],
         proposal:
-            'Deux démarches administratives tombent le même jour (J+5). '
+            'Deux démarches administratives tombent le même jour (J+5) sur $periodLabel. '
             'Proposition : traiter EDF et CAF dans un bloc unique à 18h00.',
         alternatives: ['Programmer un rappel la veille', 'Partager la tâche entre parents'],
       ),
@@ -245,12 +257,19 @@ class CalendarPlanningNotifier extends StateNotifier<CalendarPlanningState> {
     return familyVariants[index % familyVariants.length];
   }
 
-  String get analyzeLabel {
+  String analyzeLabelFor(CalendarView view) {
     final groups = _ref.read(activeCalendarGroupsProvider);
-    if (groups.length > 1) return 'Analyser les agendas ($_groupsLabel)';
+    final period = switch (view) {
+      CalendarView.day => 'du jour',
+      CalendarView.week => 'de la semaine',
+      CalendarView.month => 'du mois',
+    };
+    if (groups.length > 1) return 'Analyser les agendas ($_groupsLabel) $period';
     final label = calendarGroups.firstWhere((g) => groups.contains(g.id), orElse: () => calendarGroups.first).label;
-    return 'Analyser l\'agenda $label';
+    return 'Analyser l\'agenda $label $period';
   }
+
+  String get analyzeLabel => analyzeLabelFor(_ref.read(calendarViewProvider));
 }
 
 final calendarPlanningProvider = StateNotifierProvider<CalendarPlanningNotifier, CalendarPlanningState>(

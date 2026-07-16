@@ -37,13 +37,17 @@ class _AppShellState extends ConsumerState<AppShell> {
     final topBar = AppTopBar.fromRoute(context, showNotifications: true);
 
     if (!isWide) {
+      final topInset = MediaQuery.viewPaddingOf(context).top;
       return MeshBackground(
         child: Scaffold(
           backgroundColor: Colors.transparent,
           extendBody: true,
           appBar: PreferredSize(
-            preferredSize: const Size.fromHeight(ConfidiaSpacing.topBarHeight),
-            child: topBar,
+            preferredSize: Size.fromHeight(ConfidiaSpacing.topBarHeight + topInset),
+            child: SafeArea(
+              bottom: false,
+              child: topBar,
+            ),
           ),
           body: MediaQuery(
             data: MediaQuery.of(context).copyWith(

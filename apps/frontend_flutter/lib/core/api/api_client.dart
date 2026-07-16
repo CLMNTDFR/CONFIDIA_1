@@ -1,19 +1,16 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class ApiClient {
-  static const _baseUrl = String.fromEnvironment(
-    'API_BASE_URL',
-    defaultValue: 'http://localhost:8000/api/v1',
-  );
+import 'api_config.dart';
 
+class ApiClient {
   final Dio _dio;
   final FlutterSecureStorage _storage;
+  bool _configured = false;
 
   ApiClient({FlutterSecureStorage? storage})
       : _storage = storage ?? const FlutterSecureStorage(),
         _dio = Dio(BaseOptions(
-          baseUrl: _baseUrl,
           connectTimeout: const Duration(seconds: 30),
           receiveTimeout: const Duration(seconds: 30),
           headers: {'Content-Type': 'application/json'},
@@ -26,6 +23,16 @@ class ApiClient {
   }
 
   Dio get dio => _dio;
+
+  Future<void> ensureConfigured() async {
+    if (_configured) return;
+    await configureBaseUrl(await ApiConfig.resolveBaseUrl());
+  }
+
+  Future<void> configureBaseUrl(String baseUrl) async {
+    _dio.options.baseUrl = baseUrl;
+    _configured = true;
+  }
 }
 
 class _AuthInterceptor extends Interceptor {
