@@ -11,7 +11,7 @@ import '../dashboard/dashboard_provider.dart';
 class WelcomeSplashScreen extends ConsumerStatefulWidget {
   const WelcomeSplashScreen({super.key});
 
-  static const splashDuration = Duration(milliseconds: 4500);
+  static const splashDuration = Duration(milliseconds: 3200);
 
   @override
   ConsumerState<WelcomeSplashScreen> createState() => _WelcomeSplashScreenState();

@@ -1,16 +1,15 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
-import 'ai_streaming_text.dart';
+import 'cofid_ia_brand.dart';
 import 'confidia_ai_robot.dart';
 import 'confidia_animated_logo.dart';
 
-/// Profil de vitesse : connexion (boucle modérée) vs chargement post-login (4,5 s).
+/// Profil de vitesse : connexion (boucle modérée) vs chargement post-login.
 enum LogoTransitionProfile { connection, welcome }
 
 /// Overlay de chargement post-login ou pendant la connexion.
@@ -34,70 +33,74 @@ class LogoAuthTransition extends StatefulWidget {
   State<LogoAuthTransition> createState() => _LogoAuthTransitionState();
 }
 
-class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTickerProviderStateMixin {
+class _LogoAuthTransitionState extends State<LogoAuthTransition>
+    with TickerProviderStateMixin {
   late final AnimationController _main;
+  late final AnimationController _breathe;
   late final Animation<double> _logoScale;
   late final Animation<double> _logoOpacity;
-  late final Animation<double> _aiOpacity;
+  late final Animation<double> _heroOpacity;
+  late final Animation<double> _heroRise;
+  late final Animation<double> _heroScale;
+  late final Animation<double> _glowOpacity;
+  late final Animation<double> _brandOpacity;
+  late final Animation<double> _textOpacity;
+  late final Animation<double> _textRise;
+  late final Animation<double> _progress;
+  late final Animation<double> _exitOpacity;
   bool _completing = false;
   bool _completeFired = false;
-  bool _showAiMessage = false;
-  bool _aiSpeaking = false;
 
   bool get _isWelcome => widget.profile == LogoTransitionProfile.welcome;
 
   Duration get _cycleDuration => _isWelcome
-      ? const Duration(milliseconds: 4500)
+      ? const Duration(milliseconds: 3200)
       : const Duration(milliseconds: 2400);
 
   @override
   void initState() {
     super.initState();
     _main = AnimationController(vsync: this, duration: _cycleDuration);
+    _breathe = AnimationController(vsync: this, duration: const Duration(milliseconds: 2200));
     _buildAnimations();
-
     _main.addStatusListener(_onMainStatus);
     if (widget.active) _startCycle();
   }
 
   void _buildAnimations() {
     if (_isWelcome) {
-      _logoScale = TweenSequence<double>([
-        TweenSequenceItem(
-          tween: Tween(begin: 0.72, end: 1.0).chain(CurveTween(curve: Curves.easeOutCubic)),
-          weight: 28,
-        ),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 52),
-        TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.94).chain(CurveTween(curve: Curves.easeInCubic)),
-          weight: 20,
-        ),
-      ]).animate(_main);
+      // Quiet Settle: scène fixe, pas de bascule speaking / bulle.
+      _heroOpacity = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _main, curve: const Interval(0.0, 0.18, curve: Curves.easeOutCubic)),
+      );
+      _heroRise = Tween<double>(begin: 14, end: 0).animate(
+        CurvedAnimation(parent: _main, curve: const Interval(0.0, 0.2, curve: Curves.easeOutCubic)),
+      );
+      _heroScale = Tween<double>(begin: 0.92, end: 1).animate(
+        CurvedAnimation(parent: _main, curve: const Interval(0.0, 0.2, curve: Curves.easeOutCubic)),
+      );
+      _glowOpacity = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _main, curve: const Interval(0.04, 0.22, curve: Curves.easeOut)),
+      );
+      _brandOpacity = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _main, curve: const Interval(0.14, 0.32, curve: Curves.easeOut)),
+      );
+      _textOpacity = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _main, curve: const Interval(0.2, 0.38, curve: Curves.easeOut)),
+      );
+      _textRise = Tween<double>(begin: 8, end: 0).animate(
+        CurvedAnimation(parent: _main, curve: const Interval(0.2, 0.38, curve: Curves.easeOutCubic)),
+      );
+      _progress = Tween<double>(begin: 0, end: 1).animate(
+        CurvedAnimation(parent: _main, curve: const Interval(0.24, 0.84, curve: Curves.easeInOutCubic)),
+      );
+      _exitOpacity = Tween<double>(begin: 1, end: 0).animate(
+        CurvedAnimation(parent: _main, curve: const Interval(0.86, 1.0, curve: Curves.easeIn)),
+      );
 
-      _logoOpacity = TweenSequence<double>([
-        TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeOut)),
-          weight: 24,
-        ),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 56),
-        TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeIn)),
-          weight: 20,
-        ),
-      ]).animate(_main);
-
-      _aiOpacity = TweenSequence<double>([
-        TweenSequenceItem(tween: ConstantTween(0.0), weight: 22),
-        TweenSequenceItem(
-          tween: Tween(begin: 0.0, end: 1.0).chain(CurveTween(curve: Curves.easeOutCubic)),
-          weight: 14,
-        ),
-        TweenSequenceItem(tween: ConstantTween(1.0), weight: 44),
-        TweenSequenceItem(
-          tween: Tween(begin: 1.0, end: 0.0).chain(CurveTween(curve: Curves.easeIn)),
-          weight: 20,
-        ),
-      ]).animate(_main);
+      // Unused on welcome; keep valid animations for connection branch reuse.
+      _logoScale = const AlwaysStoppedAnimation(1);
+      _logoOpacity = const AlwaysStoppedAnimation(0);
     } else {
       _logoScale = TweenSequence<double>([
         TweenSequenceItem(
@@ -123,7 +126,15 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
         ),
       ]).animate(_main);
 
-      _aiOpacity = ConstantTween(0.0).animate(_main);
+      _heroOpacity = const AlwaysStoppedAnimation(0);
+      _heroRise = const AlwaysStoppedAnimation(0);
+      _heroScale = const AlwaysStoppedAnimation(1);
+      _glowOpacity = const AlwaysStoppedAnimation(0);
+      _brandOpacity = const AlwaysStoppedAnimation(0);
+      _textOpacity = const AlwaysStoppedAnimation(0);
+      _textRise = const AlwaysStoppedAnimation(0);
+      _progress = const AlwaysStoppedAnimation(0);
+      _exitOpacity = const AlwaysStoppedAnimation(1);
     }
   }
 
@@ -133,8 +144,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
     if (widget.active && !oldWidget.active) {
       _completing = false;
       _completeFired = false;
-      _showAiMessage = false;
-      _aiSpeaking = false;
       _startCycle();
     } else if (!widget.active && oldWidget.active && !_completing) {
       _finishAndExit();
@@ -160,23 +169,18 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
 
   void _startCycle() {
     _completeFired = false;
-    _showAiMessage = false;
     _main.forward(from: 0);
     if (_isWelcome) {
-      Future<void>.delayed(const Duration(milliseconds: 680), () {
-        if (mounted && widget.active) {
-          setState(() {
-            _showAiMessage = true;
-            _aiSpeaking = true;
-          });
-        }
-      });
+      _breathe.repeat(reverse: true);
+    } else {
+      _breathe.stop();
+      _breathe.value = 0;
     }
   }
 
   void _finishAndExit() {
     _completing = true;
-    final exitMs = _isWelcome ? 500 : 700;
+    final exitMs = _isWelcome ? 420 : 700;
     _main.animateTo(1.0, duration: Duration(milliseconds: exitMs), curve: Curves.easeInCubic);
   }
 
@@ -184,6 +188,7 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
   void dispose() {
     _main.removeStatusListener(_onMainStatus);
     _main.dispose();
+    _breathe.dispose();
     super.dispose();
   }
 
@@ -192,6 +197,7 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
     if (!widget.active && !_completing) return const SizedBox.shrink();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
     return AbsorbPointer(
       child: AnimatedOpacity(
@@ -205,18 +211,19 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
                   child: ColoredBox(
-                    color: (isDark ? const Color(0xFF0A0A12) : Colors.white).withValues(alpha: isDark ? 0.42 : 0.38),
+                    color: (isDark ? const Color(0xFF0A0A12) : Colors.white)
+                        .withValues(alpha: isDark ? 0.42 : 0.38),
                   ),
                 ),
               ),
               Center(
                 child: AnimatedBuilder(
-                  animation: _main,
+                  animation: Listenable.merge([_main, _breathe]),
                   builder: (context, _) {
                     if (_isWelcome) {
-                      return _buildWelcomeContent(context, isDark);
+                      return _buildWelcomeContent(context, isDark, reduceMotion);
                     }
-                    return _buildConnectionContent(context, isDark);
+                    return _buildConnectionContent(context);
                   },
                 ),
               ),
@@ -227,49 +234,134 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
     );
   }
 
-  Widget _buildWelcomeContent(BuildContext context, bool isDark) {
-    final message = widget.subtitle ?? 'Chargement de votre espace';
+  Widget _buildWelcomeContent(BuildContext context, bool isDark, bool reduceMotion) {
+    final message = widget.subtitle ?? 'Chargement de votre espace…';
+    final palette = context.palette;
+    final breathe = reduceMotion ? 0.35 : _breathe.value;
+    final glowPulse = 0.55 + breathe * 0.45;
+    final sceneOpacity = _exitOpacity.value;
 
-    // Hauteur réservée pour la bulle : le logo reste fixe quand le message apparaît.
-    const messageSlotHeight = 96.0;
+    // Empreinte fixe : jamais de recalcul mid-scene (plus de speaking on/off).
+    const robotSize = 64.0;
+    const glowPad = 36.0;
+    const stageSize = robotSize + glowPad * 2;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.xl),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Opacity(
-            opacity: _logoOpacity.value,
-            child: Transform.scale(
-              scale: _logoScale.value,
-              child: const ConfidiaAnimatedLogo(size: 68, showText: false),
-            ),
-          ),
-          const SizedBox(height: 36),
-          SizedBox(
-            height: messageSlotHeight,
-            child: Opacity(
-              opacity: _aiOpacity.value,
-              child: Transform.translate(
-                offset: Offset(0, (1 - _aiOpacity.value) * 8),
-                child: Align(
-                  alignment: Alignment.topCenter,
-                  child: _WelcomeAiMessage(
-                    visible: _showAiMessage,
-                    message: message,
-                    speaking: _aiSpeaking,
-                    onSpeakingChanged: (v) => setState(() => _aiSpeaking = v),
+    return Opacity(
+      opacity: sceneOpacity,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.xl),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SizedBox(
+              width: stageSize,
+              height: stageSize,
+              child: Opacity(
+                opacity: _heroOpacity.value,
+                child: Transform.translate(
+                  offset: Offset(0, _heroRise.value),
+                  child: Transform.scale(
+                    scale: _heroScale.value,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      clipBehavior: Clip.none,
+                      children: [
+                        Opacity(
+                          opacity: _glowOpacity.value * glowPulse,
+                          child: Container(
+                            width: robotSize * 1.15,
+                            height: robotSize * 1.15,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: palette.primary.withValues(alpha: isDark ? 0.28 : 0.18),
+                                  blurRadius: 28 + breathe * 8,
+                                  spreadRadius: 2,
+                                ),
+                                BoxShadow(
+                                  color: palette.secondary.withValues(alpha: isDark ? 0.18 : 0.12),
+                                  blurRadius: 18,
+                                  spreadRadius: 0,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const ConfidiaAiRobot(size: robotSize, speaking: false),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 28,
+              child: Opacity(
+                opacity: _brandOpacity.value,
+                child: const Center(child: CofidIaBrand(fontSize: 18)),
+              ),
+            ),
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 44,
+              child: Opacity(
+                opacity: _textOpacity.value,
+                child: Transform.translate(
+                  offset: Offset(0, _textRise.value),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: Text(
+                      message,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.82)
+                                : ConfidiaColors.lightTextPrimary.withValues(alpha: 0.78),
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.2,
+                            height: 1.4,
+                          ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: 196,
+              height: 3,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    ColoredBox(
+                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.1),
+                    ),
+                    FractionallySizedBox(
+                      alignment: Alignment.centerLeft,
+                      widthFactor: _progress.value.clamp(0.0, 1.0),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [palette.primary, palette.secondary],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildConnectionContent(BuildContext context, bool isDark) {
+  Widget _buildConnectionContent(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.xl),
       child: Opacity(
@@ -277,84 +369,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTick
         child: Transform.scale(
           scale: _logoScale.value,
           child: const ConfidiaAnimatedLogo(size: 56, showText: true),
-        ),
-      ),
-    );
-  }
-}
-
-class _WelcomeAiMessage extends StatelessWidget {
-  final bool visible;
-  final String message;
-  final bool speaking;
-  final ValueChanged<bool> onSpeakingChanged;
-
-  const _WelcomeAiMessage({
-    required this.visible,
-    required this.message,
-    required this.speaking,
-    required this.onSpeakingChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (!visible) return const SizedBox.shrink();
-
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final palette = context.palette;
-
-    return ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 360),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(18),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(14, 12, 16, 12),
-            decoration: BoxDecoration(
-              color: isDark
-                  ? Colors.white.withValues(alpha: 0.06)
-                  : Colors.white.withValues(alpha: 0.58),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: palette.primary.withValues(alpha: isDark ? 0.22 : 0.14),
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: palette.primary.withValues(alpha: isDark ? 0.08 : 0.05),
-                  blurRadius: 28,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                ConfidiaAiRobot(size: 34, speaking: speaking),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Center(
-                    child: AiStreamingText(
-                      key: ValueKey(message),
-                      text: message,
-                      showThinkingRobot: false,
-                      textAlign: TextAlign.center,
-                      thinkingDelay: const Duration(milliseconds: 120),
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        height: 1.45,
-                        letterSpacing: 0.15,
-                        color: isDark ? Colors.white.withValues(alpha: 0.9) : ConfidiaColors.lightTextPrimary,
-                      ),
-                      onStreamStart: () {},
-                      onComplete: () => onSpeakingChanged(false),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
         ),
       ),
     );
