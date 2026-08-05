@@ -7,6 +7,7 @@ import 'onboarding_targets.dart';
 
 enum GuidedTourStepId {
   welcome,
+  startMyDay,
   serenity,
   weekOverview,
   customize,
@@ -82,6 +83,14 @@ final List<GuidedTourStep> guidedTourSteps = [
         message:
             'Bienvenue sur Confidia ! Je suis Confid•IA. Laissez-moi vous faire découvrir votre espace en quelques minutes.',
         bubbleAlignment: Alignment.center,
+        route: '/dashboard',
+      ),
+      GuidedTourStep(
+        id: GuidedTourStepId.startMyDay,
+        message:
+            'Chaque matin, démarrez avec Commencer ma journée : Confid•IA résume vos priorités en quelques secondes.',
+        targetKey: OnboardingTargets.startMyDay,
+        bubbleAlignment: Alignment.bottomCenter,
         route: '/dashboard',
       ),
       GuidedTourStep(

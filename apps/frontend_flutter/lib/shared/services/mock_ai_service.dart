@@ -33,4 +33,40 @@ class MockAiService {
 
   String generatePaymentConfirmation(String creditor, double amount) =>
       'Paiement de ${amount.toStringAsFixed(2)} € à $creditor traité avec succès. Reçu archivé dans votre coffre-fort numérique.';
+
+  /// Narration du rituel "Commencer ma journée" (streaming UI).
+  String composeDayNarrative({
+    required String firstName,
+    required int currentScore,
+    required int projectedScore,
+    required int priorityCount,
+    required int urgentPaymentCount,
+    required int appointmentCount,
+    required int newDocCount,
+  }) {
+    final parts = <String>[
+      '$firstName, voici votre journée en quelques secondes.',
+      'Votre indice de sérénité est à $currentScore/100.',
+    ];
+    if (priorityCount > 0) {
+      parts.add('Je retiens $priorityCount priorité(s) pour rester serein.');
+    }
+    if (urgentPaymentCount > 0) {
+      parts.add('$urgentPaymentCount paiement(s) mérite(nt) une attention rapide.');
+    }
+    if (appointmentCount > 0) {
+      parts.add('Vous avez $appointmentCount rendez-vous aujourd\'hui.');
+    }
+    if (newDocCount > 0) {
+      parts.add('$newDocCount nouveau(x) document(s) sont arrivés récemment.');
+    }
+    if (projectedScore > currentScore) {
+      parts.add(
+        'Si vous traitez l\'essentiel, votre indice peut monter à $projectedScore/100.',
+      );
+    } else {
+      parts.add('La journée est déjà bien engagée. Continuez sur cette lancée.');
+    }
+    return parts.join(' ');
+  }
 }

@@ -25,4 +25,15 @@ void main() {
     container.read(messagingProvider.notifier).toggleStar(email.id);
     expect(container.read(messagingProvider.notifier).byId(email.id)!.isStarred, !before);
   });
+
+  test('markProcessed sets read and processed', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final email = container.read(messagingProvider).firstWhere((e) => !e.isProcessed);
+    container.read(messagingProvider.notifier).markProcessed(email.id);
+    final updated = container.read(messagingProvider.notifier).byId(email.id)!;
+    expect(updated.isProcessed, isTrue);
+    expect(updated.isRead, isTrue);
+  });
 }

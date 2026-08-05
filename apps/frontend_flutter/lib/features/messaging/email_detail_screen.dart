@@ -7,10 +7,12 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/ai_insight_model.dart';
+import '../../shared/models/email_model.dart';
+import '../../shared/utils/serenity_palette.dart';
 import '../../shared/widgets/cofid_ia_brand.dart';
 import '../../shared/widgets/confidia_ai_robot.dart';
+import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_snackbar.dart';
-import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/provider_chip.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
@@ -25,12 +27,13 @@ class EmailDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final notifier = ref.watch(messagingProvider.notifier);
-    final email = notifier.byId(emailId);
+    final email = ref.watch(messagingProvider.select((list) => _emailById(list, emailId)));
+    final ai = ref.read(messagingProvider.notifier).ai;
 
     if (email == null) return const Center(child: Text('Message introuvable'));
 
-    final insight = notifier.ai.analyzeEmail(email);
+    final insight = ai.analyzeEmail(email);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SingleChildScrollView(
       padding: ConfidiaInsets.page(context),
@@ -86,6 +89,77 @@ class EmailDetailScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                if (!email.isProcessed) ...[
+                  ConfidiaGlowButton(
+                    label: "J'ai pris connaissance",
+                    icon: Icons.done_all_rounded,
+                    expand: true,
+                    onPressed: () {
+                      ref.read(messagingProvider.notifier).markProcessed(email.id);
+                      _showSnack(
+                        context,
+                        'Courrier pris en compte · sérénité mise à jour',
+                        type: ConfidiaSnackType.success,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Valide ce courrier pour gagner des points de sérénité et le retirer des priorités du jour.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: ConfidiaColors.textSecondary(isDark),
+                          height: 1.35,
+                        ),
+                  ),
+                  if (email.paymentId != null) ...[
+                    const SizedBox(height: ConfidiaSpacing.md),
+                    ConfidiaGlowButton(
+                      label: 'Payer maintenant',
+                      icon: Icons.payment_rounded,
+                      primary: false,
+                      expand: true,
+                      onPressed: () => context.go('/payments/${email.paymentId}'),
+                    ),
+                  ],
+                  const SizedBox(height: ConfidiaSpacing.lg),
+                ] else ...[
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: SerenityPalette.excellent.withValues(alpha: isDark ? 0.16 : 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: SerenityPalette.excellent.withValues(alpha: 0.35)),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      child: Row(
+                        children: [
+                          Icon(Icons.check_circle_rounded, color: SerenityPalette.excellent, size: 20),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Pris en compte',
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: SerenityPalette.excellent,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  if (email.paymentId != null) ...[
+                    const SizedBox(height: ConfidiaSpacing.md),
+                    ConfidiaGlowButton(
+                      label: 'Voir le paiement',
+                      icon: Icons.payment_rounded,
+                      primary: false,
+                      expand: true,
+                      onPressed: () => context.go('/payments/${email.paymentId}'),
+                    ),
+                  ],
+                  const SizedBox(height: ConfidiaSpacing.lg),
+                ],
                 Text('Actions rapides', style: Theme.of(context).textTheme.titleSmall),
                 const SizedBox(height: ConfidiaSpacing.sm),
                 Wrap(
@@ -93,34 +167,47 @@ class EmailDetailScreen extends ConsumerWidget {
                   runSpacing: 8,
                   children: [
                     if (email.documentId != null)
-                      _ActionChip(icon: Icons.description_rounded, label: 'Fiche documentaire', onTap: () => context.go('/documents/${email.documentId}')),
-                    _ActionChip(icon: Icons.smart_toy_rounded, label: 'Analyser avec l\'IA', onTap: () => _showSnack(context, 'Analyse IA terminée', type: ConfidiaSnackType.success)),
-                    _ActionChip(icon: Icons.archive_rounded, label: 'Archiver', onTap: () => _showSnack(context, 'Email archivé')),
-                    _ActionChip(icon: Icons.notifications_active_rounded, label: 'Créer un rappel', onTap: () => _showSnack(context, 'Rappel créé')),
-                    if (email.eventId != null)
-                      _ActionChip(icon: Icons.calendar_month_rounded, label: 'Voir au calendrier', onTap: () => context.go('/calendar')),
-                    if (email.paymentId != null)
-                      _ActionChip(icon: Icons.payment_rounded, label: 'Payer', onTap: () => context.go('/payments/${email.paymentId}')),
+                      _ActionChip(
+                        icon: Icons.description_rounded,
+                        label: 'Fiche documentaire',
+                        onTap: () => context.go('/documents/${email.documentId}'),
+                      ),
                     _ActionChip(
-                      icon: Icons.check_circle_outline_rounded,
-                      label: 'Marquer traité',
-                      onTap: () {
-                        ref.read(messagingProvider.notifier).markProcessed(email.id);
-                        _showSnack(context, 'Email marqué comme traité');
-                      },
+                      icon: Icons.smart_toy_rounded,
+                      label: 'Analyser avec l\'IA',
+                      onTap: () => _showSnack(context, 'Analyse IA terminée', type: ConfidiaSnackType.success),
                     ),
+                    _ActionChip(
+                      icon: Icons.archive_rounded,
+                      label: 'Archiver',
+                      onTap: () => _showSnack(context, 'Email archivé'),
+                    ),
+                    _ActionChip(
+                      icon: Icons.notifications_active_rounded,
+                      label: 'Créer un rappel',
+                      onTap: () => _showSnack(context, 'Rappel créé'),
+                    ),
+                    if (email.eventId != null)
+                      _ActionChip(
+                        icon: Icons.calendar_month_rounded,
+                        label: 'Voir au calendrier',
+                        onTap: () => context.go('/calendar'),
+                      ),
                   ],
                 ),
-                if (!email.isProcessed && email.paymentId != null) ...[
-                  const SizedBox(height: ConfidiaSpacing.lg),
-                  ConfidiaButton(label: 'Payer maintenant', icon: Icons.payment_rounded, onPressed: () => context.go('/payments/${email.paymentId}')),
-                ],
               ],
             ),
           ),
         ],
       ),
     );
+  }
+
+  static EmailModel? _emailById(List<EmailModel> list, String id) {
+    for (final e in list) {
+      if (e.id == id) return e;
+    }
+    return null;
   }
 
   void _showSnack(BuildContext context, String msg, {ConfidiaSnackType type = ConfidiaSnackType.info}) {

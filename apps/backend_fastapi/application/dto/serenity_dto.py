@@ -61,3 +61,52 @@ class SerenityBriefingResponse(BaseModel):
     actions: list[SerenityActionDTO]
     score_history: list[SerenityScorePointDTO]
     generated_at: datetime
+
+
+class DayPriorityDTO(BaseModel):
+    id: str
+    label: str
+    description: str
+    route: str
+    domain: SerenityDomain
+    priority: int = 0
+
+
+class DayUrgentPaymentDTO(BaseModel):
+    id: str
+    creditor: str
+    amount: float = Field(ge=0)
+    currency: str = "EUR"
+    due_date: date
+    days_until_due: int
+
+
+class DayAppointmentDTO(BaseModel):
+    id: str
+    title: str
+    start: datetime
+    end: datetime
+    location: str | None = None
+    event_type: str
+
+
+class DayDocumentDTO(BaseModel):
+    id: int
+    title: str
+    document_type: str | None = None
+    is_important: bool = False
+
+
+class DayBriefingResponse(BaseModel):
+    """Briefing « démarrer la journée » : priorités, agenda et projection de sérénité."""
+
+    greeting: str
+    summary: str
+    priorities: list[DayPriorityDTO] = Field(max_length=3)
+    urgent_payments: list[DayUrgentPaymentDTO]
+    todays_appointments: list[DayAppointmentDTO]
+    new_documents: list[DayDocumentDTO]
+    current_score: int = Field(ge=0, le=100)
+    projected_score: int = Field(ge=0, le=100)
+    value_message: str | None = None
+    generated_at: datetime

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 /// GlobalKeys partagés pour le spotlight de la visite guidée.
 abstract final class OnboardingTargets {
+  static final startMyDay = GlobalKey(debugLabel: 'onboarding_start_my_day');
   static final serenity = GlobalKey(debugLabel: 'onboarding_serenity');
   static final weekOverview = GlobalKey(debugLabel: 'onboarding_week');
   static final customizeFab = GlobalKey(debugLabel: 'onboarding_customize');

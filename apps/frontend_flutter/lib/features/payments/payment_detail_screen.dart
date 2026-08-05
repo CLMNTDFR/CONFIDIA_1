@@ -7,11 +7,14 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/payment_model.dart';
+import '../../shared/services/serenity_service.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../messaging/messaging_provider.dart';
+import '../serenity_feedback/serenity_moments_provider.dart';
 import 'payments_provider.dart';
 
 class PaymentDetailScreen extends ConsumerStatefulWidget {
@@ -167,7 +170,19 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
 
   Future<void> _simulatePay(String id) async {
     setState(() => _paying = true);
+    final payment = ref.read(paymentsProvider.notifier).byId(id);
+    final penaltyAvoided =
+        payment != null ? SerenityService.estimatePenaltyAvoided(payment) : 0.0;
+    // Avant payNow : le listen score lit cette valeur pour l'overlay.
+    if (payment != null) {
+      ref.read(serenityMomentsProvider.notifier).notifyPaymentSuccess(penaltyAvoided: penaltyAvoided);
+    }
     final msg = await ref.read(paymentsProvider.notifier).payNow(id);
+    // Démo : le courrier lié disparaît aussi du briefing / des priorités.
+    final emailId = payment?.emailId;
+    if (emailId != null) {
+      ref.read(messagingProvider.notifier).markProcessed(emailId);
+    }
     if (mounted) setState(() { _paying = false; _successMessage = msg; });
   }
 }

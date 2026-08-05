@@ -6,16 +6,21 @@ import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
+import '../../features/day_start/day_start_overlay.dart';
+import '../../features/day_start/day_start_provider.dart';
+import '../../features/dashboard/serenity_briefing_provider.dart';
 import '../../features/messaging/messaging_provider.dart';
 import '../../features/onboarding/guided_tour_overlay.dart';
 import '../../features/onboarding/guided_tour_provider.dart';
 import '../../features/onboarding/onboarding_targets.dart';
+import '../../features/serenity_feedback/serenity_moment_overlay.dart';
+import '../../features/serenity_feedback/serenity_moments_provider.dart';
 import '../../shared/data/mock_data.dart';
+import '../../shared/models/serenity_briefing_model.dart';
 import 'app_top_bar.dart';
 import 'confidia_logo.dart';
 import 'confidia_navigation.dart';
 import 'mesh_background.dart';
-import 'mobile_page_header.dart';
 import 'mobile_shell_insets.dart';
 
 class AppShell extends ConsumerStatefulWidget {
@@ -36,14 +41,23 @@ class _AppShellState extends ConsumerState<AppShell> {
     final currentPath = GoRouterState.of(context).matchedLocation;
     final unreadCount = MockData.notifications.where((n) => !n.read).length;
     final mailUnread = ref.watch(messagingUnreadCountProvider);
-    final routeMeta = AppTopBar.routeMeta(currentPath);
     final topBar = AppTopBar.fromRoute(context, showNotifications: true);
     final tourActive = ref.watch(guidedTourProvider.select((s) => s.active));
+    final dayStartOpen = ref.watch(dayStartSessionProvider.select((s) => s.isOpen));
+    final hasMoment = ref.watch(serenityMomentsProvider.select((s) => s.current != null));
 
     ref.listen(authStateProvider, (prev, next) {
       if (prev?.isAuthenticated == true && !next.isAuthenticated) {
         ref.read(guidedTourProvider.notifier).reset();
       }
+    });
+
+    ref.listen(serenityBriefingProvider, (prev, next) {
+      ref.read(serenityMomentsProvider.notifier).onScoreChanged(
+            prev?.score,
+            next.score,
+            next.level.label,
+          );
     });
 
     Widget shell;
@@ -65,17 +79,9 @@ class _AppShellState extends ConsumerState<AppShell> {
               bottom: ConfidiaMobileShell.bottomScrollInset(context),
             ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              MobilePageHeader(title: routeMeta.$1, subtitle: routeMeta.$2, path: currentPath),
-              Expanded(
-                child: KeyedSubtree(
-                  key: ValueKey<String>(currentPath),
-                  child: widget.child,
-                ),
-              ),
-            ],
+          child: KeyedSubtree(
+            key: ValueKey<String>(currentPath),
+            child: widget.child,
           ),
         ),
         bottomNavigationBar: ConfidiaMobileNavBar(
@@ -123,6 +129,8 @@ class _AppShellState extends ConsumerState<AppShell> {
       child: Stack(
         children: [
           shell,
+          if (hasMoment) const SerenityMomentOverlay(),
+          if (dayStartOpen) const DayStartOverlay(),
           if (tourActive) const GuidedTourOverlay(),
         ],
       ),

@@ -15,9 +15,10 @@ abstract final class SerenityService {
     required List<PaymentModel> payments,
     required List<NotificationModel> notifications,
     required List<DocumentModel> documents,
+    DateTime? now,
   }) {
-    final now = DateTime.now();
-    final horizon = now.add(const Duration(days: 30));
+    final reference = now ?? DateTime.now();
+    final horizon = reference.add(const Duration(days: 30));
 
     final unprocessedEmails = emails.where((e) => !e.isProcessed).length;
     final pendingPayments = payments
@@ -27,10 +28,10 @@ abstract final class SerenityService {
     final unreadNotifications = notifications.where((n) => !n.read).length;
     final importantDocs = documents.where((d) => d.isImportant).length;
 
-    final upcomingEvents = events.where((e) => e.start.isAfter(now) && e.start.isBefore(horizon)).toList();
+    final upcomingEvents = events.where((e) => e.start.isAfter(reference) && e.start.isBefore(horizon)).toList();
     final busyDays = _countBusyDays(upcomingEvents);
     final deadlines7d = upcomingEvents
-        .where((e) => e.eventType == EventType.deadline && e.start.isBefore(now.add(const Duration(days: 7))))
+        .where((e) => e.eventType == EventType.deadline && e.start.isBefore(reference.add(const Duration(days: 7))))
         .length;
 
     final factors = <SerenityFactor>[];
@@ -79,11 +80,11 @@ abstract final class SerenityService {
     }
 
     final soonPayment = pendingPayments.cast<PaymentModel?>().firstWhere(
-          (p) => p!.dueDate.isBefore(now.add(const Duration(days: 8))),
+          (p) => p!.dueDate.isBefore(reference.add(const Duration(days: 8))),
           orElse: () => null,
         );
     if (soonPayment != null) {
-      final days = soonPayment.dueDate.difference(now).inDays.clamp(0, 30);
+      final days = soonPayment.dueDate.difference(reference).inDays.clamp(0, 30);
       const impact = 4;
       score -= impact;
       factors.add(
@@ -151,7 +152,7 @@ abstract final class SerenityService {
       'Votre $calendarLabel sur les 30 prochains jours.',
     ];
     if (soonPayment != null) {
-      final days = soonPayment.dueDate.difference(now).inDays.clamp(0, 30);
+      final days = soonPayment.dueDate.difference(reference).inDays.clamp(0, 30);
       summaryParts.add('Une facture ${soonPayment.creditor} arrive à échéance dans $days jour(s).');
     }
     if (priorityToday > 0) {
@@ -194,9 +195,86 @@ abstract final class SerenityService {
       metrics: metrics,
       factors: factors..sort((a, b) => b.impact.compareTo(a.impact)),
       actions: _buildActions(factors),
-      scoreHistory: _buildScoreHistory(score, now),
-      generatedAt: now,
+      scoreHistory: _buildScoreHistory(score, reference),
+      generatedAt: reference,
     );
+  }
+
+  /// Score projeté si certaines dettes actionnables étaient déjà traitées.
+  /// Réutilise [build] (un seul moteur de score). Défaut: courriers + échéances proches (8 j).
+  ///
+  /// Exemple: 67 → 82 pour le bandeau "Indice : 67 → 82 si vous traitez les échéances".
+  static int projectAfterResolving({
+    required String firstName,
+    required List<EmailModel> emails,
+    required List<CalendarEventModel> events,
+    required List<PaymentModel> payments,
+    required List<NotificationModel> notifications,
+    required List<DocumentModel> documents,
+    bool processEmails = true,
+    bool settlePaymentsDueSoon = true,
+    bool settlePendingPayments = false,
+    bool clearUnreadNotifications = false,
+    DateTime? now,
+  }) {
+    final reference = now ?? DateTime.now();
+    final soonHorizon = reference.add(const Duration(days: 8));
+
+    final projectedEmails = processEmails
+        ? emails.map((e) => e.isProcessed ? e : e.copyWith(isProcessed: true, isRead: true)).toList()
+        : emails;
+
+    final projectedPayments = payments.map((p) {
+      final actionable = p.status == PaymentStatus.pending || p.status == PaymentStatus.waiting;
+      if (!actionable) return p;
+      if (settlePendingPayments) {
+        return p.copyWith(status: PaymentStatus.paid, paidAt: reference);
+      }
+      if (settlePaymentsDueSoon && p.dueDate.isBefore(soonHorizon)) {
+        return p.copyWith(status: PaymentStatus.paid, paidAt: reference);
+      }
+      return p;
+    }).toList();
+
+    final projectedNotifications = clearUnreadNotifications
+        ? notifications
+            .map(
+              (n) => NotificationModel(
+                id: n.id,
+                title: n.title,
+                message: n.message,
+                type: n.type,
+                read: true,
+                createdAt: n.createdAt,
+                actionUrl: n.actionUrl,
+              ),
+            )
+            .toList()
+        : notifications;
+
+    return build(
+      firstName: firstName,
+      emails: projectedEmails,
+      events: events,
+      payments: projectedPayments,
+      notifications: projectedNotifications,
+      documents: documents,
+      now: reference,
+    ).score;
+  }
+
+  /// Heuristique locale des pénalités évitées en réglant [payment] à temps.
+  /// Sert la copy du type "Vous évitez X € de pénalités".
+  ///
+  /// Règle mock: 5 % du montant + 1 € par jour de retard déjà écoulé,
+  /// plancher 2 €, plafond 100 €.
+  static double estimatePenaltyAvoided(PaymentModel payment, {DateTime? now}) {
+    final reference = now ?? DateTime.now();
+    final overdueDays = reference.isAfter(payment.dueDate)
+        ? reference.difference(payment.dueDate).inDays
+        : 0;
+    final estimate = payment.amount * 0.05 + overdueDays * 1.0;
+    return double.parse(estimate.clamp(2.0, 100.0).toStringAsFixed(2));
   }
 
   /// Historique mock : forte amplitude, récupération progressive vers le score actuel.
@@ -228,7 +306,6 @@ abstract final class SerenityService {
     if (score >= 50) return SerenityLevel.moderate;
     return SerenityLevel.attention;
   }
-
 
   static List<SerenityAction> _buildActions(List<SerenityFactor> factors) {
     final domains = factors.map((f) => f.domain).toSet();

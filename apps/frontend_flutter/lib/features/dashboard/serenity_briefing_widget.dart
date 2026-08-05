@@ -16,9 +16,10 @@ import '../../shared/widgets/cofid_ia_brand.dart';
 import '../../shared/widgets/confidia_ai_robot.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../../shared/widgets/serenity_score_ring.dart';
 import 'serenity_briefing_provider.dart';
 
-/// Briefing IA de sérénité — sections distinctes, courbe temporelle colorée.
+/// Briefing IA de sérénité : sections distinctes, courbe temporelle colorée.
 class SerenityBriefingWidget extends ConsumerStatefulWidget {
   const SerenityBriefingWidget({super.key});
 
@@ -188,12 +189,25 @@ class _SerenityBriefingCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           Center(
-            child: ConfidiaGlowButton(
-              label: _ctaLabel(detailLevel),
-              icon: _ctaIcon(detailLevel),
-              primary: detailLevel < 2,
-              onPressed: onToggleLevel,
-            ),
+            child: detailLevel == 0
+                ? TextButton.icon(
+                    onPressed: onToggleLevel,
+                    icon: const Icon(Icons.expand_more_rounded, size: 16),
+                    label: const Text('Détails'),
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      foregroundColor: ConfidiaColors.textSecondary(
+                        Theme.of(context).brightness == Brightness.dark,
+                      ),
+                      textStyle: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
+                    ),
+                  )
+                : ConfidiaGlowButton(
+                    label: _ctaLabel(detailLevel),
+                    icon: _ctaIcon(detailLevel),
+                    primary: detailLevel == 1,
+                    onPressed: onToggleLevel,
+                  ),
           ),
         ],
       ),
@@ -201,13 +215,11 @@ class _SerenityBriefingCard extends StatelessWidget {
   }
 
   String _ctaLabel(int level) => switch (level) {
-        0 => 'Voir le briefing',
-        1 => 'Analyser les facteurs',
+        1 => 'Facteurs',
         _ => 'Réduire',
       };
 
   IconData _ctaIcon(int level) => switch (level) {
-        0 => Icons.expand_more_rounded,
         1 => Icons.insights_rounded,
         _ => Icons.expand_less_rounded,
       };
@@ -307,123 +319,10 @@ class _CompactHeader extends StatelessWidget {
             ],
           ),
         ),
-        _AnimatedScoreRing(score: score, label: levelLabel, color: accent, pulse: pulse),
+        SerenityScoreRing(score: score, label: levelLabel, color: accent, pulse: pulse),
       ],
     );
   }
-}
-
-class _AnimatedScoreRing extends StatelessWidget {
-  final int score;
-  final String label;
-  final Color color;
-  final AnimationController pulse;
-
-  const _AnimatedScoreRing({
-    required this.score,
-    required this.label,
-    required this.color,
-    required this.pulse,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: score / 100),
-      duration: const Duration(milliseconds: 900),
-      curve: Curves.easeOutCubic,
-      builder: (context, progress, _) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedBuilder(
-              animation: pulse,
-              builder: (context, child) {
-                return Container(
-                  width: 54,
-                  height: 54,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: color.withValues(alpha: 0.1 + pulse.value * 0.08),
-                        blurRadius: 8 + pulse.value * 4,
-                      ),
-                    ],
-                  ),
-                  child: child,
-                );
-              },
-              child: CustomPaint(
-                size: const Size(54, 54),
-                painter: _ScoreRingPainter(progress: progress, color: color),
-                child: Center(
-                  child: Text(
-                    '$score',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: color,
-                          height: 1,
-                          fontSize: 18,
-                        ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 3),
-            SizedBox(
-              width: 72,
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                      height: 1.1,
-                    ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _ScoreRingPainter extends CustomPainter {
-  final double progress;
-  final Color color;
-
-  _ScoreRingPainter({required this.progress, required this.color});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 4;
-    const start = -math.pi / 2;
-    const sweep = math.pi * 2;
-
-    final track = Paint()
-      ..color = color.withValues(alpha: 0.14)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start, sweep, false, track);
-
-    final fill = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start, sweep * progress, false, fill);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ScoreRingPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color;
 }
 
 class _ScoreHistoryChart extends StatefulWidget {

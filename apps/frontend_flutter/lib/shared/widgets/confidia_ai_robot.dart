@@ -71,10 +71,12 @@ class _ConfidiaAiRobotState extends State<ConfidiaAiRobot> with SingleTickerProv
         final haloSize = widget.size * (1.05 + t * 0.18);
         final primaryAlpha = (isDark ? 0.07 : 0.09) + t * (isDark ? 0.06 : 0.08);
         final secondaryAlpha = (isDark ? 0.05 : 0.07) + t * (isDark ? 0.05 : 0.06);
+        // Marge pour que le blur du halo ne soit pas coupé par le SizedBox parent.
+        final glowPad = widget.speaking ? widget.size * 0.55 : pad;
 
         return SizedBox(
-          width: widget.size + pad * 2,
-          height: widget.size + pad * 2,
+          width: widget.size + glowPad * 2,
+          height: widget.size + glowPad * 2,
           child: Stack(
             alignment: Alignment.center,
             clipBehavior: Clip.none,

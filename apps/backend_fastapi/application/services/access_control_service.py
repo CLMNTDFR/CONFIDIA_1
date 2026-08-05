@@ -74,6 +74,11 @@ _CLUB_ORG = OrganizationDTO(
     ],
 )
 
+def _role_perms(role_id: str) -> list[str]:
+    role = next((r for r in _ROLES if r.id == role_id), None)
+    return list(role.default_permissions) if role else []
+
+
 _FAMILY_MEMBERS = [
     MemberDTO(id="m_sophie", name="Sophie Martin", email="sophie@demo.local", role_id="admin", node_id="n_sophie", permissions=[p.id for p in _PERMISSIONS]),
     MemberDTO(id="m_marc", name="Marc Martin", email="marc@demo.local", role_id="parent", node_id="n_marc", permissions=["calendar.read", "calendar.write", "documents.read", "payments.read"]),
@@ -88,11 +93,6 @@ _CLUB_MEMBERS = [
     MemberDTO(id="m_sec", name="Julie Moreau", email="secretaire@fc-confidia.local", role_id="secretary", node_id="n_sec", permissions=_role_perms("secretary")),
     MemberDTO(id="m_u17", name="Licenciés U17", email="u17@fc-confidia.local", role_id="member", node_id="n_u17", permissions=_role_perms("member")),
 ]
-
-
-def _role_perms(role_id: str) -> list[str]:
-    role = next((r for r in _ROLES if r.id == role_id), None)
-    return list(role.default_permissions) if role else []
 
 
 class AccessControlService:

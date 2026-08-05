@@ -29,10 +29,13 @@ import '../calendar/calendar_provider.dart';
 import '../onboarding/guided_tour_provider.dart';
 import '../onboarding/onboarding_targets.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
+import '../day_start/day_briefing_provider.dart';
+import '../day_start/day_glance_strip.dart';
 import 'dashboard_chart_widgets.dart';
 import 'dashboard_grid.dart';
 import 'dashboard_provider.dart';
 import 'serenity_briefing_widget.dart';
+import 'start_my_day_hero.dart';
 import 'week_overview_widget.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -79,25 +82,55 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           ),
         );
 
+    final listPadding = padding.copyWith(top: ConfidiaSpacing.sm);
+    final glanceStrip = DayGlanceStrip(
+      metrics: ref.watch(dayBriefingProvider).glance,
+      dense: MediaQuery.sizeOf(context).width < 400,
+      layout: DayGlanceLayout.row,
+      showSerenity: false,
+    );
+
     return Stack(
       children: [
-        if (layout.editMode)
-          _EditModeDashboardList(
-            padding: padding,
-            types: layout.visible,
-            buildTile: buildTile,
-            onReorderSegment: (oldIndex, newIndex, segments) =>
-                notifier.reorderSegments(oldIndex, newIndex, segments),
-          )
-        else
-          ListView(
-            padding: padding,
-            children: DashboardGrid.buildRows(
-              context: context,
-              types: layout.visible,
-              builder: buildTile,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: EdgeInsets.fromLTRB(
+                padding.left,
+                padding.top,
+                padding.right,
+                ConfidiaSpacing.sm,
+              ),
+              child: const StartMyDayHero(),
             ),
-          ),
+            Expanded(
+              child: layout.editMode
+                  ? _EditModeDashboardList(
+                      padding: listPadding,
+                      header: glanceStrip,
+                      types: layout.visible,
+                      buildTile: buildTile,
+                      onReorderSegment: (oldIndex, newIndex, segments) =>
+                          notifier.reorderSegments(oldIndex, newIndex, segments),
+                    )
+                  : ListView(
+                      padding: listPadding,
+                      children: [
+                        Padding(
+                          padding: EdgeInsets.only(bottom: ConfidiaSpacing.md),
+                          child: glanceStrip,
+                        ),
+                        ...DashboardGrid.buildRows(
+                          context: context,
+                          types: layout.visible,
+                          builder: buildTile,
+                        ),
+                      ],
+                    ),
+            ),
+          ],
+        ),
         if (layout.editMode) ...[
           Positioned(
             left: ConfidiaSpacing.lg,
@@ -192,12 +225,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 
 class _EditModeDashboardList extends StatelessWidget {
   final EdgeInsets padding;
+  final Widget? header;
   final List<DashboardWidgetType> types;
   final Widget Function(DashboardWidgetType type, int index) buildTile;
   final void Function(int oldIndex, int newIndex, List<List<DashboardWidgetType>> segments) onReorderSegment;
 
   const _EditModeDashboardList({
     required this.padding,
+    this.header,
     required this.types,
     required this.buildTile,
     required this.onReorderSegment,
@@ -211,6 +246,12 @@ class _EditModeDashboardList extends StatelessWidget {
 
     return ReorderableListView.builder(
       padding: padding,
+      header: header == null
+          ? null
+          : Padding(
+              padding: const EdgeInsets.only(bottom: ConfidiaSpacing.md),
+              child: header,
+            ),
       buildDefaultDragHandles: false,
       onReorder: (oldIndex, newIndex) => onReorderSegment(oldIndex, newIndex, segmentTypes),
       itemCount: segments.length,

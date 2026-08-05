@@ -9,12 +9,16 @@ import '../navigation/confidia_route_labels.dart';
 import '../../shared/models/user_model.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
+import '../../core/theme/theme_context.dart';
+import '../../features/dashboard/serenity_briefing_provider.dart';
+import '../../features/day_start/day_start_provider.dart';
 import '../../features/onboarding/onboarding_targets.dart';
 import '../../features/profile/profile_avatar_provider.dart';
 import '../../shared/data/mock_data.dart';
+import '../../shared/utils/serenity_palette.dart';
 import 'confidia_button.dart';
-import 'confidia_logo.dart';
 import 'confidia_page_header.dart';
+import 'confidia_tooltip.dart';
 import 'theme_toggle_button.dart';
 import 'user_avatar.dart';
 
@@ -61,7 +65,8 @@ class AppTopBar extends ConsumerWidget {
     final auth = ref.watch(authStateProvider);
     final avatarBase64 = ref.watch(profileAvatarProvider);
     final unread = MockData.notifications.where((n) => !n.read).length;
-    final isWide = MediaQuery.of(context).size.width >= 900;
+    final width = MediaQuery.of(context).size.width;
+    final showDate = width >= 720;
     final path = GoRouterState.of(context).matchedLocation;
     final backRoute = confidiaParentRoute(path);
 
@@ -75,33 +80,47 @@ class AppTopBar extends ConsumerWidget {
       child: Row(
         children: [
           Expanded(
-            child: isWide
-                ? Row(
+            child: Row(
+              children: [
+                if (backRoute != null) ...[
+                  ConfidiaBackButton(parentRoute: backRoute),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (backRoute != null) ...[
-                        ConfidiaBackButton(parentRoute: backRoute),
-                        const SizedBox(width: 10),
-                      ],
-                      Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(title, style: Theme.of(context).textTheme.titleLarge),
-                            if (subtitle != null)
-                              Text(subtitle!, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis),
-                          ],
-                        ),
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              height: 1.15,
+                            ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
+                      if (subtitle != null)
+                        Text(
+                          subtitle!,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: ConfidiaColors.textSecondary(isDark),
+                              ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                     ],
-                  )
-                : const Align(
-                    alignment: Alignment.centerLeft,
-                    child: ConfidiaLogo(size: 26, showText: true),
                   ),
+                ),
+              ],
+            ),
           ),
-          const _TopBarDate(),
-          const SizedBox(width: 12),
+          if (showDate) ...[
+            const _TopBarDate(),
+            const SizedBox(width: 12),
+          ],
+          const _SerenityScoreChip(),
+          const SizedBox(width: 8),
           if (showNotifications)
             KeyedSubtree(
               key: OnboardingTargets.notifications,
@@ -139,6 +158,55 @@ class _TopBarDate extends StatelessWidget {
             fontWeight: FontWeight.w400,
             letterSpacing: 0.1,
           ),
+    );
+  }
+}
+
+class _SerenityScoreChip extends ConsumerWidget {
+  const _SerenityScoreChip();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final score = ref.watch(serenityBriefingProvider.select((b) => b.score));
+    final accent = SerenityPalette.forScore(score, palette: context.palette);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          context.go('/dashboard');
+          ref.read(dayStartSessionProvider.notifier).openFromChip();
+        },
+        borderRadius: BorderRadius.circular(10),
+        child: ConfidiaTooltip(
+          message: 'Briefing du jour',
+          child: Container(
+            height: 32,
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            decoration: BoxDecoration(
+              color: accent.withValues(alpha: isDark ? 0.16 : 0.1),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: accent.withValues(alpha: 0.35)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.shield_rounded, size: 14, color: accent),
+                const SizedBox(width: 4),
+                Text(
+                  '$score',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w800,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

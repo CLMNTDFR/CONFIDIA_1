@@ -1,4 +1,5 @@
 from fastapi.testclient import TestClient
+from jose import jwt
 
 from api.main import app
 
@@ -6,9 +7,16 @@ client = TestClient(app)
 
 
 def _auth_headers():
-    login = client.post("/api/v1/auth/login", json={"username": "user", "password": "user"})
-    assert login.status_code == 200
-    token = login.json()["access_token"]
+    token = jwt.encode(
+        {
+            "sub": "test-user",
+            "email": "amandine@demo.local",
+            "preferred_username": "amandine",
+            "realm_access": {"roles": ["USER"]},
+        },
+        key="test",
+        algorithm="HS256",
+    )
     return {"Authorization": f"Bearer {token}"}
 
 
@@ -48,3 +56,27 @@ def test_serenity_briefing_endpoint():
     assert data["actions"][0]["route"].startswith("/")
     assert len(data["score_history"]) == 14
     assert data["score_history"][-1]["score"] == data["score"]
+
+
+def test_day_briefing_endpoint():
+    response = client.get("/api/v1/dashboard/day-briefing", headers=_auth_headers())
+    assert response.status_code == 200
+    data = response.json()
+    assert data["greeting"].startswith("Bonjour")
+    assert isinstance(data["summary"], str) and len(data["summary"]) > 20
+    assert 1 <= len(data["priorities"]) <= 3
+    assert data["priorities"][0]["route"].startswith("/")
+    assert len(data["urgent_payments"]) >= 1
+    assert data["urgent_payments"][0]["creditor"]
+    assert data["urgent_payments"][0]["amount"] > 0
+    assert isinstance(data["todays_appointments"], list)
+    assert len(data["new_documents"]) >= 1
+    assert 0 <= data["current_score"] <= 100
+    assert 0 <= data["projected_score"] <= 100
+    assert data["projected_score"] >= data["current_score"]
+    assert data["value_message"] is None or "pénalités" in data["value_message"]
+
+
+def test_day_briefing_requires_auth():
+    response = client.get("/api/v1/dashboard/day-briefing")
+    assert response.status_code in {401, 403}
