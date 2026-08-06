@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'colors.dart';
 import 'palette.dart';
-import 'spacing.dart';
-import 'typography.dart';
+import 'tokens/tokens.dart';
 
 abstract final class ConfidiaTheme {
   static final Map<String, ThemeData> _cache = {};
@@ -16,9 +14,9 @@ abstract final class ConfidiaTheme {
       _cache.putIfAbsent('l-${palette.id.name}', () => _buildTheme(isDark: false, palette: palette));
 
   static ThemeData _buildTheme({required bool isDark, required ConfidiaPalette palette}) {
-    final surface = isDark ? ConfidiaColors.darkSurface : ConfidiaColors.lightSurface;
-    final surfaceVariant = isDark ? ConfidiaColors.darkSurfaceVariant : ConfidiaColors.lightSurfaceVariant;
-    final border = isDark ? ConfidiaColors.darkBorder : ConfidiaColors.lightBorder;
+    final surface = AppColors.surface(isDark);
+    final surfaceVariant = AppColors.surfaceVariant(isDark);
+    final border = AppColors.border(isDark);
 
     return ThemeData(
       useMaterial3: true,
@@ -33,22 +31,22 @@ abstract final class ConfidiaTheme {
         onSecondary: Colors.white,
         tertiary: palette.accent,
         surface: surface,
-        onSurface: ConfidiaColors.textPrimary(isDark),
-        error: ConfidiaColors.error,
+        onSurface: AppColors.textPrimary(isDark),
+        error: AppColors.error,
         onError: Colors.white,
       ),
-      textTheme: ConfidiaTypography.textTheme(isDark: isDark),
+      textTheme: AppTypography.textTheme(isDark: isDark),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
+        elevation: AppElevation.flat,
+        scrolledUnderElevation: AppElevation.flat,
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
       cardTheme: CardThemeData(
-        color: isDark ? ConfidiaColors.darkSurfaceElevated : ConfidiaColors.lightSurface,
-        elevation: 0,
+        color: isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurface,
+        elevation: AppElevation.flat,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusLg),
+          borderRadius: AppRadius.cardAll,
           side: BorderSide(color: border),
         ),
       ),
@@ -56,12 +54,12 @@ abstract final class ConfidiaTheme {
         isDense: true,
         filled: true,
         fillColor: isDark
-            ? ConfidiaColors.darkSurfaceElevated.withValues(alpha: 0.55)
-            : Colors.white.withValues(alpha: 0.92),
+            ? AppColors.darkSurfaceElevated.withValues(alpha: AppOpacity.inputFillDark)
+            : Colors.white.withValues(alpha: AppOpacity.inputFillLight),
         labelStyle: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
-          color: ConfidiaColors.textSecondary(isDark),
+          color: AppColors.textSecondary(isDark),
         ),
         floatingLabelStyle: TextStyle(
           fontSize: 11,
@@ -71,75 +69,68 @@ abstract final class ConfidiaTheme {
         ),
         hintStyle: TextStyle(
           fontSize: 13,
-          color: ConfidiaColors.textSecondary(isDark),
+          color: AppColors.textSecondary(isDark),
         ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
         suffixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: border.withValues(alpha: 0.85)),
+        border: AppBorders.input(isDark: isDark, alpha: AppOpacity.borderStrong),
+        enabledBorder: AppBorders.input(isDark: isDark, alpha: AppOpacity.borderMedium),
+        focusedBorder: AppBorders.input(
+          isDark: isDark,
+          accent: palette.primary.withValues(alpha: AppOpacity.borderFocus),
+          width: AppBorders.focus,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: border.withValues(alpha: 0.75)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: palette.primary.withValues(alpha: 0.55), width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: ConfidiaColors.error),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: const BorderSide(color: ConfidiaColors.error, width: 1.5),
+        errorBorder: AppBorders.input(isDark: isDark, accent: AppColors.error),
+        focusedErrorBorder: AppBorders.input(
+          isDark: isDark,
+          accent: AppColors.error,
+          width: AppBorders.focus,
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: palette.primary,
           foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          elevation: AppElevation.flat,
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonAll),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: ConfidiaColors.textPrimary(isDark),
+          foregroundColor: AppColors.textPrimary(isDark),
           side: BorderSide(color: border),
-          padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 14),
+          shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonAll),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: palette.primary,
         foregroundColor: Colors.white,
-        elevation: 4,
+        elevation: AppElevation.overlay,
       ),
-      dividerTheme: DividerThemeData(color: border, thickness: 1),
+      dividerTheme: DividerThemeData(color: border, thickness: AppBorders.hairline),
       chipTheme: ChipThemeData(
         backgroundColor: surfaceVariant,
         side: BorderSide(color: border),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        shape: RoundedRectangleBorder(borderRadius: AppRadius.chipAll),
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
-        indicatorColor: palette.primary.withValues(alpha: 0.12),
-        height: 68,
+        indicatorColor: palette.primary.withValues(alpha: AppOpacity.indicator),
+        height: AppSpacing.materialNavBarHeight,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: isDark ? ConfidiaColors.darkSurfaceElevated : ConfidiaColors.lightSurface,
+        backgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurface,
         behavior: SnackBarBehavior.floating,
-        elevation: 6,
+        elevation: AppElevation.modal,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppRadius.buttonAll,
           side: BorderSide(color: border.withValues(alpha: 0.6)),
         ),
         contentTextStyle: TextStyle(
-          color: ConfidiaColors.textPrimary(isDark),
+          color: AppColors.textPrimary(isDark),
           fontWeight: FontWeight.w600,
           fontSize: 14,
           height: 1.35,
@@ -148,7 +139,7 @@ abstract final class ConfidiaTheme {
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           shape: WidgetStatePropertyAll(
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            RoundedRectangleBorder(borderRadius: AppRadius.buttonAll),
           ),
         ),
       ),
