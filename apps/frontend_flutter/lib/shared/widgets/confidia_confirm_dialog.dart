@@ -4,9 +4,10 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
+import 'confidia_chrome_material.dart';
 import 'confidia_glow_button.dart';
 
-/// Dialogue de confirmation au style CONFIDIA (glass, animation, boutons centrés).
+/// Dialogue de confirmation au style CONFIDIA (matière chrome, boutons centrés).
 Future<bool> showConfidiaConfirmDialog(
   BuildContext context, {
   required String title,
@@ -20,7 +21,7 @@ Future<bool> showConfidiaConfirmDialog(
     context: context,
     barrierDismissible: true,
     barrierLabel: 'Fermer',
-    barrierColor: Colors.black.withValues(alpha: 0.45),
+    barrierColor: Colors.black.withValues(alpha: AppOpacity.veilDark),
     transitionDuration: const Duration(milliseconds: 280),
     pageBuilder: (context, animation, secondaryAnimation) => const SizedBox.shrink(),
     transitionBuilder: (context, animation, secondaryAnimation, child) {
@@ -73,64 +74,59 @@ class _ConfidiaConfirmDialog extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Material(
         color: Colors.transparent,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(22),
-          child: BackdropFilter(
-            filter: AppBlur.sheetFilter,
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 420),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(22),
-                color: AppColors.surface1(isDark),
-                border: Border.fromBorderSide(AppBorders.standard(isDark)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.lg, ConfidiaSpacing.lg, ConfidiaSpacing.md),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: ConfidiaChromeMaterial(
+            borderRadius: BorderRadius.circular(22),
+            padding: const EdgeInsets.fromLTRB(
+              ConfidiaSpacing.lg,
+              ConfidiaSpacing.lg,
+              ConfidiaSpacing.lg,
+              ConfidiaSpacing.md,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: accent.withValues(alpha: isDark ? AppOpacity.muted : AppOpacity.tintSoft),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: accent, size: 22),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 44,
-                      height: 44,
-                      decoration: BoxDecoration(
-                        color: accent.withValues(alpha: isDark ? AppOpacity.muted : AppOpacity.tintSoft),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Icon(icon, color: accent, size: 22),
+                    ConfidiaGlowButton(
+                      label: cancelLabel,
+                      icon: Icons.close_rounded,
+                      primary: false,
+                      onPressed: () => Navigator.pop(context, false),
                     ),
-                    const SizedBox(height: 14),
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
-                    ),
-                    const SizedBox(height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ConfidiaGlowButton(
-                          label: cancelLabel,
-                          icon: Icons.close_rounded,
-                          primary: false,
-                          onPressed: () => Navigator.pop(context, false),
-                        ),
-                        const SizedBox(width: 10),
-                        ConfidiaGlowButton(
-                          label: confirmLabel,
-                          icon: destructive ? Icons.logout_rounded : Icons.check_rounded,
-                          onPressed: () => Navigator.pop(context, true),
-                        ),
-                      ],
+                    const SizedBox(width: 10),
+                    ConfidiaGlowButton(
+                      label: confirmLabel,
+                      icon: destructive ? Icons.logout_rounded : Icons.check_rounded,
+                      onPressed: () => Navigator.pop(context, true),
                     ),
                   ],
                 ),
-              ),
+              ],
             ),
           ),
         ),

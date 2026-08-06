@@ -7,11 +7,12 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
 import '../../shared/utils/serenity_palette.dart';
+import '../../core/theme/tokens/tokens.dart';
 import '../../shared/widgets/ai_streaming_text.dart';
 import '../../shared/widgets/cofid_ia_brand.dart';
 import '../../shared/widgets/confidia_ai_robot.dart';
+import '../../shared/widgets/confidia_chrome_material.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
-import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/stagger_fade.dart';
 import 'day_briefing_model.dart';
 import 'day_glance_strip.dart';
@@ -31,7 +32,7 @@ class DayStartOverlay extends ConsumerWidget {
 
     return Positioned.fill(
       child: Material(
-        color: Colors.black.withValues(alpha: 0.58),
+        color: Colors.black.withValues(alpha: AppOpacity.veilDark),
         child: SafeArea(
           child: Center(
             child: ConstrainedBox(
@@ -61,11 +62,9 @@ class _DayStartCard extends ConsumerWidget {
     final showSections = phase == DayStartPhase.ready && briefing != null;
     final streaming = phase == DayStartPhase.streaming && briefing != null;
 
-    return GlassCard(
+    return ConfidiaChromeMaterial(
+      borderRadius: BorderRadius.circular(22),
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
-      borderRadius: 22,
-      highlighted: true,
-      clipContent: false,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.sizeOf(context).height * 0.86,

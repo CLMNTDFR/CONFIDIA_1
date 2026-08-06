@@ -17,6 +17,7 @@ import '../../features/profile/profile_avatar_provider.dart';
 import '../../shared/data/mock_data.dart';
 import '../../shared/utils/serenity_palette.dart';
 import 'confidia_button.dart';
+import 'confidia_chrome_material.dart';
 import 'confidia_page_header.dart';
 import 'confidia_tooltip.dart';
 import 'theme_toggle_button.dart';
@@ -70,14 +71,12 @@ class AppTopBar extends ConsumerWidget {
     final path = GoRouterState.of(context).matchedLocation;
     final backRoute = confidiaParentRoute(path);
 
-    return Container(
-      height: ConfidiaSpacing.topBarHeight,
-      padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
-      decoration: BoxDecoration(
-        color: isDark ? ConfidiaColors.darkSurface.withValues(alpha: 0.85) : Colors.white.withValues(alpha: 0.9),
-        border: Border(bottom: BorderSide(color: isDark ? ConfidiaColors.darkBorderSubtle : ConfidiaColors.lightBorderSubtle)),
-      ),
-      child: Row(
+    return ConfidiaChromeMaterial(
+      child: SizedBox(
+        height: ConfidiaSpacing.topBarHeight,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
+          child: Row(
         children: [
           Expanded(
             child: Row(
@@ -137,6 +136,8 @@ class AppTopBar extends ConsumerWidget {
           if (auth.user != null)
             _ProfileChip(user: auth.user!, imageBase64: avatarBase64, onTap: () => context.go('/profile')),
         ],
+          ),
+        ),
       ),
     );
   }

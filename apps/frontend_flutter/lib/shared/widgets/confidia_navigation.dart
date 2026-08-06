@@ -1,13 +1,11 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
-import '../../core/theme/tokens/tokens.dart';
 import '../../features/onboarding/onboarding_targets.dart';
 import '../navigation/confidia_route_labels.dart';
+import 'confidia_chrome_material.dart';
 import 'confidia_tooltip.dart';
 
 /// Entrée de navigation partagée (sidebar + bottom bar).
@@ -148,42 +146,28 @@ class ConfidiaMobileNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final selected = _selectedIndex();
 
     return Material(
       color: Colors.transparent,
       elevation: 0,
-      child: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: isDark
-                  ? AppColors.darkSurface1.withValues(alpha: 0.22)
-                  : AppColors.lightSurface1.withValues(alpha: 0.18),
-              border: Border(
-                top: AppBorders.standard(isDark, alpha: AppOpacity.borderMedium),
-              ),
-            ),
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
-                child: Row(
-                  children: List.generate(destinations.length, (i) {
-                    final destination = destinations[i];
-                    Widget item = _MobileNavItem(
-                      destination: destination,
-                      isActive: i == selected,
-                    );
-                    if (destination.path == '/settings') {
-                      item = KeyedSubtree(key: OnboardingTargets.settingsNav, child: item);
-                    }
-                    return Expanded(child: item);
-                  }),
-                ),
-              ),
+      child: ConfidiaChromeMaterial(
+        child: SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+            child: Row(
+              children: List.generate(destinations.length, (i) {
+                final destination = destinations[i];
+                Widget item = _MobileNavItem(
+                  destination: destination,
+                  isActive: i == selected,
+                );
+                if (destination.path == '/settings') {
+                  item = KeyedSubtree(key: OnboardingTargets.settingsNav, child: item);
+                }
+                return Expanded(child: item);
+              }),
             ),
           ),
         ),

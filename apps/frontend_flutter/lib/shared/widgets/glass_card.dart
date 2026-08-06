@@ -4,6 +4,7 @@ import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 
+/// Carte de contenu. Quasi sans flou : surface opaque et ombre douce.
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -30,7 +31,7 @@ class GlassCard extends StatelessWidget {
     final resolvedPadding = padding ?? const EdgeInsets.all(ConfidiaSpacing.lg);
     final base = highlighted ? AppColors.surface2(isDark) : AppColors.surface1(isDark);
     final fill = base.withValues(
-      alpha: isDark ? AppOpacity.glassDark : AppOpacity.glassLight,
+      alpha: isDark ? AppOpacity.contentDark : AppOpacity.contentLight,
     );
     final decoration = BoxDecoration(
       color: fill,
@@ -39,42 +40,23 @@ class GlassCard extends StatelessWidget {
       boxShadow: AppShadows.card(isDark: isDark, palette: context.palette),
     );
 
-    final Widget content;
-    if (clipContent) {
-      content = ClipRRect(
-        borderRadius: radius,
-        child: BackdropFilter(
-          filter: AppBlur.glassFilter,
-          child: Container(padding: resolvedPadding, decoration: decoration, child: child),
-        ),
-      );
-    } else {
-      content = Container(
-        decoration: decoration,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Positioned.fill(
-              child: ClipRRect(
-                borderRadius: radius,
-                child: BackdropFilter(
-                  filter: AppBlur.glassFilter,
-                  child: Container(color: decoration.color),
-                ),
-              ),
-            ),
-            Padding(padding: resolvedPadding, child: child),
-          ],
-        ),
-      );
-    }
+    final content = clipContent
+        ? ClipRRect(
+            borderRadius: radius,
+            child: Container(padding: resolvedPadding, decoration: decoration, child: child),
+          )
+        : Container(
+            decoration: decoration,
+            padding: resolvedPadding,
+            child: child,
+          );
 
     if (onTap != null) {
       return Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(borderRadius),
+          borderRadius: radius,
           child: content,
         ),
       );

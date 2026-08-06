@@ -169,7 +169,7 @@ class _Sidebar extends StatelessWidget {
       width: width,
       decoration: BoxDecoration(
         color: AppColors.surface1(isDark).withValues(
-          alpha: isDark ? AppOpacity.chromeDark : AppOpacity.chromeLight,
+          alpha: isDark ? AppOpacity.contentDark : AppOpacity.contentLight,
         ),
         border: Border(right: AppBorders.subtle(isDark)),
         boxShadow: [

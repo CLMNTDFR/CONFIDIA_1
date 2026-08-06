@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
@@ -210,7 +208,7 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
             children: [
               ClipRect(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
+                  filter: AppBlur.veilFilter,
                   child: ColoredBox(
                     color: AppColors.surface0(isDark).withValues(
                       alpha: isDark ? AppOpacity.veilDark : AppOpacity.veilLight,

@@ -139,6 +139,36 @@ abstract final class ConfidiaTheme {
           height: 1.35,
         ),
       ),
+      popupMenuTheme: PopupMenuThemeData(
+        color: surface1.withValues(alpha: isDark ? 0.96 : 0.98),
+        elevation: AppElevation.flat,
+        shadowColor: Colors.black.withValues(
+          alpha: isDark ? AppOpacity.chromeShadowDark : AppOpacity.chromeShadowLight,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.mdAll,
+          side: hairline,
+        ),
+      ),
+      dropdownMenuTheme: DropdownMenuThemeData(
+        menuStyle: MenuStyle(
+          backgroundColor: WidgetStatePropertyAll(
+            surface1.withValues(alpha: isDark ? 0.96 : 0.98),
+          ),
+          elevation: const WidgetStatePropertyAll(AppElevation.flat),
+          shadowColor: WidgetStatePropertyAll(
+            Colors.black.withValues(
+              alpha: isDark ? AppOpacity.chromeShadowDark : AppOpacity.chromeShadowLight,
+            ),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(
+              borderRadius: AppRadius.mdAll,
+              side: hairline,
+            ),
+          ),
+        ),
+      ),
       segmentedButtonTheme: SegmentedButtonThemeData(
         style: ButtonStyle(
           shape: WidgetStatePropertyAll(

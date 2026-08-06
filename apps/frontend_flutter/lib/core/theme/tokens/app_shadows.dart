@@ -4,8 +4,20 @@ import '../palette.dart';
 import 'app_colors.dart';
 import 'app_opacity.dart';
 
-/// Ombres sobres. Jamais plus voyantes que le fill de surface.
+/// Ombres sobres. Chrome : très diffuses ; contenu : discrètes.
 abstract final class AppShadows {
+  /// Ombre chrome (nav, sheets, dialogs, menus). Extrêmement diffuse.
+  static List<BoxShadow> chrome({required bool isDark}) => [
+        BoxShadow(
+          color: Colors.black.withValues(
+            alpha: isDark ? AppOpacity.chromeShadowDark : AppOpacity.chromeShadowLight,
+          ),
+          blurRadius: 28,
+          spreadRadius: -4,
+          offset: const Offset(0, 8),
+        ),
+      ];
+
   static List<BoxShadow> soft({required bool isDark, Color? accent}) {
     if (accent != null) {
       return [
@@ -31,7 +43,8 @@ abstract final class AppShadows {
         color: isDark
             ? Colors.black.withValues(alpha: AppOpacity.shadowDark)
             : (palette?.primary ?? AppColors.info).withValues(alpha: AppOpacity.shadowLight),
-        blurRadius: 18,
+        blurRadius: 16,
+        spreadRadius: -2,
         offset: const Offset(0, 6),
       ),
     ];
@@ -39,9 +52,9 @@ abstract final class AppShadows {
 
   static List<BoxShadow> tooltip({required bool isDark}) => [
         BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.22 : 0.06),
-          blurRadius: 10,
-          offset: const Offset(0, 3),
+          color: Colors.black.withValues(alpha: isDark ? 0.16 : 0.05),
+          blurRadius: 12,
+          offset: const Offset(0, 4),
         ),
       ];
 
