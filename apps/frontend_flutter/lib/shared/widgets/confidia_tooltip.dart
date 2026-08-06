@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
+import '../../core/theme/tokens/tokens.dart';
 
-/// Info-bulle sobre, lisible en thème clair et sombre.
+/// Info-bulle sobre, alignée sur le chrome CONFIDIA (clair et sombre).
 class ConfidiaTooltip extends StatelessWidget {
   final String message;
   final Widget child;
@@ -18,23 +18,17 @@ class ConfidiaTooltip extends StatelessWidget {
   static BoxDecoration decoration(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return BoxDecoration(
-      color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
-      borderRadius: BorderRadius.circular(8),
-      border: Border.all(color: ConfidiaColors.border(isDark)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.1),
-          blurRadius: 12,
-          offset: const Offset(0, 4),
-        ),
-      ],
+      color: AppColors.surface1(isDark),
+      borderRadius: AppRadius.mdAll,
+      border: Border.fromBorderSide(AppBorders.standard(isDark)),
+      boxShadow: AppShadows.card(isDark: isDark),
     );
   }
 
   static TextStyle textStyle(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return TextStyle(
-      color: ConfidiaColors.textPrimary(isDark),
+      color: AppColors.textPrimary(isDark),
       fontSize: 12,
       fontWeight: FontWeight.w500,
       height: 1.35,
@@ -49,7 +43,7 @@ class ConfidiaTooltip extends StatelessWidget {
       waitDuration: const Duration(milliseconds: 350),
       decoration: decoration(context),
       textStyle: textStyle(context),
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: child,
     );
   }

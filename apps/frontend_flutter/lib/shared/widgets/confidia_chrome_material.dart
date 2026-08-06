@@ -32,8 +32,10 @@ class ConfidiaChromeMaterial extends StatelessWidget {
         borderRadius: borderRadius,
         boxShadow: AppShadows.chrome(isDark: isDark),
       ),
-      child: ClipRRect(
+      child: Material(
+        color: Colors.transparent,
         borderRadius: borderRadius,
+        clipBehavior: Clip.antiAlias,
         child: BackdropFilter(
           filter: AppBlur.chromeFilter,
           child: DecoratedBox(

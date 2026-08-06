@@ -50,6 +50,8 @@ flutter:
     - assets/logo/confidia-launcher-icon.png
     - assets/logo/confidia-logo-pink-128.png
     - assets/logo/confidia-logo-pink-256.png
+    - assets/logo/confidia-wordmark-blue.png
+    - assets/logo/confidia-wordmark-pink.png
     - brands/gmail.png
     - brands/googlecalendar.png
     - brands/googledocs.png

@@ -142,7 +142,7 @@ class _AiAnalysisSectionState extends State<_AiAnalysisSection> {
 
     return GlassCard(
       highlighted: true,
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -156,7 +156,7 @@ class _AiAnalysisSectionState extends State<_AiAnalysisSection> {
                   : const SizedBox.shrink(),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           AiStreamingText(
             text: widget.analysisText,
             showThinkingRobot: false,
@@ -176,18 +176,20 @@ class _AiAnalysisSectionState extends State<_AiAnalysisSection> {
             child: widget.analysisComplete && widget.insight.tags.isNotEmpty
                 ? Padding(
                     key: const ValueKey('tags'),
-                    padding: const EdgeInsets.only(top: 14),
+                    padding: const EdgeInsets.only(top: 16),
                     child: Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
+                      spacing: 8,
+                      runSpacing: 8,
                       children: widget.insight.tags
                           .map(
                             (tag) => Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
-                                color: context.palette.secondary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(6),
-                                border: Border.all(color: context.palette.secondary.withValues(alpha: 0.2)),
+                                color: ConfidiaColors.textSecondary(
+                                  Theme.of(context).brightness == Brightness.dark,
+                                ).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
                               ),
                               child: Text('#$tag', style: Theme.of(context).textTheme.labelSmall),
                             ),
@@ -212,7 +214,7 @@ class _DocumentPreview extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Aperçu', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         Container(
           height: 340,
           width: double.infinity,
@@ -224,7 +226,11 @@ class _DocumentPreview extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.picture_as_pdf_rounded, size: 52, color: context.palette.primary.withValues(alpha: 0.45)),
+              Icon(
+                Icons.picture_as_pdf_rounded,
+                size: 52,
+                color: ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.55),
+              ),
               const SizedBox(height: 12),
               Text('Aperçu du document', style: Theme.of(context).textTheme.bodyMedium),
               const SizedBox(height: 4),
@@ -258,7 +264,7 @@ class _DocumentMetadata extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Informations', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         GlassCard(
           padding: const EdgeInsets.all(12),
           child: LayoutBuilder(
@@ -284,12 +290,12 @@ class _DocumentMetadata extends StatelessWidget {
         if (doc.tags.isNotEmpty) ...[
           const SizedBox(height: 12),
           Wrap(
-            spacing: 6,
-            runSpacing: 6,
+            spacing: 8,
+            runSpacing: 8,
             children: doc.tags
                 .map(
                   (tag) => Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(8),
@@ -323,16 +329,16 @@ class _MetaTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Row(
         children: [
           Icon(item.icon, size: 15, color: ConfidiaColors.textSecondary(isDark)),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -346,7 +352,7 @@ class _MetaTile extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                       ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(
                   item.value,
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),

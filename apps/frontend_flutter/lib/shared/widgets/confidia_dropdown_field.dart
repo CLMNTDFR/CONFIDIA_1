@@ -51,18 +51,18 @@ class ConfidiaDropdownField<T> extends StatelessWidget {
       floatingLabelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
             fontSize: 11,
             fontWeight: FontWeight.w600,
-            color: context.palette.primary,
+            color: ConfidiaColors.textSecondary(isDark),
             letterSpacing: 0.2,
           ),
       hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
             fontSize: 13,
             color: ConfidiaColors.textSecondary(isDark),
           ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       prefixIcon: prefixIcon != null
           ? Icon(prefixIcon, size: 18, color: ConfidiaColors.textSecondary(isDark))
           : null,
-      prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
+      prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
       border: AppBorders.input(isDark: isDark),
       enabledBorder: AppBorders.input(isDark: isDark),
       focusedBorder: AppBorders.input(
@@ -87,7 +87,11 @@ class ConfidiaDropdownField<T> extends StatelessWidget {
       value: value,
       isExpanded: true,
       borderRadius: BorderRadius.circular(12),
-      icon: Icon(Icons.keyboard_arrow_down_rounded, color: context.palette.primary, size: 22),
+      icon: Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+        size: 22,
+      ),
       dropdownColor: Theme.of(context).brightness == Brightness.dark
           ? ConfidiaColors.darkSurfaceElevated
           : Colors.white,

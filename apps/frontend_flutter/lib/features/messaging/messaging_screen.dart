@@ -71,7 +71,7 @@ class MessagingScreen extends ConsumerWidget {
                     : ListView.separated(
                         padding: ConfidiaInsets.page(context),
                         itemCount: filtered.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 6),
+                        separatorBuilder: (_, __) => const SizedBox(height: 8),
                         itemBuilder: (context, i) {
                           final stagger = ConfidiaPageRevealTiming.staggerCount(
                             context,
@@ -141,10 +141,11 @@ class _AccountTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: selected ? context.palette.primary.withValues(alpha: 0.1) : Colors.transparent,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(8),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
@@ -178,18 +179,22 @@ class _EmailTile extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Material(
-      color: email.isRead ? Colors.transparent : context.palette.primary.withValues(alpha: 0.04),
-      borderRadius: BorderRadius.circular(14),
+      color: email.isRead
+          ? Colors.transparent
+          : ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark)
+              .withValues(alpha: 0.06),
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
           ref.read(messagingProvider.notifier).markRead(email.id);
           context.go('/messaging/${email.id}');
         },
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             border: Border.all(color: ConfidiaColors.border(isDark)),
           ),
           child: Row(
@@ -203,7 +208,7 @@ class _EmailTile extends ConsumerWidget {
                   fallbackIcon: email.provider.icon,
                   fallbackColor: email.provider.brandColor,
                   size: 22,
-                  borderRadius: 10,
+                  borderRadius: 12,
                 ),
               ),
               const SizedBox(width: 12),
@@ -222,7 +227,7 @@ class _EmailTile extends ConsumerWidget {
                           ),
                         ),
                         MailProviderChip(provider: email.provider, compact: true),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(DateFormat('d MMM', 'fr_FR').format(email.receivedAt), style: Theme.of(context).textTheme.labelSmall),
                       ],
                     ),

@@ -1,7 +1,7 @@
 /// Route parente pour les écrans secondaires (bouton retour).
 String? confidiaParentRoute(String path) {
   if (path == '/access-control' || path == '/admin') return '/settings';
-  if (path == '/scan' || path == '/upload') return '/documents';
+  // Couvre /documents/add et /documents/:id
   if (path.startsWith('/documents/') && path != '/documents') return '/documents';
   if (path.startsWith('/payments/') && path != '/payments') return '/payments';
   if (path.startsWith('/messaging/') && path != '/messaging') return '/messaging';

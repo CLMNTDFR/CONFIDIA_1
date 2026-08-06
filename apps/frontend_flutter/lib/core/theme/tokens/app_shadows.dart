@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../palette.dart';
-import 'app_colors.dart';
 import 'app_opacity.dart';
 
 /// Ombres sobres. Chrome : très diffuses ; contenu : discrètes.
@@ -37,12 +35,10 @@ abstract final class AppShadows {
     ];
   }
 
-  static List<BoxShadow> card({required bool isDark, ConfidiaPalette? palette}) {
+  static List<BoxShadow> card({required bool isDark}) {
     return [
       BoxShadow(
-        color: isDark
-            ? Colors.black.withValues(alpha: AppOpacity.shadowDark)
-            : (palette?.primary ?? AppColors.info).withValues(alpha: AppOpacity.shadowLight),
+        color: Colors.black.withValues(alpha: isDark ? AppOpacity.shadowDark : AppOpacity.shadowLight),
         blurRadius: 16,
         spreadRadius: -2,
         offset: const Offset(0, 6),

@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
-import '../../shared/data/mock_data.dart';
+import '../../core/theme/theme_context.dart';
+import '../../shared/models/user_model.dart';
+import '../../shared/widgets/confidia_glow_button.dart';
+import '../../shared/widgets/confidia_tappable.dart';
 import '../../shared/widgets/glass_card.dart';
-import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/logout_button.dart';
+import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/user_avatar.dart';
 import 'profile_avatar_provider.dart';
+import 'profile_edit_sheet.dart';
+import 'profile_password_sheet.dart';
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -22,186 +26,254 @@ class ProfileScreen extends ConsumerWidget {
     final avatarBase64 = ref.watch(profileAvatarProvider);
     if (user == null) return const Center(child: CircularProgressIndicator());
 
-    final docCount = MockData.documents.length;
-    final eventCount = MockData.calendarEvents.length;
-    final unread = MockData.notifications.where((n) => !n.read).length;
-    final isWide = MediaQuery.of(context).size.width >= 720;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return SingleChildScrollView(
+    return ListView(
       padding: ConfidiaInsets.page(context),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 720),
+      children: [
+        _ProfileHero(
+          user: user,
+          avatarBase64: avatarBase64,
+          onAvatarTap: () => showProfileAvatarSheet(context),
+          onEdit: () => showProfileEditSheet(context, user),
+        ),
+        const SizedBox(height: ConfidiaSpacing.md),
+        const _SectionTitle(label: 'Coordonnées'),
+        const SizedBox(height: 8),
+        GlassCard(
+          padding: EdgeInsets.zero,
           child: Column(
             children: [
-              GlassCard(
-                  highlighted: true,
-                  child: Column(
-                    children: [
-                      Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          UserAvatarLarge(
-                            user: user,
-                            imageBase64: avatarBase64,
-                            onTap: () => _showAvatarOptions(context, ref),
-                          ),
-                          Positioned(
-                            right: -2,
-                            bottom: -2,
-                            child: Material(
-                              color: context.palette.primary,
-                              shape: const CircleBorder(),
-                              child: InkWell(
-                                onTap: () => _showAvatarOptions(context, ref),
-                                customBorder: const CircleBorder(),
-                                child: const Padding(
-                                  padding: EdgeInsets.all(6),
-                                  child: Icon(Icons.camera_alt_rounded, color: Colors.white, size: 14),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Text(user.fullName, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 2),
-                      Text(user.email, style: Theme.of(context).textTheme.bodySmall),
-                      const SizedBox(height: 10),
-                      Wrap(
-                        spacing: 6,
-                        children: user.roles
-                            .map((r) => Chip(
-                                  label: Text(r, style: const TextStyle(fontSize: 11)),
-                                  visualDensity: VisualDensity.compact,
-                                  padding: EdgeInsets.zero,
-                                ))
-                            .toList(),
-                      ),
-                    ],
-                  ),
+              _InfoTile(
+                icon: Icons.phone_rounded,
+                title: 'Téléphone',
+                subtitle: user.phone?.isNotEmpty == true ? user.phone! : 'Non renseigné',
+                onTap: () => showProfileEditSheet(
+                  context,
+                  user,
+                  focusField: ProfileEditField.phone,
                 ),
-              const SizedBox(height: ConfidiaSpacing.md),
-              Row(
-                  children: [
-                    Expanded(child: _MetricTile(label: 'Documents', value: '$docCount', icon: Icons.folder_copy_rounded, color: context.palette.primary)),
-                    const SizedBox(width: ConfidiaSpacing.sm),
-                    Expanded(child: _MetricTile(label: 'Échéances', value: '$eventCount', icon: Icons.event_rounded, color: context.palette.accent)),
-                    const SizedBox(width: ConfidiaSpacing.sm),
-                    Expanded(child: _MetricTile(label: 'Alertes', value: '$unread', icon: Icons.notifications_rounded, color: context.palette.secondary)),
-                  ],
+              ),
+              Divider(height: 1, color: ConfidiaColors.border(isDark)),
+              _InfoTile(
+                icon: Icons.business_rounded,
+                title: 'Organisation',
+                subtitle: user.organization?.isNotEmpty == true ? user.organization! : 'Non renseigné',
+                onTap: () => showProfileEditSheet(
+                  context,
+                  user,
+                  focusField: ProfileEditField.organization,
                 ),
-              const SizedBox(height: ConfidiaSpacing.md),
-              GlassCard(
-                  padding: EdgeInsets.zero,
-                  child: Column(
-                    children: [
-                      _ProfileTile(icon: Icons.person_rounded, title: 'Informations', subtitle: '${user.firstName} ${user.lastName}'),
-                      const Divider(height: 1),
-                      _ProfileTile(icon: Icons.email_rounded, title: 'Email', subtitle: user.email),
-                      const Divider(height: 1),
-                      _ProfileTile(icon: Icons.phone_rounded, title: 'Téléphone', subtitle: user.phone ?? 'Non renseigné'),
-                      const Divider(height: 1),
-                      _ProfileTile(icon: Icons.business_rounded, title: 'Organisation', subtitle: user.organization ?? 'Non renseigné'),
-                    ],
-                  ),
+              ),
+              Divider(height: 1, color: ConfidiaColors.border(isDark)),
+              _InfoTile(
+                icon: Icons.language_rounded,
+                title: 'Langue',
+                subtitle: user.localeLabel,
+                onTap: () => showProfileEditSheet(
+                  context,
+                  user,
+                  focusField: ProfileEditField.locale,
                 ),
-              const SizedBox(height: ConfidiaSpacing.lg),
-              const LogoutButton(),
-              if (isWide) const SizedBox(height: ConfidiaSpacing.md),
+              ),
+              Divider(height: 1, color: ConfidiaColors.border(isDark)),
+              _InfoTile(
+                icon: Icons.schedule_rounded,
+                title: 'Fuseau horaire',
+                subtitle: user.timezoneLabel,
+                onTap: () => showProfileEditSheet(
+                  context,
+                  user,
+                  focusField: ProfileEditField.timezone,
+                ),
+              ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Future<void> _showAvatarOptions(BuildContext context, WidgetRef ref) async {
-    final hasPhoto = ref.read(profileAvatarProvider) != null;
-
-    await showModalBottomSheet<void>(
-      context: context,
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_rounded),
-              title: const Text('Choisir depuis la galerie'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                await ref.read(profileAvatarProvider.notifier).pickAndSave(ImageSource.gallery);
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_camera_rounded),
-              title: const Text('Prendre une photo'),
-              onTap: () async {
-                Navigator.pop(ctx);
-                await ref.read(profileAvatarProvider.notifier).pickAndSave(ImageSource.camera);
-              },
-            ),
-            if (hasPhoto)
-              ListTile(
-                leading: const Icon(Icons.delete_outline_rounded, color: ConfidiaColors.error),
-                title: const Text('Supprimer la photo', style: TextStyle(color: ConfidiaColors.error)),
-                onTap: () async {
-                  Navigator.pop(ctx);
-                  await ref.read(profileAvatarProvider.notifier).remove();
-                },
+        const SizedBox(height: ConfidiaSpacing.md),
+        const _SectionTitle(label: 'Accès & services'),
+        const SizedBox(height: 8),
+        GlassCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              _InfoTile(
+                icon: Icons.account_tree_rounded,
+                title: 'Gouvernance & accès',
+                subtitle: 'Structures, rôles et droits',
+                onTap: () => context.go('/access-control'),
               ),
-          ],
+              Divider(height: 1, color: ConfidiaColors.border(isDark)),
+              _InfoTile(
+                icon: Icons.link_rounded,
+                title: 'Comptes & intégrations',
+                subtitle: 'Comptes connectés et stockage',
+                onTap: () => context.go('/settings'),
+              ),
+            ],
+          ),
         ),
-      ),
+        const SizedBox(height: ConfidiaSpacing.md),
+        const _SectionTitle(label: 'Sécurité'),
+        const SizedBox(height: 8),
+        GlassCard(
+          padding: EdgeInsets.zero,
+          child: Column(
+            children: [
+              _InfoTile(
+                icon: Icons.lock_outline_rounded,
+                title: 'Changer le mot de passe',
+                onTap: () => showProfilePasswordSheet(context),
+              ),
+              Divider(height: 1, color: ConfidiaColors.border(isDark)),
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: LogoutButton(),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: ConfidiaSpacing.xl),
+      ],
     );
   }
 }
 
-class _MetricTile extends StatelessWidget {
-  final String label;
-  final String value;
-  final IconData icon;
-  final Color color;
+class _ProfileHero extends StatelessWidget {
+  final UserModel user;
+  final String? avatarBase64;
+  final VoidCallback onAvatarTap;
+  final VoidCallback onEdit;
 
-  const _MetricTile({required this.label, required this.value, required this.icon, required this.color});
+  const _ProfileHero({
+    required this.user,
+    required this.avatarBase64,
+    required this.onAvatarTap,
+    required this.onEdit,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: ConfidiaColors.border(isDark)),
-      ),
-      child: Column(
+    return GlassCard(
+      highlighted: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 6),
-          Text(value, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
-          Text(label, style: Theme.of(context).textTheme.labelSmall),
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              UserAvatarLarge(
+                user: user,
+                radius: 36,
+                imageBase64: avatarBase64,
+                onTap: onAvatarTap,
+              ),
+              Positioned(
+                right: -2,
+                bottom: -2,
+                child: ConfidiaTappable(
+                  onTap: onAvatarTap,
+                  pressScale: 0.92,
+                  borderRadius: BorderRadius.circular(999),
+                  child: Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: context.palette.primary,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.camera_alt_rounded, color: Colors.white, size: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(width: ConfidiaSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  user.fullName,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  user.email,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  user.roleLabel,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: context.palette.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: ConfidiaSpacing.sm),
+          ConfidiaGlowButton(
+            label: 'Modifier',
+            icon: Icons.edit_outlined,
+            primary: false,
+            onPressed: onEdit,
+          ),
         ],
       ),
     );
   }
 }
 
-class _ProfileTile extends StatelessWidget {
+class _SectionTitle extends StatelessWidget {
+  final String label;
+
+  const _SectionTitle({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+            letterSpacing: 0.4,
+          ),
+    );
+  }
+}
+
+class _InfoTile extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String subtitle;
+  final String? subtitle;
+  final VoidCallback? onTap;
 
-  const _ProfileTile({required this.icon, required this.title, required this.subtitle});
+  const _InfoTile({
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
       dense: true,
-      leading: Icon(icon, color: context.palette.primary, size: 18),
-      title: Text(title, style: Theme.of(context).textTheme.labelMedium),
-      subtitle: Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+      visualDensity: VisualDensity.compact,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+      leading: Icon(icon, size: 18, color: context.palette.primary),
+      title: Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
+      subtitle: subtitle != null ? Text(subtitle!, style: Theme.of(context).textTheme.labelSmall) : null,
+      trailing: onTap != null ? const Icon(Icons.chevron_right_rounded, size: 18) : null,
+      mouseCursor: onTap != null ? SystemMouseCursors.click : null,
+      onTap: onTap,
     );
   }
 }

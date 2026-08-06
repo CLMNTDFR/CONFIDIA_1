@@ -82,6 +82,8 @@ class _MemberPermissionsPickerState extends State<MemberPermissionsPicker> {
               children: [
                 Material(
                   color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
+                  clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     borderRadius: BorderRadius.circular(10),
                     onTap: () => setState(() => _expanded[category] = !expanded),

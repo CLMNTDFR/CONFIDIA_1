@@ -19,10 +19,39 @@ enum DashboardWidgetType {
   aiAnalyzed,
 }
 
+/// Widgets masqués par défaut (redondants avec la nav, le bandeau ou d'autres pages).
+const Set<DashboardWidgetType> kDefaultHiddenDashboardWidgets = {
+  DashboardWidgetType.stats,
+  DashboardWidgetType.quickActions,
+  DashboardWidgetType.importantDocs,
+  DashboardWidgetType.aiAnalyzed,
+  DashboardWidgetType.activity,
+};
+
+/// Ordre par défaut : visibles d'abord, puis les masqués (restaurables en mode perso).
+const List<DashboardWidgetType> kDefaultDashboardOrder = [
+  DashboardWidgetType.serenityBriefing,
+  DashboardWidgetType.weekOverview,
+  DashboardWidgetType.expensesTrend,
+  DashboardWidgetType.paymentsOverview,
+  DashboardWidgetType.documentsBreakdown,
+  DashboardWidgetType.hubActivity,
+  DashboardWidgetType.pendingPayments,
+  DashboardWidgetType.recentDocs,
+  DashboardWidgetType.deadlines,
+  DashboardWidgetType.connectedAccounts,
+  // Masqués par défaut (fin de liste pour le mode personnalisation).
+  DashboardWidgetType.stats,
+  DashboardWidgetType.quickActions,
+  DashboardWidgetType.importantDocs,
+  DashboardWidgetType.aiAnalyzed,
+  DashboardWidgetType.activity,
+];
+
 extension DashboardWidgetTypeX on DashboardWidgetType {
   String get label => switch (this) {
         DashboardWidgetType.greeting => 'Bienvenue',
-        DashboardWidgetType.serenityBriefing => 'Briefing sérénité',
+        DashboardWidgetType.serenityBriefing => 'Indice de sérénité',
         DashboardWidgetType.weekOverview => 'Ma semaine en un coup d\'œil',
         DashboardWidgetType.stats => 'Statistiques',
         DashboardWidgetType.expensesTrend => 'Évolution des dépenses',
@@ -107,23 +136,8 @@ class DashboardLayout {
 class DashboardLayoutNotifier extends StateNotifier<DashboardLayout> {
   DashboardLayoutNotifier()
       : super(const DashboardLayout(
-          order: [
-            DashboardWidgetType.serenityBriefing,
-            DashboardWidgetType.weekOverview,
-            DashboardWidgetType.stats,
-            DashboardWidgetType.expensesTrend,
-            DashboardWidgetType.paymentsOverview,
-            DashboardWidgetType.documentsBreakdown,
-            DashboardWidgetType.hubActivity,
-            DashboardWidgetType.pendingPayments,
-            DashboardWidgetType.quickActions,
-            DashboardWidgetType.recentDocs,
-            DashboardWidgetType.importantDocs,
-            DashboardWidgetType.deadlines,
-            DashboardWidgetType.connectedAccounts,
-            DashboardWidgetType.aiAnalyzed,
-            DashboardWidgetType.activity,
-          ],
+          order: kDefaultDashboardOrder,
+          hidden: kDefaultHiddenDashboardWidgets,
         ));
 
   void toggleEditMode() => state = state.copyWith(editMode: !state.editMode);
@@ -168,23 +182,8 @@ class DashboardLayoutNotifier extends StateNotifier<DashboardLayout> {
 
   void reset() {
     state = const DashboardLayout(
-      order: [
-        DashboardWidgetType.serenityBriefing,
-        DashboardWidgetType.weekOverview,
-        DashboardWidgetType.stats,
-        DashboardWidgetType.expensesTrend,
-        DashboardWidgetType.paymentsOverview,
-        DashboardWidgetType.documentsBreakdown,
-        DashboardWidgetType.hubActivity,
-        DashboardWidgetType.pendingPayments,
-        DashboardWidgetType.quickActions,
-        DashboardWidgetType.recentDocs,
-        DashboardWidgetType.importantDocs,
-        DashboardWidgetType.deadlines,
-        DashboardWidgetType.connectedAccounts,
-        DashboardWidgetType.aiAnalyzed,
-        DashboardWidgetType.activity,
-      ],
+      order: kDefaultDashboardOrder,
+      hidden: kDefaultHiddenDashboardWidgets,
     );
   }
 }

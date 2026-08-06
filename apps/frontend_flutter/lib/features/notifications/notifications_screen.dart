@@ -3,7 +3,6 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
-import '../../core/theme/palette.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_data.dart';
@@ -138,11 +137,12 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final palette = context.palette;
-    final accent = _colorForType(notification.type, palette);
+    final accent = _colorForType(notification.type, isDark);
 
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusLg),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusLg),
@@ -167,7 +167,7 @@ class _NotificationCard extends StatelessWidget {
             GlassCard(
               highlighted: !notification.read,
               clipContent: false,
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -179,7 +179,7 @@ class _NotificationCard extends StatelessWidget {
                         height: 44,
                         decoration: BoxDecoration(
                           color: accent.withValues(alpha: isDark ? 0.18 : 0.12),
-                          borderRadius: BorderRadius.circular(13),
+                          borderRadius: BorderRadius.circular(12),
                           border: Border.all(color: accent.withValues(alpha: 0.2)),
                         ),
                         child: Icon(_iconForType(notification.type), color: accent, size: 20),
@@ -189,8 +189,8 @@ class _NotificationCard extends StatelessWidget {
                           right: -2,
                           top: -2,
                           child: Container(
-                            width: 10,
-                            height: 10,
+                            width: 8,
+                            height: 8,
                             decoration: BoxDecoration(
                               color: context.palette.primary,
                               shape: BoxShape.circle,
@@ -221,7 +221,7 @@ class _NotificationCard extends StatelessWidget {
                             _TypePill(type: notification.type, color: accent),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Text(
                           notification.message,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -243,7 +243,7 @@ class _NotificationCard extends StatelessWidget {
                   ),
                   if (notification.actionUrl != null)
                     Padding(
-                      padding: const EdgeInsets.only(left: 4, top: 10),
+                      padding: const EdgeInsets.only(left: 4, top: 8),
                       child: Icon(
                         Icons.arrow_forward_ios_rounded,
                         size: 12,
@@ -259,13 +259,13 @@ class _NotificationCard extends StatelessWidget {
     );
   }
 
-  Color _colorForType(NotificationType type, ConfidiaPalette palette) {
+  Color _colorForType(NotificationType type, bool isDark) {
     return switch (type) {
       NotificationType.warning => ConfidiaColors.warning,
       NotificationType.success => ConfidiaColors.success,
       NotificationType.error => ConfidiaColors.error,
-      NotificationType.document => palette.primary,
-      NotificationType.calendar => palette.accent,
+      NotificationType.document => ConfidiaColors.textSecondary(isDark),
+      NotificationType.calendar => ConfidiaColors.textSecondary(isDark),
       _ => ConfidiaColors.info,
     };
   }
@@ -310,7 +310,7 @@ class _TypePill extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),

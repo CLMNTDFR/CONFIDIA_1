@@ -50,9 +50,9 @@ class SkeletonCard extends StatelessWidget {
           children: [
             SkeletonBox(width: 120, height: 12),
             SizedBox(height: 12),
-            SkeletonBox(height: 18),
+            SkeletonBox(height: 16),
             SizedBox(height: 8),
-            SkeletonBox(width: 200, height: 14),
+            SkeletonBox(width: 200, height: 16),
           ],
         ),
       ),

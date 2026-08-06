@@ -53,11 +53,11 @@ void showConfidiaSnackBar(
       backgroundColor: surface,
       elevation: isDark ? 10 : 6,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(color: accent.withValues(alpha: isDark ? 0.45 : 0.35)),
       ),
       width: isMobileShell ? null : 380,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       margin: isMobileShell
           ? EdgeInsets.only(
               left: ConfidiaSpacing.md,
@@ -68,7 +68,7 @@ void showConfidiaSnackBar(
       content: Row(
         children: [
           Icon(icon, color: accent, size: 18),
-          const SizedBox(width: 10),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               message,

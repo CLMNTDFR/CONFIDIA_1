@@ -13,6 +13,35 @@ abstract final class ConfidiaTheme {
   static ThemeData light(ConfidiaPalette palette) =>
       _cache.putIfAbsent('l-${palette.id.name}', () => _buildTheme(isDark: false, palette: palette));
 
+  static final _clickCursor = WidgetStateProperty.resolveWith<MouseCursor>((states) {
+    if (states.contains(WidgetState.disabled)) return SystemMouseCursors.basic;
+    return SystemMouseCursors.click;
+  });
+
+  static WidgetStateProperty<Color?> _inkOverlay({required bool isDark, bool onBrand = false}) {
+    return WidgetStateProperty.resolveWith((states) {
+      if (onBrand) {
+        if (states.contains(WidgetState.pressed)) {
+          return Colors.white.withValues(alpha: AppOpacity.soft);
+        }
+        if (states.contains(WidgetState.hovered)) {
+          return Colors.white.withValues(alpha: AppOpacity.hoverInkDark);
+        }
+        return null;
+      }
+      final ink = isDark ? Colors.white : Colors.black;
+      if (states.contains(WidgetState.pressed)) {
+        return ink.withValues(alpha: AppOpacity.quiet);
+      }
+      if (states.contains(WidgetState.hovered)) {
+        return ink.withValues(
+          alpha: isDark ? AppOpacity.hoverInkDark : AppOpacity.hoverInkLight,
+        );
+      }
+      return null;
+    });
+  }
+
   static ThemeData _buildTheme({required bool isDark, required ConfidiaPalette palette}) {
     final surface1 = AppColors.surface1(isDark);
     final surface2 = AppColors.surface2(isDark);
@@ -71,9 +100,9 @@ abstract final class ConfidiaTheme {
           fontSize: 13,
           color: AppColors.textSecondary(isDark),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
-        suffixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+        suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         border: AppBorders.input(isDark: isDark, alpha: AppOpacity.borderMedium),
         enabledBorder: AppBorders.input(isDark: isDark, alpha: AppOpacity.borderHairline),
         focusedBorder: AppBorders.input(
@@ -92,20 +121,50 @@ abstract final class ConfidiaTheme {
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: palette.primary,
-          foregroundColor: Colors.white,
-          elevation: AppElevation.flat,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonAll),
+        style: ButtonStyle(
+          backgroundColor: WidgetStatePropertyAll(palette.primary),
+          foregroundColor: const WidgetStatePropertyAll(Colors.white),
+          elevation: const WidgetStatePropertyAll(AppElevation.flat),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 16),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: AppRadius.buttonAll),
+          ),
+          mouseCursor: _clickCursor,
+          overlayColor: _inkOverlay(isDark: isDark, onBrand: true),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.textPrimary(isDark),
-          side: hairline,
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 14),
-          shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonAll),
+        style: ButtonStyle(
+          foregroundColor: WidgetStatePropertyAll(AppColors.textPrimary(isDark)),
+          side: WidgetStatePropertyAll(hairline),
+          padding: const WidgetStatePropertyAll(
+            EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 16),
+          ),
+          shape: WidgetStatePropertyAll(
+            RoundedRectangleBorder(borderRadius: AppRadius.buttonAll),
+          ),
+          mouseCursor: _clickCursor,
+          overlayColor: _inkOverlay(isDark: isDark),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: ButtonStyle(
+          mouseCursor: _clickCursor,
+          overlayColor: _inkOverlay(isDark: isDark),
+        ),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: ButtonStyle(
+          mouseCursor: _clickCursor,
+          overlayColor: _inkOverlay(isDark: isDark),
+        ),
+      ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: ButtonStyle(
+          mouseCursor: _clickCursor,
+          overlayColor: _inkOverlay(isDark: isDark, onBrand: true),
         ),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(

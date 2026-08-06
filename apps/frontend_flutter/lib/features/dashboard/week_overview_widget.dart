@@ -77,7 +77,7 @@ class _WeekOverviewWidgetState extends ConsumerState<WeekOverviewWidget> {
               );
             }).toList(),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           _WeekDaysRow(
             days: overview.days,
             selectedIndex: _selectedIndex,
@@ -131,12 +131,12 @@ class _Header extends StatelessWidget {
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: context.palette.primary.withValues(alpha: isDark ? 0.18 : 0.1),
-            borderRadius: BorderRadius.circular(10),
+            color: ConfidiaColors.textSecondary(isDark).withValues(alpha: isDark ? 0.12 : 0.08),
+            borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(Icons.calendar_view_week_rounded, size: 20, color: context.palette.primary),
+          child: Icon(Icons.calendar_view_week_rounded, size: 20, color: ConfidiaColors.textSecondary(isDark)),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,7 +145,7 @@ class _Header extends StatelessWidget {
                 'Ma semaine en un coup d\'œil',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 4),
               Text.rich(
                 TextSpan(
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -248,6 +248,8 @@ class _DayCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -282,7 +284,7 @@ class _DayCard extends StatelessWidget {
                       color: ConfidiaColors.textSecondary(isDark),
                     ),
               ),
-              const SizedBox(height: 2),
+              const SizedBox(height: 4),
               Text(
                 day.dateLabel,
                 maxLines: 1,
@@ -293,7 +295,7 @@ class _DayCard extends StatelessWidget {
                       height: 1.1,
                     ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 8),
               WeekWorkloadGauge(loadScore: day.loadScore, level: day.workloadLevel),
               const SizedBox(height: 4),
               Text(
@@ -356,15 +358,15 @@ class _DayDetailsStrip extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
         color: color.withValues(alpha: isDark ? 0.1 : 0.06),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Wrap(
         spacing: 12,
-        runSpacing: 6,
+        runSpacing: 8,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
           Text(
@@ -425,8 +427,8 @@ class WeekWorkloadGauge extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return SizedBox(
-      width: 58,
-      height: 30,
+      width: 56,
+      height: 32,
       child: CustomPaint(
         painter: _WeekWorkloadGaugePainter(
           loadScore: loadScore,

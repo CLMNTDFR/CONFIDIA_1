@@ -16,7 +16,7 @@ class BrandIcon extends StatelessWidget {
     required this.fallbackIcon,
     required this.fallbackColor,
     this.size = 18,
-    this.borderRadius = 4,
+    this.borderRadius = 8,
     this.adaptForTheme = true,
   });
 
@@ -48,10 +48,10 @@ class BrandIcon extends StatelessWidget {
     return Container(
       width: size + 4,
       height: size + 4,
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(borderRadius + 1),
+        borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.12),
@@ -103,7 +103,7 @@ class BrandLabel extends StatelessWidget {
           size: iconSize,
         ),
         if (showLabel) ...[
-          const SizedBox(width: 5),
+          const SizedBox(width: 4),
           Flexible(
             child: Text(
               label,

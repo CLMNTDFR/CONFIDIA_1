@@ -14,7 +14,7 @@ abstract final class ConfidiaSpacing {
   static const double radiusSm = AppRadius.sm;
   static const double radiusMd = AppRadius.md;
   static const double radiusLg = AppRadius.lg;
-  static const double radiusXl = AppRadius.xl;
+  static const double radiusXl = AppRadius.xxl;
 
   static const double sidebarWidth = AppSpacing.sidebarWidth;
   static const double sidebarCollapsedWidth = AppSpacing.sidebarCollapsedWidth;

@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/tokens/tokens.dart';
 import '../../features/day_start/day_start_overlay.dart';
@@ -21,6 +20,7 @@ import '../../shared/models/serenity_briefing_model.dart';
 import 'app_top_bar.dart';
 import 'confidia_logo.dart';
 import 'confidia_navigation.dart';
+import 'confidia_tappable.dart';
 import 'mesh_background.dart';
 import 'mobile_shell_insets.dart';
 
@@ -77,6 +77,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         body: MediaQuery(
           data: MediaQuery.of(context).copyWith(
             padding: MediaQuery.paddingOf(context).copyWith(
+              // Réserve l'emprise barre + air : les pages qui s'appuient sur
+              // MediaQuery.padding (SafeArea, etc.) restent au-dessus de la nav.
               bottom: ConfidiaMobileShell.bottomScrollInset(context),
             ),
           ),
@@ -167,6 +169,7 @@ class _Sidebar extends StatelessWidget {
       duration: const Duration(milliseconds: 250),
       curve: Curves.easeOutCubic,
       width: width,
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
         color: AppColors.surface1(isDark).withValues(
           alpha: isDark ? AppOpacity.contentDark : AppOpacity.contentLight,
@@ -174,78 +177,95 @@ class _Sidebar extends StatelessWidget {
         border: Border(right: AppBorders.subtle(isDark)),
         boxShadow: [
           BoxShadow(
-            color: context.palette.secondary.withValues(alpha: isDark ? 0.06 : 0.04),
+            color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.06),
             blurRadius: 24,
             offset: const Offset(4, 0),
           ),
         ],
       ),
-      child: Column(
-        children: [
-          Padding(
-            padding: EdgeInsets.fromLTRB(collapsed ? 8 : 12, 16, collapsed ? 8 : 8, 12),
-            child: collapsed
-                ? Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        height: 34,
-                        child: Center(
-                          child: const ConfidiaLogo(size: 22, showText: false),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Largeur animée vs booléen : afficher le chrome étendu seulement quand il y a la place.
+          final showExpandedChrome = constraints.maxWidth >= 160;
+
+          return Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(showExpandedChrome ? 12 : 8, 16, showExpandedChrome ? 8 : 8, 12),
+                child: showExpandedChrome
+                    ? Row(
+                        children: [
+                          const Expanded(
+                            child: Padding(
+                              padding: EdgeInsets.only(left: 4),
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  alignment: Alignment.centerLeft,
+                                  child: ConfidiaLogo(size: 26, showText: true),
+                                ),
+                              ),
+                            ),
+                          ),
+                          _SidebarToggleButton(collapsed: false, onPressed: onToggle, isDark: isDark),
+                        ],
+                      )
+                    : Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const SizedBox(
+                            height: 36,
+                            child: Center(
+                              child: ConfidiaLogo(size: 28, showText: false),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _SidebarToggleButton(collapsed: true, onPressed: onToggle, isDark: isDark),
+                        ],
+                      ),
+              ),
+              const SizedBox(height: ConfidiaSpacing.sm),
+              Expanded(
+                child: ListView(
+                  padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.sm),
+                  children: mainDestinations
+                      .map(
+                        (d) => ConfidiaSidebarNavItem(
+                          destination: d,
+                          isActive: confidiaNavIsActive(d.path, currentPath),
+                          collapsed: !showExpandedChrome,
                         ),
-                      ),
-                      const SizedBox(height: 14),
-                      _SidebarToggleButton(collapsed: true, onPressed: onToggle, isDark: isDark),
-                    ],
-                  )
-                : Row(
-                    children: [
-                      const Expanded(
-                        child: ConfidiaLogo(size: 32, showText: true),
-                      ),
-                      _SidebarToggleButton(collapsed: false, onPressed: onToggle, isDark: isDark),
-                    ],
-                  ),
-          ),
-          const SizedBox(height: ConfidiaSpacing.sm),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.sm),
-              children: mainDestinations
-                  .map(
-                    (d) => ConfidiaSidebarNavItem(
-                      destination: d,
-                      isActive: confidiaNavIsActive(d.path, currentPath),
-                      collapsed: collapsed,
-                    ),
-                  )
-                  .toList(),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(8, 4, 8, 10),
-            child: Column(
-              children: [
-                Divider(height: 1, color: AppBorders.subtle(isDark).color),
-                const SizedBox(height: 4),
-                KeyedSubtree(
-                  key: OnboardingTargets.settingsNav,
-                  child: ConfidiaSidebarNavItem(
-                    destination: ConfidiaNavDestinations.settings(),
-                    isActive: confidiaNavIsActive('/settings', currentPath),
-                    collapsed: collapsed,
-                  ),
+                      )
+                      .toList(),
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 8, 8),
+                child: Column(
+                  children: [
+                    Divider(height: 1, color: AppBorders.subtle(isDark).color),
+                    const SizedBox(height: 4),
+                    KeyedSubtree(
+                      key: OnboardingTargets.settingsNav,
+                      child: ConfidiaSidebarNavItem(
+                        destination: ConfidiaNavDestinations.settings(),
+                        isActive: confidiaNavIsActive('/settings', currentPath),
+                        collapsed: !showExpandedChrome,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _SidebarToggleButton extends StatefulWidget {
+class _SidebarToggleButton extends StatelessWidget {
   final bool collapsed;
   final VoidCallback onPressed;
   final bool isDark;
@@ -257,48 +277,24 @@ class _SidebarToggleButton extends StatefulWidget {
   });
 
   @override
-  State<_SidebarToggleButton> createState() => _SidebarToggleButtonState();
-}
-
-class _SidebarToggleButtonState extends State<_SidebarToggleButton> with SingleTickerProviderStateMixin {
-  late final AnimationController _press;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _press = AnimationController(vsync: this, duration: const Duration(milliseconds: 90));
-    _scale = Tween<double>(begin: 1, end: 0.9).animate(CurvedAnimation(parent: _press, curve: Curves.easeOut));
-  }
-
-  @override
-  void dispose() {
-    _press.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTapDown: (_) => _press.forward(),
-      onTapUp: (_) => _press.reverse(),
-      onTapCancel: () => _press.reverse(),
-      onTap: widget.onPressed,
-      child: ScaleTransition(
-        scale: _scale,
-        child: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
-            color: (widget.isDark ? Colors.white : Colors.black).withValues(alpha: AppOpacity.faint),
-            border: Border.fromBorderSide(AppBorders.standard(widget.isDark)),
-          ),
-          child: Icon(
-            widget.collapsed ? Icons.menu_rounded : Icons.menu_open_rounded,
-            size: 18,
-            color: ConfidiaColors.textSecondary(widget.isDark),
-          ),
+    final radius = BorderRadius.circular(8);
+    return ConfidiaTappable(
+      onTap: onPressed,
+      pressScale: 0.9,
+      borderRadius: radius,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          color: (isDark ? Colors.white : Colors.black).withValues(alpha: AppOpacity.faint),
+          border: Border.fromBorderSide(AppBorders.standard(isDark)),
+        ),
+        child: Icon(
+          collapsed ? Icons.menu_rounded : Icons.menu_open_rounded,
+          size: 18,
+          color: ConfidiaColors.textSecondary(isDark),
         ),
       ),
     );

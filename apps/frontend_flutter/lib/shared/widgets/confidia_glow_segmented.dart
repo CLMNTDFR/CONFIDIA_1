@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 
 class ConfidiaGlowSegment<T> {
@@ -16,7 +14,7 @@ class ConfidiaGlowSegment<T> {
   });
 }
 
-/// Sélecteur segmenté premium  -  indicateur glissant animé, glow sobre.
+/// Sélecteur segmenté  -  indicateur glissant animé, sélection discrète.
 class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
   final T value;
   final List<ConfidiaGlowSegment<T>> segments;
@@ -49,17 +47,18 @@ class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
   Widget _buildShell(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final selectedIndex = _selectedIndex;
+    final ink = isDark ? Colors.white : Colors.black;
 
     return Container(
       width: expand ? double.infinity : null,
       padding: const EdgeInsets.all(_shellPadding),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
+        color: ink.withValues(alpha: 0.05),
         border: Border.fromBorderSide(AppBorders.standard(isDark)),
         boxShadow: [
           BoxShadow(
-            color: context.palette.secondary.withValues(alpha: isDark ? 0.08 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.05),
             blurRadius: 12,
             spreadRadius: -4,
           ),
@@ -81,24 +80,9 @@ class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
                   width: segmentWidth,
                   height: _segmentHeight,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(9),
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        context.palette.primary.withValues(alpha: 0.92),
-                        context.palette.secondary.withValues(alpha: 0.78),
-                      ],
-                    ),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
-                    boxShadow: [
-                      BoxShadow(
-                        color: context.palette.primary.withValues(alpha: 0.28),
-                        blurRadius: 14,
-                        spreadRadius: -4,
-                        offset: const Offset(0, 3),
-                      ),
-                    ],
+                    borderRadius: BorderRadius.circular(8),
+                    color: AppColors.surface2(isDark),
+                    border: Border.fromBorderSide(AppBorders.standard(isDark)),
                   ),
                 ),
               ),
@@ -109,10 +93,16 @@ class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
                   return Expanded(
                     child: Material(
                       color: Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         onTap: () => onChanged(seg.value),
-                        borderRadius: BorderRadius.circular(9),
-                        splashColor: context.palette.primary.withValues(alpha: 0.08),
+                        mouseCursor: SystemMouseCursors.click,
+                        borderRadius: BorderRadius.circular(8),
+                        hoverColor: ink.withValues(
+                          alpha: isDark ? AppOpacity.hoverInkDark : AppOpacity.hoverInkLight,
+                        ),
+                        splashColor: ink.withValues(alpha: AppOpacity.quiet),
                         highlightColor: Colors.transparent,
                         child: SizedBox(
                           height: _segmentHeight,
@@ -126,10 +116,12 @@ class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
                                 child: Icon(
                                   seg.icon,
                                   size: 14,
-                                  color: selected ? Colors.white : ConfidiaColors.textSecondary(isDark),
+                                  color: selected
+                                      ? AppColors.textPrimary(isDark)
+                                      : AppColors.textSecondary(isDark),
                                 ),
                               ),
-                              const SizedBox(width: 5),
+                              const SizedBox(width: 4),
                               Flexible(
                                 child: AnimatedDefaultTextStyle(
                                   duration: const Duration(milliseconds: 280),
@@ -138,7 +130,9 @@ class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
                                     fontSize: 11,
                                     fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                                     letterSpacing: 0.2,
-                                    color: selected ? Colors.white : ConfidiaColors.textSecondary(isDark),
+                                    color: selected
+                                        ? AppColors.textPrimary(isDark)
+                                        : AppColors.textSecondary(isDark),
                                   ),
                                   child: Text(
                                     seg.label,

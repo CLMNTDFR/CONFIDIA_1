@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../shared/utils/serenity_palette.dart';
+import '../../shared/widgets/confidia_tappable.dart';
 import 'day_briefing_model.dart';
 
 /// Carrousel horizontal premium des priorités du jour (toutes visibles, scrollables).
@@ -60,7 +61,7 @@ class _DayPriorityCarouselState extends State<DayPriorityCarousel> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(0, 14, 0, 0),
+          padding: const EdgeInsets.fromLTRB(0, 16, 0, 0),
           child: Row(
             children: [
               Expanded(
@@ -108,9 +109,9 @@ class _DayPriorityCarouselState extends State<DayPriorityCarousel> {
 
               return Padding(
                 padding: EdgeInsets.only(
-                  right: index == count - 1 ? 0 : 10,
-                  top: 2,
-                  bottom: 6,
+                  right: index == count - 4 ? 0 : 8,
+                  top: 4,
+                  bottom: 8,
                 ),
                 child: Transform.scale(
                   scale: scale,
@@ -130,7 +131,7 @@ class _DayPriorityCarouselState extends State<DayPriorityCarousel> {
             },
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 8),
         _CarouselProgress(
           count: count,
           page: _page,
@@ -149,24 +150,19 @@ class _CountChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
+    final muted = ConfidiaColors.textSecondary(isDark);
     return DecoratedBox(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(999),
-        gradient: LinearGradient(
-          colors: [
-            palette.primary.withValues(alpha: isDark ? 0.28 : 0.16),
-            palette.secondary.withValues(alpha: isDark ? 0.22 : 0.12),
-          ],
-        ),
-        border: Border.all(color: palette.primary.withValues(alpha: 0.35)),
+        borderRadius: BorderRadius.circular(32),
+        color: muted.withValues(alpha: isDark ? 0.16 : 0.1),
+        border: Border.all(color: muted.withValues(alpha: 0.35)),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         child: Text(
           '$count',
           style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: palette.primary,
+                color: muted,
                 fontWeight: FontWeight.w900,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
@@ -210,7 +206,7 @@ class _CarouselProgress extends StatelessWidget {
                     DecoratedBox(
                       decoration: BoxDecoration(
                         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(999),
+                        borderRadius: BorderRadius.circular(32),
                       ),
                       child: const SizedBox.expand(),
                     ),
@@ -221,7 +217,7 @@ class _CarouselProgress extends StatelessWidget {
                       bottom: 0,
                       child: DecoratedBox(
                         decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
+                          borderRadius: BorderRadius.circular(32),
                           gradient: LinearGradient(
                             colors: [palette.primary, palette.secondary],
                           ),
@@ -248,7 +244,7 @@ class _CarouselProgress extends StatelessWidget {
   }
 }
 
-class _PrioritySlideCard extends StatefulWidget {
+class _PrioritySlideCard extends StatelessWidget {
   final int index;
   final int total;
   final DayPriority priority;
@@ -263,14 +259,7 @@ class _PrioritySlideCard extends StatefulWidget {
     required this.onTap,
   });
 
-  @override
-  State<_PrioritySlideCard> createState() => _PrioritySlideCardState();
-}
-
-class _PrioritySlideCardState extends State<_PrioritySlideCard> {
-  bool _pressed = false;
-
-  IconData get _kindIcon => switch (widget.priority.kind) {
+  IconData get _kindIcon => switch (priority.kind) {
         DayPriorityKind.payment => Icons.payments_rounded,
         DayPriorityKind.document => Icons.description_rounded,
         DayPriorityKind.appointment => Icons.event_rounded,
@@ -283,157 +272,150 @@ class _PrioritySlideCardState extends State<_PrioritySlideCard> {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final palette = context.palette;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
-    final gain = widget.priority.serenityGain;
-    final tagColor = switch (widget.priority.kind) {
+    final gain = priority.serenityGain;
+    final muted = ConfidiaColors.textSecondary(isDark);
+    final tagColor = switch (priority.kind) {
       DayPriorityKind.payment => const Color(0xFFE57373),
-      DayPriorityKind.document => palette.primary,
-      DayPriorityKind.appointment => palette.secondary,
-      DayPriorityKind.messaging => palette.accent,
-      DayPriorityKind.other => ConfidiaColors.textSecondary(isDark),
+      DayPriorityKind.document => muted,
+      DayPriorityKind.appointment => muted,
+      DayPriorityKind.messaging => muted,
+      DayPriorityKind.other => muted,
     };
+    final radius = BorderRadius.circular(20);
 
-    return GestureDetector(
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapUp: (_) => setState(() => _pressed = false),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTap: widget.onTap,
-      child: AnimatedScale(
-        scale: _pressed ? 0.97 : 1,
-        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 110),
-        child: AnimatedContainer(
-          duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
-          curve: Curves.easeOutCubic,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: isDark
-                  ? [
-                      Color.lerp(const Color(0xFF152238), palette.primary, 0.12)!,
-                      Color.lerp(const Color(0xFF0F1A2A), palette.secondary, 0.1)!,
-                    ]
-                  : [
-                      Colors.white,
-                      Color.lerp(const Color(0xFFF4F8FC), palette.primary, 0.08)!,
-                    ],
+    return ConfidiaTappable(
+      onTap: onTap,
+      pressScale: 0.97,
+      borderRadius: radius,
+      child: AnimatedContainer(
+        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          borderRadius: radius,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: isDark
+                ? [
+                    const Color(0xFF152238),
+                    const Color(0xFF0F1A2A),
+                  ]
+                : [
+                    Colors.white,
+                    const Color(0xFFF4F8FC),
+                  ],
+          ),
+          border: Border.all(
+            color: emphasized
+                ? palette.primary.withValues(alpha: isDark ? 0.55 : 0.4)
+                : muted.withValues(alpha: isDark ? 0.22 : 0.14),
+            width: emphasized ? 1.4 : 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.08),
+              blurRadius: emphasized ? 16 : 10,
+              offset: const Offset(0, 6),
             ),
-            border: Border.all(
-              color: widget.emphasized
-                  ? palette.primary.withValues(alpha: isDark ? 0.55 : 0.4)
-                  : palette.primary.withValues(alpha: isDark ? 0.22 : 0.14),
-              width: widget.emphasized ? 1.4 : 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.08),
-                blurRadius: widget.emphasized ? 16 : 10,
-                offset: const Offset(0, 6),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      color: muted.withValues(alpha: isDark ? 0.18 : 0.1),
+                    ),
+                    child: Icon(_kindIcon, color: muted, size: 18),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$index / $total',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: ConfidiaColors.textSecondary(isDark),
+                                fontWeight: FontWeight.w600,
+                                fontFeatures: const [FontFeature.tabularFigures()],
+                              ),
+                        ),
+                        if (priority.tag != null)
+                          Text(
+                            priority.tag!,
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: tagColor,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                      ],
+                    ),
+                  ),
+                  if (gain > 0)
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(32),
+                        color: SerenityPalette.excellent.withValues(alpha: isDark ? 0.14 : 0.1),
+                        border: Border.all(
+                          color: SerenityPalette.excellent.withValues(alpha: 0.45),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        child: Text(
+                          '+$gain',
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                color: SerenityPalette.excellent,
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                priority.title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      height: 1.25,
+                      letterSpacing: -0.2,
+                    ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                priority.subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: ConfidiaColors.textSecondary(isDark),
+                    ),
+              ),
+              const Spacer(),
+              Row(
+                children: [
+                  Text(
+                    'Ouvrir',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: ConfidiaColors.textPrimary(isDark),
+                          fontWeight: FontWeight.w800,
+                        ),
+                  ),
+                  const SizedBox(width: 4),
+                  Icon(Icons.arrow_forward_rounded, size: 16, color: ConfidiaColors.textPrimary(isDark)),
+                ],
               ),
             ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [palette.primary, palette.secondary],
-                        ),
-                      ),
-                      child: Icon(_kindIcon, color: Colors.white, size: 18),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            '${widget.index} / ${widget.total}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                  color: ConfidiaColors.textSecondary(isDark),
-                                  fontWeight: FontWeight.w600,
-                                  fontFeatures: const [FontFeature.tabularFigures()],
-                                ),
-                          ),
-                          if (widget.priority.tag != null)
-                            Text(
-                              widget.priority.tag!,
-                              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                    color: tagColor,
-                                    fontWeight: FontWeight.w800,
-                                  ),
-                            ),
-                        ],
-                      ),
-                    ),
-                    if (gain > 0)
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(999),
-                          color: SerenityPalette.excellent.withValues(alpha: isDark ? 0.14 : 0.1),
-                          border: Border.all(
-                            color: SerenityPalette.excellent.withValues(alpha: 0.45),
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                          child: Text(
-                            '+$gain',
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                  color: SerenityPalette.excellent,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Text(
-                  widget.priority.title,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        height: 1.25,
-                        letterSpacing: -0.2,
-                      ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  widget.priority.subtitle,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: ConfidiaColors.textSecondary(isDark),
-                      ),
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Text(
-                      'Ouvrir',
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: palette.primary,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_rounded, size: 16, color: palette.primary),
-                  ],
-                ),
-              ],
-            ),
           ),
         ),
       ),

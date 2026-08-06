@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 
 import '../../core/theme/theme_context.dart';
@@ -6,100 +8,211 @@ import '../../core/theme/tokens/tokens.dart';
 import 'confidia_chrome_material.dart';
 import 'mobile_shell_insets.dart';
 
-enum ConfidiaSheetLayout { bottom, centered }
-
 /// Affiche une modale au style CONFIDIA (matière chrome discrète).
-/// Mobile : ancrée en bas. Desktop : centrée verticalement.
+/// Toujours centrée dans la zone utile :
+/// - mobile : entre top bar et bottom bar
+/// - desktop : entre top bar et bas d'écran
+///
+/// Animation : blur/voile en fondu fixe ; sheet en slide bas → haut.
+/// Racine navigator + barrière bloquante.
+///
+/// [maxWidth] / [maxHeightFactor] : pour les sur-modales plus compactes
+/// (ex. sélecteur date), afin de garder un effet de superposition.
 Future<T?> showConfidiaSheet<T>({
   required BuildContext context,
   required String title,
   required Widget child,
   List<Widget>? actions,
   bool isScrollControlled = true,
+  double maxWidth = 520,
+  double maxHeightFactor = 1,
 }) {
-  final isMobile = ConfidiaMobileShell.isMobileShell(context);
-
-  return showModalBottomSheet<T>(
+  return showGeneralDialog<T>(
     context: context,
-    isScrollControlled: isScrollControlled,
-    backgroundColor: Colors.transparent,
-    barrierColor: Colors.black.withValues(alpha: AppOpacity.veilDark),
-    builder: (ctx) {
-      final sheet = ConfidiaSheet(
+    useRootNavigator: true,
+    barrierDismissible: false,
+    barrierLabel: 'Modale',
+    barrierColor: Colors.transparent,
+    transitionDuration: AppDurations.medium,
+    pageBuilder: (context, animation, secondaryAnimation) => const SizedBox.shrink(),
+    transitionBuilder: (context, animation, secondaryAnimation, _) {
+      return _ConfidiaSheetTransition(
+        animation: animation,
         title: title,
         actions: actions,
-        layout: isMobile ? ConfidiaSheetLayout.bottom : ConfidiaSheetLayout.centered,
-        child: child,
-      );
-
-      if (isMobile) return sheet;
-
-      final viewInsets = MediaQuery.viewInsetsOf(ctx);
-      return Padding(
-        padding: EdgeInsets.fromLTRB(24, 32 + viewInsets.top * 0.15, 24, 32 + viewInsets.bottom),
-        child: Align(
-          alignment: Alignment.center,
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxWidth: 520,
-              maxHeight: MediaQuery.sizeOf(ctx).height * 0.86,
-            ),
-            child: sheet,
-          ),
-        ),
+        sheetChild: child,
+        maxWidth: maxWidth,
+        maxHeightFactor: maxHeightFactor.clamp(0.4, 1.0),
       );
     },
   );
+}
+
+/// Blur en fondu (fixe) + modale en slide depuis le bas + ombre douce.
+class _ConfidiaSheetTransition extends StatefulWidget {
+  final Animation<double> animation;
+  final String title;
+  final Widget sheetChild;
+  final List<Widget>? actions;
+  final double maxWidth;
+  final double maxHeightFactor;
+
+  const _ConfidiaSheetTransition({
+    required this.animation,
+    required this.title,
+    required this.sheetChild,
+    required this.maxWidth,
+    required this.maxHeightFactor,
+    this.actions,
+  });
+
+  @override
+  State<_ConfidiaSheetTransition> createState() => _ConfidiaSheetTransitionState();
+}
+
+class _ConfidiaSheetTransitionState extends State<_ConfidiaSheetTransition> {
+  static const double _edgeGap = 12;
+  static const double _barrierBlur = 14;
+
+  late final CurvedAnimation _motion = CurvedAnimation(
+    parent: widget.animation,
+    curve: Curves.easeOutCubic,
+    reverseCurve: Curves.easeInCubic,
+  );
+
+  @override
+  void dispose() {
+    _motion.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final viewPadding = MediaQuery.viewPaddingOf(context);
+    final viewInsets = MediaQuery.viewInsetsOf(context);
+    final isMobile = size.width < 900;
+
+    final topChrome = viewPadding.top + ConfidiaSpacing.topBarHeight;
+    final bottomChrome = isMobile
+        ? ConfidiaMobileShell.navBarHeight + viewPadding.bottom
+        : viewPadding.bottom;
+
+    final topInset = topChrome + _edgeGap;
+    final bottomInset = bottomChrome + _edgeGap + viewInsets.bottom;
+    final availableH = (size.height - topInset - bottomInset).clamp(120.0, size.height);
+    final sheetMaxH = availableH * widget.maxHeightFactor;
+    final sheetMaxW = widget.maxWidth;
+
+    // Un seul ticker : sigma/alpha du blur et translation de la sheet
+    // (FadeTransition + BackdropFilter décale le blur perçu, surtout sur web).
+    return AnimatedBuilder(
+      animation: _motion,
+      builder: (context, _) {
+        final t = _motion.value.clamp(0.0, 1.0);
+        final sigma = _barrierBlur * t;
+        final veil = AppOpacity.veilDark * t;
+        final dy = (1.0 - t) * 56;
+
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+                child: ColoredBox(
+                  color: Colors.black.withValues(alpha: veil),
+                ),
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.only(top: topInset, bottom: bottomInset),
+              child: Center(
+                child: Transform.translate(
+                  offset: Offset(0, dy),
+                  child: Opacity(
+                    opacity: t,
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: sheetMaxW,
+                          maxHeight: sheetMaxH,
+                        ),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(22),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.22 * t),
+                                blurRadius: 36,
+                                spreadRadius: 2,
+                                offset: const Offset(0, 12),
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.12 * t),
+                                blurRadius: 64,
+                                spreadRadius: 8,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
+                          ),
+                          child: Material(
+                            type: MaterialType.transparency,
+                            child: ConfidiaSheet(
+                              title: widget.title,
+                              actions: widget.actions,
+                              child: widget.sheetChild,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
 
 class ConfidiaSheet extends StatelessWidget {
   final String title;
   final Widget child;
   final List<Widget>? actions;
-  final ConfidiaSheetLayout layout;
 
   const ConfidiaSheet({
     super.key,
     required this.title,
     required this.child,
     this.actions,
-    this.layout = ConfidiaSheetLayout.bottom,
   });
 
-  bool get _centered => layout == ConfidiaSheetLayout.centered;
+  static const double _headerBlock = 56;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final keyboardBottom = MediaQuery.viewInsetsOf(context).bottom;
-    final shellBottom = ConfidiaMobileShell.isMobileShell(context)
-        ? ConfidiaMobileShell.bottomScrollInset(context)
-        : 0.0;
     final radius = BorderRadius.circular(22);
+    final actionsBlock = (actions != null && actions!.isNotEmpty) ? 72.0 : 0.0;
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: _centered ? 0 : keyboardBottom),
-      child: Padding(
-        padding: _centered ? EdgeInsets.zero : EdgeInsets.fromLTRB(10, 0, 10, 10 + shellBottom),
-        child: ConfidiaChromeMaterial(
-          borderRadius: radius,
-          child: Column(
+    return ConfidiaChromeMaterial(
+      borderRadius: radius,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxBody = constraints.maxHeight.isFinite
+              ? (constraints.maxHeight - _headerBlock - actionsBlock).clamp(80.0, constraints.maxHeight)
+              : double.infinity;
+
+          return Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (!_centered) ...[
-                const SizedBox(height: 8),
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: AppBorders.standard(isDark).color,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ] else
-                const SizedBox(height: 14),
+              const SizedBox(height: 14),
               Padding(
-                padding: EdgeInsets.fromLTRB(ConfidiaSpacing.lg, _centered ? 4 : 14, 8, 0),
+                padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, 4, 8, 0),
                 child: Row(
                   children: [
                     Expanded(
@@ -117,6 +230,7 @@ class ConfidiaSheet extends StatelessWidget {
                     Material(
                       color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(10),
+                      clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         onTap: () => Navigator.pop(context),
                         borderRadius: BorderRadius.circular(10),
@@ -131,15 +245,13 @@ class ConfidiaSheet extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Divider(height: 1, color: AppBorders.subtle(isDark).color),
-              Flexible(
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    ConfidiaSpacing.lg,
-                    ConfidiaSpacing.lg,
-                    ConfidiaSpacing.lg,
-                    ConfidiaSpacing.lg + (_centered ? 0 : shellBottom),
-                  ),
-                  child: child,
+              // shrinkWrap : hauteur = contenu, plafonnée par maxBody (scroll si besoin).
+              ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxBody),
+                child: ListView(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+                  children: [child],
                 ),
               ),
               if (actions != null && actions!.isNotEmpty) ...[
@@ -153,8 +265,8 @@ class ConfidiaSheet extends StatelessWidget {
                 ),
               ],
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }

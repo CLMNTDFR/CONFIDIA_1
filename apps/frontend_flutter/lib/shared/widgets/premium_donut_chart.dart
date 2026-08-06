@@ -15,6 +15,7 @@ class PremiumDonutChart extends StatelessWidget {
   final Widget? center;
   final ValueChanged<int>? onSectionEnter;
   final VoidCallback? onSectionExit;
+  final ValueChanged<int>? onSectionTap;
 
   const PremiumDonutChart({
     super.key,
@@ -27,6 +28,7 @@ class PremiumDonutChart extends StatelessWidget {
     this.center,
     this.onSectionEnter,
     this.onSectionExit,
+    this.onSectionTap,
   });
 
   /// Angle médian d'une portion (repère `drawArc`, 0 = droite, sens horaire).
@@ -77,12 +79,24 @@ class PremiumDonutChart extends StatelessWidget {
       duration: const Duration(milliseconds: 620),
       curve: Curves.easeOutCubic,
       builder: (context, rotationOffset, _) {
-        return Listener(
-          onPointerMove: (event) => _probe(context, event.localPosition, rotationOffset),
-          onPointerDown: (event) => _probe(context, event.localPosition, rotationOffset),
-          onPointerUp: (_) => onSectionExit?.call(),
-          child: MouseRegion(
-            onExit: (_) => onSectionExit?.call(),
+        return MouseRegion(
+          cursor: onSectionTap != null ? SystemMouseCursors.click : MouseCursor.defer,
+          onExit: (_) => onSectionExit?.call(),
+          child: Listener(
+            onPointerMove: (event) => _probe(context, event.localPosition, rotationOffset),
+            onPointerDown: (event) => _probe(context, event.localPosition, rotationOffset),
+            onPointerUp: (event) {
+              final index = _PremiumDonutPainter.probeSection(
+                position: event.localPosition,
+                size: Size(size, size),
+                slices: slices,
+                strokeWidth: strokeWidth,
+                gapDegrees: gapDegrees,
+                rotationOffset: rotationOffset,
+              );
+              if (index != null) onSectionTap?.call(index);
+              onSectionExit?.call();
+            },
             child: SizedBox(
               width: size,
               height: size,

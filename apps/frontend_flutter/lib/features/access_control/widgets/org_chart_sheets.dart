@@ -112,7 +112,6 @@ class _NodeDetailBodyState extends State<_NodeDetailBody> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final palette = context.palette;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -123,11 +122,11 @@ class _NodeDetailBodyState extends State<_NodeDetailBody> {
           value: widget.member?.email ?? 'Non renseigné',
         ),
         if (widget.node.subtitle != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _InfoTile(icon: Icons.info_outline_rounded, label: 'Profil', value: widget.node.subtitle!),
         ],
         if (widget.parentNode != null) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           _InfoTile(
             icon: Icons.arrow_upward_rounded,
             label: 'Rattaché à',
@@ -150,7 +149,7 @@ class _NodeDetailBodyState extends State<_NodeDetailBody> {
           },
         ),
         if (widget.role != null) ...[
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(widget.role!.description, style: Theme.of(context).textTheme.labelSmall),
         ],
         const SizedBox(height: 16),
@@ -166,7 +165,7 @@ class _NodeDetailBodyState extends State<_NodeDetailBody> {
         ),
         if (widget.node.parentId == null)
           Padding(
-            padding: const EdgeInsets.only(top: 6),
+            padding: const EdgeInsets.only(top: 8),
             child: Text(
               'Les racines n\'ont pas de lien ascendant.',
               style: Theme.of(context).textTheme.labelSmall?.copyWith(color: ConfidiaColors.textSecondary(isDark)),
@@ -174,15 +173,15 @@ class _NodeDetailBodyState extends State<_NodeDetailBody> {
           ),
         const SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.all(10),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: palette.primary.withValues(alpha: isDark ? 0.1 : 0.05),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: palette.primary.withValues(alpha: 0.2)),
+            color: ConfidiaColors.textSecondary(isDark).withValues(alpha: isDark ? 0.1 : 0.05),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: ConfidiaColors.border(isDark)),
           ),
           child: Row(
             children: [
-              Icon(Icons.touch_app_rounded, size: 16, color: palette.primary),
+              Icon(Icons.touch_app_rounded, size: 16, color: ConfidiaColors.textSecondary(isDark)),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
@@ -223,7 +222,7 @@ class _EditLinkBodyState extends State<_EditLinkBody> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text('Personne supérieure', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         ConfidiaDropdownField<String>(
           value: _parentId,
           hintText: 'Choisir…',
@@ -235,9 +234,9 @@ class _EditLinkBodyState extends State<_EditLinkBody> {
             if (_childId == v) _childId = null;
           }),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         Text('Personne subordonnée', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         ConfidiaDropdownField<String>(
           value: _childId,
           hintText: 'Choisir…',
@@ -246,9 +245,9 @@ class _EditLinkBodyState extends State<_EditLinkBody> {
           itemLabel: (id) => childCandidates.firstWhere((n) => n.id == id).label,
           onChanged: (v) => setState(() => _childId = v),
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         Text('Type de lien', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         ...OrgHierarchyLinkType.values.map(
           (type) => _LinkTypeTile(
             type: type,
@@ -301,7 +300,7 @@ class _ManageLevelsBody extends StatelessWidget {
           'Glissez une carte au-dessus ou en dessous pour créer un niveau supplémentaire.',
           style: Theme.of(context).textTheme.bodySmall,
         ),
-        const SizedBox(height: 14),
+        const SizedBox(height: 16),
         for (var d = 0; d <= maxBand; d++) ...[
           _LevelLabelField(
             depth: d,
@@ -399,9 +398,9 @@ class _ManageRolesBodyState extends State<_ManageRolesBody> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           TextField(controller: labelCtrl, decoration: _fieldDecoration(context).copyWith(labelText: 'Nom du rôle')),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           TextField(controller: descCtrl, decoration: _fieldDecoration(context).copyWith(labelText: 'Description')),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           TextField(
             controller: levelCtrl,
             keyboardType: TextInputType.number,
@@ -436,8 +435,6 @@ class _ManageRolesBodyState extends State<_ManageRolesBody> {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -459,7 +456,11 @@ class _ManageRolesBodyState extends State<_ManageRolesBody> {
               side: BorderSide(color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
             ),
             child: ListTile(
-              leading: Icon(roleIcon(role.id), color: palette.primary, size: 20),
+              leading: Icon(
+                roleIcon(role.id),
+                color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+                size: 20,
+              ),
               title: Text(role.label, style: const TextStyle(fontWeight: FontWeight.w600)),
               subtitle: Text('${role.description} · niveau ${role.level}${builtIn ? ' · intégré' : ''}'),
               trailing: Row(
@@ -561,7 +562,7 @@ InputDecoration _fieldDecoration(BuildContext context) {
     isDense: true,
     filled: true,
     fillColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-    border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
   );
 }

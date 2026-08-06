@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/confidia_logo.dart';
 import '../../shared/widgets/confidia_button.dart';
@@ -91,12 +90,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               children: [
                 const ConfidiaLogo(size: 48),
                 const SizedBox(height: ConfidiaSpacing.xxl),
-                ShaderMask(
-                  shaderCallback: (b) => context.palette.brandGradient.createShader(b),
-                  child: Text(
-                    'Votre vie administrative,\nsimplifiée.',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white, fontWeight: FontWeight.w800, height: 1.15),
-                  ),
+                Text(
+                  'Votre vie administrative,\nsimplifiée.',
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: ConfidiaColors.textPrimary(Theme.of(context).brightness == Brightness.dark),
+                        fontWeight: FontWeight.w800,
+                        height: 1.15,
+                      ),
                 ),
                 const SizedBox(height: ConfidiaSpacing.lg),
                 Text(
@@ -191,7 +191,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               loadingLabel: 'Connexion…',
               onPressed: busy ? null : () => _handleLogin(guidedTour: true),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               'Simule une première connexion avec tutoriel Confid•IA',
               style: Theme.of(context).textTheme.labelSmall,
@@ -221,7 +221,7 @@ class _FeatureRow extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: context.palette.secondary),
+          Icon(icon, size: 18, color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark)),
           const SizedBox(width: ConfidiaSpacing.sm),
           Text(text, style: Theme.of(context).textTheme.bodyMedium),
         ],

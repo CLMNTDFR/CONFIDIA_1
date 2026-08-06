@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/calendar_event_model.dart';
 import '../../shared/widgets/confidia_confirm_dialog.dart';
+import '../../shared/widgets/confidia_datetime_picker.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/confidia_modal_sheet.dart';
@@ -102,7 +104,7 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 16, color: context.palette.secondary),
+          Icon(icon, size: 16, color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark)),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -165,42 +167,27 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
 
   Future<void> _pickDateTime({required bool isStart}) async {
     final initial = isStart ? _start : _end;
-    final date = await showDatePicker(
-      context: context,
-      useRootNavigator: true,
-      initialDate: initial,
-      firstDate: DateTime(2020),
-      lastDate: DateTime(2035),
-      locale: const Locale('fr', 'FR'),
+    final picked = await showConfidiaDateTimePicker(
+      context,
+      initial: initial,
+      includeTime: !_allDay,
+      title: isStart ? 'Début' : 'Fin',
     );
-    if (date == null || !mounted) return;
-
-    if (_allDay) {
-      setState(() {
-        if (isStart) {
-          _start = DateTime(date.year, date.month, date.day);
-          if (_end.isBefore(_start)) _end = _start;
-        } else {
-          _end = DateTime(date.year, date.month, date.day, 23, 59);
-        }
-      });
-      return;
-    }
-
-    final time = await showTimePicker(
-      context: context,
-      useRootNavigator: true,
-      initialTime: TimeOfDay.fromDateTime(initial),
-    );
-    if (time == null || !mounted) return;
+    if (picked == null || !mounted) return;
 
     setState(() {
-      final dt = DateTime(date.year, date.month, date.day, time.hour, time.minute);
-      if (isStart) {
-        _start = dt;
+      if (_allDay) {
+        if (isStart) {
+          _start = DateTime(picked.year, picked.month, picked.day);
+          if (_end.isBefore(_start)) _end = _start;
+        } else {
+          _end = DateTime(picked.year, picked.month, picked.day, 23, 59);
+        }
+      } else if (isStart) {
+        _start = picked;
         if (_end.isBefore(_start)) _end = _start.add(const Duration(hours: 1));
       } else {
-        _end = dt;
+        _end = picked;
       }
     });
   }
@@ -253,8 +240,8 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
           Text('Type d\'événement', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Wrap(
-            spacing: 6,
-            runSpacing: 6,
+            spacing: 8,
+            runSpacing: 8,
             children: eventTypeConfigs(context.palette).map((cfg) {
               return ConfidiaGlowChip(
                 label: cfg.label,

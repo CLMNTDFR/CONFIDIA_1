@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/theme_context.dart';
+import '../../core/theme/colors.dart';
 import 'confidia_ai_robot.dart';
 
-/// Nom de marque « Cofid-IA » en deux couleurs (primary + secondary).
+/// Nom de marque « Confid•IA » en monochrome (textPrimary + textSecondary).
 class CofidIaBrand extends StatelessWidget {
   final double? fontSize;
   final FontWeight fontWeight;
@@ -16,18 +16,20 @@ class CofidIaBrand extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final base = (fontSize ?? Theme.of(context).textTheme.titleSmall?.fontSize ?? 14);
+    final primary = ConfidiaColors.textPrimary(isDark);
+    final secondary = ConfidiaColors.textSecondary(isDark);
 
     return Text.rich(
       TextSpan(
         children: [
-                    TextSpan(
+          TextSpan(
             text: 'Confid',
             style: TextStyle(
               fontSize: base,
               fontWeight: fontWeight,
-              color: palette.secondary,
+              color: primary,
               letterSpacing: -0.3,
             ),
           ),
@@ -36,7 +38,7 @@ class CofidIaBrand extends StatelessWidget {
             style: TextStyle(
               fontSize: base,
               fontWeight: fontWeight,
-              color: palette.primary,
+              color: secondary,
               letterSpacing: -0.3,
             ),
           ),
@@ -45,7 +47,7 @@ class CofidIaBrand extends StatelessWidget {
             style: TextStyle(
               fontSize: base,
               fontWeight: fontWeight,
-              color: palette.secondary,
+              color: primary,
               letterSpacing: -0.3,
             ),
           ),
@@ -76,14 +78,14 @@ class CofidIaPanelHeader extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         ConfidiaAiRobot(size: robotSize, speaking: speaking),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const CofidIaBrand(),
               if (subtitle != null) ...[
-                const SizedBox(height: 3),
+                const SizedBox(height: 4),
                 Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),
               ],
             ],

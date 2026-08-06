@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/theme_context.dart';
+import '../../core/theme/colors.dart';
 import '../../core/theme/tokens/tokens.dart';
 import '../navigation/confidia_parent_route.dart';
 
@@ -15,20 +15,27 @@ class ConfidiaBackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
+    final ink = (isDark ? Colors.white : Colors.black).withValues(
+      alpha: isDark ? AppOpacity.hoverInkDark : AppOpacity.hoverInkLight,
+    );
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(8),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.go(parentRoute),
-        borderRadius: BorderRadius.circular(10),
+        mouseCursor: SystemMouseCursors.click,
+        hoverColor: ink,
+        borderRadius: BorderRadius.circular(8),
         child: Container(
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8),
             color: (isDark ? Colors.white : Colors.black).withValues(alpha: AppOpacity.faint),
             border: Border.fromBorderSide(AppBorders.standard(isDark)),
           ),
-          child: Icon(Icons.chevron_left_rounded, color: context.palette.primary, size: 22),
+          child: Icon(Icons.chevron_left_rounded, color: ConfidiaColors.textSecondary(isDark), size: 22),
         ),
       ),
     );
@@ -77,7 +84,7 @@ class ConfidiaPageHeader extends StatelessWidget {
         children: [
           if (parent != null) ...[
             ConfidiaBackButton(parentRoute: parent),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
           ],
           Expanded(
             child: Column(

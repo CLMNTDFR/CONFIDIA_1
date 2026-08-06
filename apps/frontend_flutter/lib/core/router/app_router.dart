@@ -9,8 +9,7 @@ import '../../features/auth/welcome_splash_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/documents/documents_screen.dart';
 import '../../features/documents/document_detail_screen.dart';
-import '../../features/documents/upload_screen.dart';
-import '../../features/documents/scan_screen.dart';
+import '../../features/documents/document_ingest_screen.dart';
 import '../../features/calendar/calendar_screen.dart';
 import '../../features/payments/payments_screen.dart';
 import '../../features/payments/payment_detail_screen.dart';
@@ -64,8 +63,18 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/documents',
-            pageBuilder: (context, state) => fadeSlidePage(child: const DocumentsScreen()),
+            pageBuilder: (context, state) => fadeSlidePage(
+              child: DocumentsScreen(
+                initialCategory: state.uri.queryParameters['category'],
+              ),
+            ),
             routes: [
+              GoRoute(
+                path: 'add',
+                pageBuilder: (context, state) => fadeSlidePage(
+                  child: DocumentIngestScreen(mode: state.uri.queryParameters['mode']),
+                ),
+              ),
               GoRoute(
                 path: ':id',
                 pageBuilder: (context, state) => fadeSlidePage(
@@ -76,11 +85,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           ),
           GoRoute(
             path: '/upload',
-            pageBuilder: (context, state) => fadeSlidePage(child: const UploadScreen()),
+            redirect: (_, __) => '/documents/add?mode=files',
           ),
           GoRoute(
             path: '/scan',
-            pageBuilder: (context, state) => fadeSlidePage(child: const ScanScreen()),
+            redirect: (_, __) => '/documents/add?mode=camera',
           ),
           GoRoute(
             path: '/payments',

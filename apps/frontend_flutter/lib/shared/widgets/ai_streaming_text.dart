@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import 'confidia_ai_robot.dart';
 
 /// Affiche du texte progressivement, comme une réponse IA en cours de rédaction.
@@ -106,6 +105,8 @@ class _AiStreamingTextState extends State<AiStreamingText> with TickerProviderSt
         final visible = widget.text.characters.take(count).toString();
         final done = _stream.value >= 1;
 
+        final isDark = Theme.of(context).brightness == Brightness.dark;
+        final cursorColor = ConfidiaColors.textSecondary(isDark);
         final rich = RichText(
           textAlign: widget.textAlign,
           text: TextSpan(
@@ -120,17 +121,10 @@ class _AiStreamingTextState extends State<AiStreamingText> with TickerProviderSt
                     child: Container(
                       width: 2,
                       height: (style?.fontSize ?? 14) * 1.1,
-                      margin: const EdgeInsets.only(left: 1),
+                      margin: const EdgeInsets.only(left: 4),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(1),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            context.palette.primary.withValues(alpha: 0.5),
-                            context.palette.secondary,
-                          ],
-                        ),
+                        borderRadius: BorderRadius.circular(8),
+                        color: cursorColor,
                       ),
                     ),
                   ),
@@ -186,10 +180,10 @@ class _ThinkingDotsState extends State<_ThinkingDots> with SingleTickerProviderS
             final phase = (_pulse.value + i * 0.22) % 1.0;
             final opacity = 0.25 + (phase < 0.5 ? phase : 1 - phase) * 1.5;
             return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
               child: Container(
-                width: 5,
-                height: 5,
+                width: 4,
+                height: 4,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: color.withValues(alpha: opacity.clamp(0.2, 1)),

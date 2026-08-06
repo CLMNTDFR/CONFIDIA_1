@@ -2,324 +2,92 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/palette.dart';
-import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 import '../../shared/models/serenity_briefing_model.dart';
 import '../../shared/utils/serenity_palette.dart';
-import '../../shared/widgets/ai_streaming_text.dart';
-import '../../shared/widgets/cofid_ia_brand.dart';
-import '../../shared/widgets/confidia_ai_robot.dart';
-import '../../shared/widgets/confidia_glow_button.dart';
+import '../../shared/widgets/confidia_tooltip.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/serenity_score_ring.dart';
 import 'serenity_briefing_provider.dart';
 
-/// Briefing IA de sérénité : sections distinctes, courbe temporelle colorée.
-class SerenityBriefingWidget extends ConsumerStatefulWidget {
+/// Carte score + courbe 14 j  -  briefing narratif dans « Commencer ma journée ».
+class SerenityBriefingWidget extends ConsumerWidget {
   const SerenityBriefingWidget({super.key});
 
   @override
-  ConsumerState<SerenityBriefingWidget> createState() => _SerenityBriefingWidgetState();
-}
-
-class _SerenityBriefingWidgetState extends ConsumerState<SerenityBriefingWidget> with SingleTickerProviderStateMixin {
-  int _detailLevel = 0;
-  late final AnimationController _pulse;
-
-  static const _animDuration = Duration(milliseconds: 300);
-
-  @override
-  void initState() {
-    super.initState();
-    _pulse = AnimationController(vsync: this, duration: const Duration(milliseconds: 2400))..repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _pulse.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final briefing = ref.watch(serenityBriefingProvider);
-
-    return _SerenityBriefingCard(
-      briefing: briefing,
-      detailLevel: _detailLevel,
-      pulse: _pulse,
-      onToggleLevel: () {
-        setState(() {
-          if (_detailLevel >= 2) {
-            _detailLevel = 0;
-          } else {
-            _detailLevel++;
-          }
-        });
-      },
-    );
-  }
-}
-
-class _SerenityBriefingCard extends StatelessWidget {
-  final SerenityBriefing briefing;
-  final int detailLevel;
-  final AnimationController pulse;
-  final VoidCallback onToggleLevel;
-
-  const _SerenityBriefingCard({
-    required this.briefing,
-    required this.detailLevel,
-    required this.pulse,
-    required this.onToggleLevel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
     final palette = context.palette;
     final accent = SerenityPalette.forScore(briefing.score, palette: palette);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
 
     return GlassCard(
-      padding: const EdgeInsets.all(ConfidiaSpacing.sm + 2),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _SerenitySection(
-            title: 'Indice de sérénité',
-            icon: Icons.spa_rounded,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _CompactHeader(
-                  greeting: briefing.greeting,
-                  score: briefing.score,
-                  levelLabel: briefing.level.label,
-                  accent: accent,
-                  pulse: pulse,
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          _SerenitySection(
-            title: 'Évolution dans le temps',
-            icon: Icons.timeline_rounded,
-            subtitle: '14 derniers jours · score quotidien',
-            child: _ScoreHistoryChart(history: briefing.scoreHistory, palette: palette),
-          ),
-          AnimatedSize(
-            duration: _SerenityBriefingWidgetState._animDuration,
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: detailLevel == 0
-                ? const SizedBox.shrink()
-                : Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: _SerenitySection(
-                      title: 'Briefing du jour',
-                      icon: Icons.wb_sunny_outlined,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          AiStreamingText(
-                            key: ValueKey(briefing.summary),
-                            text: briefing.summary,
-                            showThinkingRobot: false,
-                            thinkingDelay: const Duration(milliseconds: 280),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.45),
-                          ),
-                          const SizedBox(height: 8),
-                          _MetricsGrid(metrics: briefing.metrics, palette: palette),
-                        ],
-                      ),
-                    ),
-                  ),
-          ),
-          AnimatedSize(
-            duration: _SerenityBriefingWidgetState._animDuration,
-            curve: Curves.easeOutCubic,
-            alignment: Alignment.topCenter,
-            child: detailLevel < 2
-                ? const SizedBox.shrink()
-                : Column(
-                    children: [
-                      const SizedBox(height: 8),
-                      _SerenitySection(
-                        title: 'Facteurs identifiés',
-                        icon: Icons.warning_amber_rounded,
-                        child: LayoutBuilder(
-                          builder: (context, constraints) {
-                            final columns = constraints.maxWidth >= 420 ? 2 : 1;
-                            return GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: columns,
-                                crossAxisSpacing: 6,
-                                mainAxisSpacing: 6,
-                                mainAxisExtent: 30,
-                              ),
-                              itemCount: briefing.factors.length,
-                              itemBuilder: (_, index) => _FactorChip(factor: briefing.factors[index]),
-                            );
-                          },
-                        ),
-                      ),
-                      if (briefing.actions.isNotEmpty) ...[
-                        const SizedBox(height: 8),
-                        _SerenitySection(
-                          title: 'Actions recommandées',
-                          icon: Icons.auto_awesome_rounded,
-                          child: Column(
-                            children: briefing.actions
-                                .asMap()
-                                .entries
-                                .map((e) => _ActionRow(action: e.value, index: e.key))
-                                .toList(),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-          ),
-          const SizedBox(height: 10),
-          Center(
-            child: detailLevel == 0
-                ? TextButton.icon(
-                    onPressed: onToggleLevel,
-                    icon: const Icon(Icons.expand_more_rounded, size: 16),
-                    label: const Text('Détails'),
-                    style: TextButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      foregroundColor: ConfidiaColors.textSecondary(
-                        Theme.of(context).brightness == Brightness.dark,
-                      ),
-                      textStyle: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
-                    ),
-                  )
-                : ConfidiaGlowButton(
-                    label: _ctaLabel(detailLevel),
-                    icon: _ctaIcon(detailLevel),
-                    primary: detailLevel == 1,
-                    onPressed: onToggleLevel,
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  String _ctaLabel(int level) => switch (level) {
-        1 => 'Facteurs',
-        _ => 'Réduire',
-      };
-
-  IconData _ctaIcon(int level) => switch (level) {
-        1 => Icons.insights_rounded,
-        _ => Icons.expand_less_rounded,
-      };
-}
-
-class _SerenitySection extends StatelessWidget {
-  final String title;
-  final String? subtitle;
-  final IconData icon;
-  final Widget child;
-
-  const _SerenitySection({
-    required this.title,
-    required this.icon,
-    required this.child,
-    this.subtitle,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final palette = context.palette;
-
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
-        border: Border.all(color: ConfidiaColors.border(isDark)),
-      ),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(icon, size: 15, color: palette.primary),
-              const SizedBox(width: 6),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      title,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w800),
+                      'Indice de sérénité',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
                     ),
-                    if (subtitle != null)
-                      Text(subtitle!, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 10)),
+                    const SizedBox(height: 8),
+                    const _ScoreLegend(),
+                    const SizedBox(height: 6),
+                    Text(
+                      'Évolution sur 14 jours',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: muted),
+                    ),
                   ],
                 ),
               ),
+              const SizedBox(width: 16),
+              SerenityScoreRing(
+                score: briefing.score,
+                label: briefing.level.label,
+                color: accent,
+                size: 52,
+                scoreFontSize: 17,
+                labelFontSize: 10,
+              ),
             ],
           ),
-          const SizedBox(height: 8),
-          child,
+          if (briefing.scoreHistory.length >= 2) ...[
+            const SizedBox(height: 18),
+            _ScoreHistoryChart(history: briefing.scoreHistory, palette: palette),
+          ],
         ],
       ),
     );
   }
 }
 
-class _CompactHeader extends StatelessWidget {
-  final String greeting;
-  final int score;
-  final String levelLabel;
-  final Color accent;
-  final AnimationController pulse;
-
-  const _CompactHeader({
-    required this.greeting,
-    required this.score,
-    required this.levelLabel,
-    required this.accent,
-    required this.pulse,
-  });
+class _ScoreLegend extends StatelessWidget {
+  const _ScoreLegend();
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        ConfidiaAiRobot(size: 28, speaking: true),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const CofidIaBrand(fontSize: 11),
-              Text(
-                greeting,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: ConfidiaColors.textSecondary(isDark),
-                      fontWeight: FontWeight.w500,
-                    ),
-              ),
-            ],
-          ),
-        ),
-        SerenityScoreRing(score: score, label: levelLabel, color: accent, pulse: pulse),
+    return Wrap(
+      spacing: 12,
+      runSpacing: 4,
+      children: const [
+        _LegendDot(color: SerenityPalette.excellent, label: '>60'),
+        _LegendDot(color: SerenityPalette.moderate, label: '41-60'),
+        _LegendDot(color: SerenityPalette.attention, label: '≤40'),
       ],
     );
   }
@@ -343,7 +111,7 @@ class _ScoreHistoryChartState extends State<_ScoreHistoryChart> with SingleTicke
   @override
   void initState() {
     super.initState();
-    _draw = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200));
+    _draw = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
     _progress = CurvedAnimation(parent: _draw, curve: Curves.easeOutCubic);
     _draw.forward();
   }
@@ -356,105 +124,83 @@ class _ScoreHistoryChartState extends State<_ScoreHistoryChart> with SingleTicke
 
   @override
   Widget build(BuildContext context) {
-    final delta = widget.history.length >= 2 ? widget.history.last.score - widget.history.first.score : 0;
+    final delta = widget.history.last.score - widget.history.first.score;
     final first = widget.history.first.date;
     final last = widget.history.last.date;
+    final trendColor = delta >= 0 ? SerenityPalette.excellent : SerenityPalette.attention;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
+    final dateFmt = DateFormat('d MMM', 'fr_FR');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         SizedBox(
-          height: 88,
+          height: 96,
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final layout = _ChartLayout.compute(widget.history, Size(constraints.maxWidth, 76));
-              final visibleCount = (layout.points.length * _progress.value).ceil().clamp(2, layout.points.length);
+              final layout = _ChartLayout.compute(
+                widget.history,
+                Size(constraints.maxWidth, 96),
+              );
 
-              return Stack(
-                clipBehavior: Clip.none,
-                children: [
-                  Positioned(
-                    top: 0,
-                    right: 0,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _LegendDot(color: SerenityPalette.excellent, label: '≥80'),
-                        const SizedBox(width: 6),
-                        _LegendDot(color: SerenityPalette.moderate, label: '50-79'),
-                        const SizedBox(width: 6),
-                        _LegendDot(color: SerenityPalette.attention, label: '<50'),
-                      ],
-                    ),
-                  ),
-                  Positioned(
-                    top: 22,
-                    left: 0,
-                    right: 0,
-                    height: 64,
-                    child: AnimatedBuilder(
-                      animation: _progress,
-                      builder: (context, _) {
-                        return Stack(
-                          clipBehavior: Clip.none,
-                          children: [
-                            CustomPaint(
-                              size: Size(constraints.maxWidth, 64),
-                              painter: _ScoreHistoryPainter(
-                                layout: layout,
-                                progress: _progress.value,
-                                palette: widget.palette,
-                                hoveredIndex: _hoveredIndex,
-                              ),
-                            ),
-                            for (var i = 0; i < visibleCount; i++)
-                              _ChartPointHitTarget(
-                                point: layout.points[i],
-                                tooltip: _pointTooltip(widget.history[i]),
-                                onHover: (hovered) {
-                                  setState(() => _hoveredIndex = hovered ? i : null);
-                                },
-                              ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ],
+              return AnimatedBuilder(
+                animation: _progress,
+                builder: (context, _) {
+                  final visibleCount =
+                      (layout.points.length * _progress.value).ceil().clamp(2, layout.points.length);
+                  return Stack(
+                    clipBehavior: Clip.hardEdge,
+                    children: [
+                      CustomPaint(
+                        size: Size(constraints.maxWidth, 96),
+                        painter: _ScoreHistoryPainter(
+                          layout: layout,
+                          progress: _progress.value,
+                          palette: widget.palette,
+                          hoveredIndex: _hoveredIndex,
+                        ),
+                      ),
+                      for (var i = 0; i < visibleCount; i++)
+                        _ChartPointHitTarget(
+                          point: layout.points[i],
+                          chartWidth: constraints.maxWidth,
+                          chartHeight: 96,
+                          tooltip: _pointTooltip(widget.history[i]),
+                          onHover: (hovered) {
+                            setState(() => _hoveredIndex = hovered ? i : null);
+                          },
+                        ),
+                    ],
+                  );
+                },
               );
             },
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 14),
         Row(
           children: [
-            Text(
-              DateFormat('d MMM', 'fr_FR').format(first),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
+            Expanded(
+              child: Text(
+                dateFmt.format(first),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: muted),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            const Spacer(),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  delta >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
-                  size: 13,
-                  color: delta >= 0 ? SerenityPalette.excellent : SerenityPalette.attention,
-                ),
-                Text(
-                  ' ${delta >= 0 ? '+' : ''}$delta pts · 14 j',
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 9,
-                        color: delta >= 0 ? SerenityPalette.excellent : SerenityPalette.attention,
-                      ),
-                ),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              DateFormat('d MMM', 'fr_FR').format(last),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9, fontWeight: FontWeight.w700),
+            _TrendBadge(delta: delta, color: trendColor),
+            Expanded(
+              child: Text(
+                dateFmt.format(last),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+              ),
             ),
           ],
         ),
@@ -469,13 +215,54 @@ class _ScoreHistoryChartState extends State<_ScoreHistoryChart> with SingleTicke
   }
 }
 
+class _TrendBadge extends StatelessWidget {
+  final int delta;
+  final Color color;
+
+  const _TrendBadge({required this.delta, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final up = delta >= 0;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: AppRadius.pillAll,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            up ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+            size: 14,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '${up ? '+' : ''}$delta pts',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: color,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ChartPointHitTarget extends StatelessWidget {
   final Offset point;
+  final double chartWidth;
+  final double chartHeight;
   final String tooltip;
   final ValueChanged<bool> onHover;
 
   const _ChartPointHitTarget({
     required this.point,
+    required this.chartWidth,
+    required this.chartHeight,
     required this.tooltip,
     required this.onHover,
   });
@@ -484,17 +271,20 @@ class _ChartPointHitTarget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final left = (point.dx - _hitSize / 2).clamp(0.0, math.max(0.0, chartWidth - _hitSize)).toDouble();
+    final top = (point.dy - _hitSize / 2).clamp(0.0, chartHeight - _hitSize).toDouble();
+
     return Positioned(
-      left: point.dx - _hitSize / 2,
-      top: point.dy - _hitSize / 2,
+      left: left,
+      top: top,
       width: _hitSize,
       height: _hitSize,
       child: MouseRegion(
+        cursor: SystemMouseCursors.click,
         onEnter: (_) => onHover(true),
         onExit: (_) => onHover(false),
-        child: Tooltip(
+        child: ConfidiaTooltip(
           message: tooltip,
-          waitDuration: const Duration(milliseconds: 120),
           child: const SizedBox.expand(),
         ),
       ),
@@ -503,32 +293,23 @@ class _ChartPointHitTarget extends StatelessWidget {
 }
 
 class _ChartLayout {
-  final Rect chartRect;
-  final double yMin;
-  final double yMax;
   final List<Offset> points;
   final List<int> scores;
 
-  const _ChartLayout({
-    required this.chartRect,
-    required this.yMin,
-    required this.yMax,
-    required this.points,
-    required this.scores,
-  });
+  const _ChartLayout({required this.points, required this.scores});
 
   factory _ChartLayout.compute(List<SerenityScorePoint> history, Size size) {
     if (history.length < 2) {
-      return _ChartLayout(chartRect: Rect.zero, yMin: 0, yMax: 100, points: const [], scores: const []);
+      return const _ChartLayout(points: [], scores: []);
     }
 
     final scoreValues = history.map((p) => p.score.toDouble()).toList();
     final minScore = scoreValues.reduce(math.min);
     final maxScore = scoreValues.reduce(math.max);
-    final range = math.max(12, maxScore - minScore);
+    final range = math.max(12.0, maxScore - minScore);
     final yMin = minScore - 4;
     final yMax = yMin + range + 8;
-    final chartRect = Rect.fromLTWH(4, 4, size.width - 8, size.height - 8);
+    final chartRect = Rect.fromLTWH(6, 8, size.width - 12, size.height - 16);
 
     final points = <Offset>[];
     for (var i = 0; i < history.length; i++) {
@@ -539,9 +320,6 @@ class _ChartLayout {
     }
 
     return _ChartLayout(
-      chartRect: chartRect,
-      yMin: yMin,
-      yMax: yMax,
       points: points,
       scores: history.map((p) => p.score).toList(),
     );
@@ -556,12 +334,24 @@ class _LegendDot extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muted = ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark);
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(width: 7, height: 7, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-        const SizedBox(width: 3),
-        Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9)),
+        Container(
+          width: 6,
+          height: 6,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 5),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: muted,
+                fontWeight: FontWeight.w500,
+              ),
+        ),
       ],
     );
   }
@@ -599,8 +389,7 @@ class _ScoreHistoryPainter extends CustomPainter {
     }
 
     for (var i = 0; i < visible.length; i++) {
-      final score = layout.scores[i];
-      final color = SerenityPalette.forScore(score, palette: palette);
+      final color = SerenityPalette.forScore(layout.scores[i], palette: palette);
       final isHovered = hoveredIndex == i;
       final isLast = i == visible.length - 1;
       final radius = isHovered ? 4.5 : (isLast ? 3.5 : 2.5);
@@ -623,207 +412,4 @@ class _ScoreHistoryPainter extends CustomPainter {
       oldDelegate.progress != progress ||
       oldDelegate.hoveredIndex != hoveredIndex ||
       oldDelegate.layout != layout;
-}
-
-class _MetricsGrid extends StatelessWidget {
-  final List<SerenityMetric> metrics;
-  final ConfidiaPalette palette;
-
-  const _MetricsGrid({required this.metrics, required this.palette});
-
-  @override
-  Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final cellW = (constraints.maxWidth - 6) / 2;
-        return Wrap(
-          spacing: 6,
-          runSpacing: 6,
-          children: metrics.asMap().entries.map((e) {
-            return TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: Duration(milliseconds: 280 + e.key * 50),
-              curve: Curves.easeOutCubic,
-              builder: (context, t, child) {
-                final clamped = t.clamp(0.0, 1.0);
-                return Opacity(opacity: clamped, child: Transform.scale(scale: 0.92 + clamped * 0.08, child: child));
-              },
-              child: SizedBox(width: cellW, child: _MetricPill(metric: e.value, palette: palette)),
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
-}
-
-class _MetricPill extends StatelessWidget {
-  final SerenityMetric metric;
-  final ConfidiaPalette palette;
-
-  const _MetricPill({required this.metric, required this.palette});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = palette.primary;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-        border: Border.all(color: ConfidiaColors.border(isDark)),
-      ),
-      child: Row(
-        children: [
-          Icon(_iconForDomain(metric.domain), size: 13, color: accent),
-          const SizedBox(width: 5),
-          Text('${metric.value}', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w900)),
-          const SizedBox(width: 4),
-          Expanded(
-            child: Text(
-              metric.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _iconForDomain(SerenityDomain domain) => switch (domain) {
-        SerenityDomain.messaging => Icons.mail_outline_rounded,
-        SerenityDomain.calendar => Icons.calendar_month_rounded,
-        SerenityDomain.payments => Icons.payments_outlined,
-        SerenityDomain.documents => Icons.folder_outlined,
-        SerenityDomain.notifications => Icons.notifications_none_rounded,
-      };
-}
-
-class _FactorChip extends StatelessWidget {
-  final SerenityFactor factor;
-
-  const _FactorChip({required this.factor});
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final color = switch (factor.severity) {
-      'high' => SerenityPalette.attention,
-      'medium' => SerenityPalette.moderate,
-      _ => ConfidiaColors.textSecondary(isDark),
-    };
-
-    return Tooltip(
-      message: factor.detail,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.35)),
-          color: color.withValues(alpha: isDark ? 0.1 : 0.06),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.max,
-          children: [
-            Container(width: 5, height: 5, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-            const SizedBox(width: 5),
-            Expanded(
-              child: Text(
-                factor.label,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 10, fontWeight: FontWeight.w600),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Text('-${factor.impact}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color, fontWeight: FontWeight.w800, fontSize: 10)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionRow extends StatelessWidget {
-  final SerenityAction action;
-  final int index;
-
-  const _ActionRow({required this.action, required this.index});
-
-  @override
-  Widget build(BuildContext context) {
-    final palette = context.palette;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: Duration(milliseconds: 240 + index * 40),
-      curve: Curves.easeOutCubic,
-      builder: (context, t, child) {
-        final clamped = t.clamp(0.0, 1.0);
-        return Opacity(opacity: clamped, child: Transform.translate(offset: Offset(0, (1 - clamped) * 4), child: child));
-      },
-      child: Padding(
-        padding: const EdgeInsets.only(bottom: 4),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => context.go(action.route),
-            borderRadius: BorderRadius.circular(8),
-            child: Ink(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: palette.primary.withValues(alpha: isDark ? 0.07 : 0.04),
-                border: Border.all(color: palette.primary.withValues(alpha: 0.12)),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(_iconFromName(action.icon), size: 14, color: palette.primary),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          action.label,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
-                        ),
-                        Text(
-                          action.description,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 9),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (action.aiPowered) ...[
-                    const SizedBox(width: 6),
-                    const CofidIaBrand(fontSize: 10),
-                  ],
-                  Icon(Icons.chevron_right_rounded, size: 15, color: ConfidiaColors.textSecondary(isDark)),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  IconData _iconFromName(String name) => switch (name) {
-        'mail' => Icons.mail_rounded,
-        'calendar_month' => Icons.calendar_month_rounded,
-        'account_tree' => Icons.account_tree_rounded,
-        'payment' => Icons.payment_rounded,
-        'folder' => Icons.folder_rounded,
-        _ => Icons.auto_awesome_rounded,
-      };
 }

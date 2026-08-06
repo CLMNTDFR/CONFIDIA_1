@@ -6,11 +6,15 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
+import '../../core/theme/tokens/tokens.dart';
+import '../../shared/brands/brand_assets.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/calendar_event_model.dart';
+import '../../shared/widgets/brand_icon.dart';
 import '../../shared/widgets/confidia_confirm_dialog.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
+import '../../shared/widgets/confidia_tappable.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/confidia_glow_segmented.dart';
 import '../../shared/widgets/glass_card.dart';
@@ -32,6 +36,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   CalendarView _view = CalendarView.month;
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay = DateTime.now();
+  bool _filtersOpen = false;
 
   void _shiftDay(int delta) {
     setState(() {
@@ -65,7 +70,6 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     final planning = ref.watch(calendarPlanningProvider);
     final planningNotifier = ref.read(calendarPlanningProvider.notifier);
     final isMobileShell = ConfidiaMobileShell.isMobileShell(context);
-    const fabClearance = 56.0;
 
     return Stack(
       children: [
@@ -74,44 +78,65 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           return SingleChildScrollView(
             padding: ConfidiaInsets.pageWithExtra(
               context,
-              extraBottom: isMobileShell ? fabClearance : 0,
+              extraBottom: isMobileShell ? ConfidiaMobileShell.fabScrollClearance() : 0,
             ),
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight - ConfidiaSpacing.lg * 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                Stack(
+                  alignment: Alignment.center,
                   children: [
-                    Expanded(
-                      child: _ViewSelector(
-                        view: _view,
-                        onChanged: (v) {
-                          setState(() => _view = v);
-                          ref.read(calendarViewProvider.notifier).state = v;
-                        },
-                      ),
+                    _ViewSelector(
+                      view: _view,
+                      onChanged: (v) {
+                        setState(() => _view = v);
+                        ref.read(calendarViewProvider.notifier).state = v;
+                      },
                     ),
-                    if (!isMobileShell) ...[
-                      const SizedBox(width: ConfidiaSpacing.sm),
-                      ConfidiaGlowButton(
-                        label: 'Événement',
-                        icon: Icons.add_rounded,
-                        onPressed: () => showEventFormSheet(context, initialDay: _selectedDay),
-                      ),
-                    ],
+                    Row(
+                      children: [
+                        const Spacer(),
+                        Semantics(
+                          button: true,
+                          label: 'Filtres',
+                          child: ConfidiaGlowChip(
+                            label: '',
+                            icon: _filtersOpen
+                                ? Icons.expand_less_rounded
+                                : Icons.filter_list_rounded,
+                            selected: _filtersOpen || filter != null,
+                            onTap: () => setState(() => _filtersOpen = !_filtersOpen),
+                          ),
+                        ),
+                        if (!isMobileShell) ...[
+                          const SizedBox(width: ConfidiaSpacing.sm),
+                          ConfidiaGlowButton(
+                            label: 'Événement',
+                            icon: Icons.add_rounded,
+                            onPressed: () => showEventFormSheet(context, initialDay: _selectedDay),
+                          ),
+                        ],
+                      ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: ConfidiaSpacing.sm),
-                const _CalendarGroupBar(),
-                const SizedBox(height: ConfidiaSpacing.sm),
-                const _ConnectedCalendarsBar(),
-                const SizedBox(height: ConfidiaSpacing.sm),
-                _TypeLegend(
-                    selected: filter,
-                    onSelected: (t) => ref.read(calendarFilterProvider.notifier).state = t,
-                  ),
+                AnimatedSize(
+                  duration: AppDurations.medium,
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: _filtersOpen
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: ConfidiaSpacing.sm),
+                          child: _CalendarFiltersPanel(
+                            selectedType: filter,
+                            onTypeSelected: (t) =>
+                                ref.read(calendarFilterProvider.notifier).state = t,
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
                   const SizedBox(height: ConfidiaSpacing.md),
                   if (isWide)
                     Row(
@@ -236,7 +261,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
           ),
           markersMaxCount: 4,
           markerSize: 6,
-          markerMargin: const EdgeInsets.symmetric(horizontal: 1),
+          markerMargin: const EdgeInsets.symmetric(horizontal: 4),
           outsideDaysVisible: false,
         ),
         calendarBuilders: CalendarBuilders(
@@ -294,16 +319,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                 final isSelected = isSameDay(day, _selectedDay);
                 return Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
                     child: Material(
                       color: isSelected ? context.palette.primary.withValues(alpha: 0.08) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
+                      clipBehavior: Clip.antiAlias,
                       child: InkWell(
                         onTap: () => setState(() => _selectedDay = day),
-                        borderRadius: BorderRadius.circular(10),
+                        mouseCursor: SystemMouseCursors.click,
+                        borderRadius: BorderRadius.circular(8),
                         child: Container(
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(8),
                             border: Border.all(
                               color: isToday ? context.palette.primary : ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark),
                             ),
@@ -311,7 +338,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                           child: Column(
                             children: [
                               Padding(
-                                padding: const EdgeInsets.all(6),
+                                padding: const EdgeInsets.all(8),
                                 child: Text(
                                   DateFormat('E\nd', 'fr_FR').format(day),
                                   textAlign: TextAlign.center,
@@ -323,18 +350,21 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                               ),
                               Expanded(
                                 child: ListView(
-                                  padding: const EdgeInsets.all(2),
+                                  padding: const EdgeInsets.all(4),
                                   children: dayEvents
                                       .map((e) {
                                         final typeColor = eventColor(e, context.palette);
-                                        return GestureDetector(
+                                        final chipRadius = BorderRadius.circular(8);
+                                        return ConfidiaTappable(
                                           onTap: () => showEventDetailSheet(context, event: e),
+                                          pressScale: 0.97,
+                                          borderRadius: chipRadius,
                                           child: Container(
-                                            margin: const EdgeInsets.only(bottom: 2),
-                                            padding: const EdgeInsets.only(left: 4, right: 3, top: 3, bottom: 3),
+                                            margin: const EdgeInsets.only(bottom: 4),
+                                            padding: const EdgeInsets.only(left: 4, right: 4, top: 4, bottom: 4),
                                             decoration: BoxDecoration(
                                               color: typeColor.withValues(alpha: 0.14),
-                                              borderRadius: BorderRadius.circular(4),
+                                              borderRadius: chipRadius,
                                               border: Border(left: BorderSide(color: typeColor, width: 2)),
                                             ),
                                             child: Text(
@@ -411,101 +441,520 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   }
 }
 
-class _CalendarGroupBar extends ConsumerWidget {
-  const _CalendarGroupBar();
+class _CalendarFiltersPanel extends ConsumerWidget {
+  final EventType? selectedType;
+  final ValueChanged<EventType?> onTypeSelected;
+
+  const _CalendarFiltersPanel({
+    required this.selectedType,
+    required this.onTypeSelected,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final active = ref.watch(activeCalendarGroupsProvider);
+    final secondary = AppColors.textSecondary(isDark);
+    final typeLabel = selectedType == null
+        ? 'Tous les types'
+        : configFor(selectedType!, context.palette).label;
+    final agendaLabel = active.length == 1
+        ? calendarGroups.firstWhere((g) => g.id == active.first).label
+        : '${active.length} agendas';
 
     return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Row(
             children: [
-              Icon(Icons.calendar_month_rounded, size: 16, color: context.palette.secondary),
-              const SizedBox(width: 8),
-              Text('Agendas CONFIDIA', style: Theme.of(context).textTheme.labelLarge),
+              Text(
+                'Filtres',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: -0.2,
+                    ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  '$agendaLabel · $typeLabel',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: secondary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+              ),
+              if (selectedType != null || active.length != 1 || !active.contains('family'))
+                ConfidiaTappable(
+                  onTap: () {
+                    ref.read(calendarFilterProvider.notifier).state = null;
+                    ref.read(activeCalendarGroupsProvider.notifier).state = {'family'};
+                    ref.read(calendarPlanningProvider.notifier).clear();
+                  },
+                  borderRadius: AppRadius.smAll,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    child: Text(
+                      'Réinitialiser',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: context.palette.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                    ),
+                  ),
+                ),
             ],
           ),
-          const SizedBox(height: 8),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: calendarGroups.map((g) {
-              final selected = active.contains(g.id);
-              return ConfidiaGlowChip(
-                label: g.label,
-                icon: g.id == 'family' ? Icons.family_restroom_rounded : Icons.sports_soccer_rounded,
-                selected: selected,
-                onTap: () {
-                  final next = Set<String>.from(active);
-                  if (selected) {
-                    if (next.length > 1) next.remove(g.id);
-                  } else {
-                    next.add(g.id);
-                  }
-                  ref.read(activeCalendarGroupsProvider.notifier).state = next;
-                  ref.read(calendarPlanningProvider.notifier).clear();
-                },
-              );
-            }).toList(),
-          ),
-          if (active.length > 1)
-            Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                'Analyse IA disponible sur les ${active.length} agendas sélectionnés',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: context.palette.primary),
-              ),
+          const SizedBox(height: 14),
+          _FilterHairline(isDark: isDark),
+          const SizedBox(height: 16),
+          _FilterSectionLabel(label: 'Agendas Confidia', icon: Icons.calendar_month_rounded),
+          const SizedBox(height: 10),
+          const _AgendaSelector(),
+          if (active.length > 1) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Analyse IA sur les ${active.length} agendas sélectionnés',
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: secondary),
             ),
+          ],
+          const SizedBox(height: 18),
+          _FilterHairline(isDark: isDark),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Expanded(
+                child: _FilterSectionLabel(
+                  label: 'Sources connectées',
+                  icon: Icons.cloud_sync_rounded,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.smAll,
+                  color: ConfidiaColors.success.withValues(alpha: isDark ? 0.14 : 0.1),
+                  border: Border.all(
+                    color: ConfidiaColors.success.withValues(alpha: 0.28),
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: ConfidiaColors.success,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Vue fusionnée',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: ConfidiaColors.success,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                            letterSpacing: 0.2,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const _ConnectedSourcesRow(),
+          const SizedBox(height: 18),
+          _FilterHairline(isDark: isDark),
+          const SizedBox(height: 16),
+          const _FilterSectionLabel(label: 'Type d\'événement', icon: Icons.tune_rounded),
+          const SizedBox(height: 12),
+          _TypeFilterRow(selected: selectedType, onSelected: onTypeSelected),
         ],
       ),
     );
   }
 }
 
-class _ConnectedCalendarsBar extends StatelessWidget {
-  const _ConnectedCalendarsBar();
+class _FilterHairline extends StatelessWidget {
+  final bool isDark;
+
+  const _FilterHairline({required this.isDark});
 
   @override
   Widget build(BuildContext context) {
-    return GlassCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.sync_rounded, size: 16, color: context.palette.secondary),
-              const SizedBox(width: 8),
-              Text('Calendriers connectés', style: Theme.of(context).textTheme.labelLarge),
-              const Spacer(),
-              Text(
-                'Vue fusionnée',
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: context.palette.primary,
-                      fontWeight: FontWeight.w600,
-                    ),
+    return Container(
+      height: 1,
+      color: AppColors.borderInk(isDark).withValues(alpha: AppOpacity.borderSubtle),
+    );
+  }
+}
+
+class _FilterSectionLabel extends StatelessWidget {
+  final String label;
+  final IconData icon;
+
+  const _FilterSectionLabel({required this.label, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final secondary = AppColors.textSecondary(isDark);
+
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: secondary.withValues(alpha: 0.85)),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: secondary,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.15,
+                fontSize: 11,
               ),
+        ),
+      ],
+    );
+  }
+}
+
+class _AgendaSelector extends ConsumerWidget {
+  const _AgendaSelector();
+
+  IconData _iconFor(String id) => switch (id) {
+        'family' => Icons.family_restroom_rounded,
+        'club' => Icons.sports_soccer_rounded,
+        _ => Icons.calendar_today_rounded,
+      };
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final active = ref.watch(activeCalendarGroupsProvider);
+    final ink = isDark ? Colors.white : Colors.black;
+
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.mdAll,
+        color: ink.withValues(alpha: isDark ? 0.05 : 0.04),
+        border: Border.fromBorderSide(AppBorders.standard(isDark)),
+      ),
+      child: Row(
+        children: calendarGroups.map((g) {
+          final selected = active.contains(g.id);
+          return Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: AppRadius.smAll,
+                clipBehavior: Clip.antiAlias,
+                child: InkWell(
+                  onTap: () {
+                    final next = Set<String>.from(active);
+                    if (selected) {
+                      if (next.length > 1) next.remove(g.id);
+                    } else {
+                      next.add(g.id);
+                    }
+                    ref.read(activeCalendarGroupsProvider.notifier).state = next;
+                    ref.read(calendarPlanningProvider.notifier).clear();
+                  },
+                  borderRadius: AppRadius.smAll,
+                  hoverColor: ink.withValues(
+                    alpha: isDark ? AppOpacity.hoverInkDark : AppOpacity.hoverInkLight,
+                  ),
+                  child: AnimatedContainer(
+                    duration: AppDurations.quick,
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      borderRadius: AppRadius.smAll,
+                      color: selected ? AppColors.surface2(isDark) : Colors.transparent,
+                      border: Border.all(
+                        color: selected
+                            ? AppColors.borderInk(isDark).withValues(alpha: AppOpacity.borderMedium)
+                            : Colors.transparent,
+                      ),
+                      boxShadow: selected
+                          ? [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ]
+                          : null,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          _iconFor(g.id),
+                          size: 16,
+                          color: selected
+                              ? AppColors.textPrimary(isDark)
+                              : AppColors.textSecondary(isDark),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          g.label,
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                                color: selected
+                                    ? AppColors.textPrimary(isDark)
+                                    : AppColors.textSecondary(isDark),
+                              ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _ConnectedSourcesRow extends StatelessWidget {
+  const _ConnectedSourcesRow();
+
+  @override
+  Widget build(BuildContext context) {
+    final sources = MockEcosystem.connectedCalendars;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final gap = 8.0;
+        final tileWidth = ((constraints.maxWidth - gap * (sources.length - 1)) / sources.length)
+            .clamp(72.0, 120.0);
+
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (var i = 0; i < sources.length; i++) ...[
+                if (i > 0) SizedBox(width: gap),
+                SizedBox(
+                  width: tileWidth,
+                  child: _ConnectedSourceTile(
+                    source: sources[i].$1,
+                    eventCount: sources[i].$3,
+                  ),
+                ),
+              ],
             ],
           ),
-          const SizedBox(height: 8),
-          SizedBox(
+        );
+      },
+    );
+  }
+}
+
+class _ConnectedSourceTile extends StatelessWidget {
+  final CalendarSource source;
+  final int eventCount;
+
+  const _ConnectedSourceTile({
+    required this.source,
+    required this.eventCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final color = source.themeColor(context.palette);
+    final secondary = AppColors.textSecondary(isDark);
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(10, 12, 10, 10),
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.mdAll,
+        color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.04 : 0.03),
+        border: Border.fromBorderSide(AppBorders.standard(isDark)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 28,
             height: 28,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: MockEcosystem.connectedCalendars
-                  .map((c) => Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: CalendarSourceChip(source: c.$1, compact: true),
-                      ))
-                  .toList(),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.smAll,
+              color: color.withValues(alpha: isDark ? 0.16 : 0.1),
+            ),
+            child: BrandIcon(
+              assetPath: source.logoAsset,
+              fallbackIcon: Icons.calendar_month_rounded,
+              fallbackColor: color,
+              size: 14,
+              borderRadius: 4,
             ),
           ),
+          const SizedBox(height: 10),
+          Text(
+            source.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary(isDark),
+                ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            '$eventCount évts',
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  fontSize: 10,
+                  color: secondary,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
         ],
+      ),
+    );
+  }
+}
+
+class _TypeFilterRow extends StatelessWidget {
+  final EventType? selected;
+  final ValueChanged<EventType?> onSelected;
+
+  const _TypeFilterRow({required this.selected, required this.onSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final configs = eventTypeConfigs(context.palette);
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      clipBehavior: Clip.none,
+      child: Row(
+        children: [
+          _TypeFilterChip(
+            label: 'Tous',
+            selected: selected == null,
+            onTap: () => onSelected(null),
+          ),
+          const SizedBox(width: 8),
+          for (var i = 0; i < configs.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            _TypeFilterChip(
+              label: configs[i].label,
+              icon: configs[i].icon,
+              accent: configs[i].color,
+              selected: selected == configs[i].type,
+              onTap: () => onSelected(configs[i].type),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _TypeFilterChip extends StatefulWidget {
+  final String label;
+  final IconData? icon;
+  final Color? accent;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _TypeFilterChip({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    this.icon,
+    this.accent,
+  });
+
+  @override
+  State<_TypeFilterChip> createState() => _TypeFilterChipState();
+}
+
+class _TypeFilterChipState extends State<_TypeFilterChip> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = isDark ? Colors.white : Colors.black;
+    final accent = widget.accent;
+    final selected = widget.selected;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: AppRadius.mdAll,
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: widget.onTap,
+          borderRadius: AppRadius.mdAll,
+          hoverColor: ink.withValues(
+            alpha: isDark ? AppOpacity.hoverInkDark : AppOpacity.hoverInkLight,
+          ),
+          child: AnimatedContainer(
+            duration: AppDurations.quick,
+            curve: Curves.easeOutCubic,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+            decoration: BoxDecoration(
+              borderRadius: AppRadius.mdAll,
+              color: selected
+                  ? AppColors.surface2(isDark)
+                  : _hovered
+                      ? ink.withValues(alpha: isDark ? 0.06 : 0.04)
+                      : (isDark ? AppColors.darkSurface0 : AppColors.lightSurface1),
+              border: Border.fromBorderSide(
+                selected
+                    ? AppBorders.standard(isDark, alpha: AppOpacity.borderMedium)
+                    : AppBorders.standard(isDark),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (accent != null) ...[
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      color: accent,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ] else if (widget.icon != null) ...[
+                  Icon(widget.icon, size: 14, color: AppColors.textSecondary(isDark)),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  widget.label,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                        color: selected
+                            ? AppColors.textPrimary(isDark)
+                            : AppColors.textSecondary(isDark),
+                      ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -529,35 +978,6 @@ class _ViewSelector extends StatelessWidget {
       value: view,
       segments: _segments,
       onChanged: onChanged,
-    );
-  }
-}
-
-class _TypeLegend extends StatelessWidget {
-  final EventType? selected;
-  final ValueChanged<EventType?> onSelected;
-
-  const _TypeLegend({required this.selected, required this.onSelected});
-
-  @override
-  Widget build(BuildContext context) {
-    return ConfidiaGlowChipScroll(
-      children: [
-        ConfidiaGlowChip(
-          label: 'Tous',
-          selected: selected == null,
-          onTap: () => onSelected(null),
-        ),
-        ...eventTypeConfigs(context.palette).map(
-          (cfg) => ConfidiaGlowChip(
-            label: cfg.label,
-            icon: cfg.icon,
-            accentColor: cfg.color,
-            selected: selected == cfg.type,
-            onTap: () => onSelected(cfg.type),
-          ),
-        ),
-      ],
     );
   }
 }
@@ -597,42 +1017,39 @@ class _DayEventMarkers extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final visible = events.take(4).toList();
+    final visible = events.take(3).toList();
     final overflow = events.length - visible.length;
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        for (final event in visible)
-          Container(
-            width: 6,
-            height: 6,
-            margin: const EdgeInsets.symmetric(horizontal: 1),
-            decoration: BoxDecoration(
-              color: eventColor(event, context.palette),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: eventColor(event, context.palette).withValues(alpha: 0.35),
-                  blurRadius: 2,
-                ),
-              ],
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (final event in visible)
+            Container(
+              width: 6,
+              height: 6,
+              margin: const EdgeInsets.symmetric(horizontal: 1),
+              decoration: BoxDecoration(
+                color: eventColor(event, context.palette),
+                shape: BoxShape.circle,
+              ),
             ),
-          ),
-        if (overflow > 0)
-          Padding(
-            padding: const EdgeInsets.only(left: 2),
-            child: Text(
-              '+$overflow',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    fontSize: 7,
-                    fontWeight: FontWeight.w700,
-                    color: ConfidiaColors.textSecondary(isDark),
-                  ),
+          if (overflow > 0)
+            Padding(
+              padding: const EdgeInsets.only(left: 2),
+              child: Text(
+                '+$overflow',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      fontSize: 7,
+                      fontWeight: FontWeight.w700,
+                      color: ConfidiaColors.textSecondary(isDark),
+                    ),
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 }
@@ -646,25 +1063,32 @@ class _EventTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final cfg = configFor(event.eventType, context.palette);
+    final fill = isDark ? AppColors.darkSurface0 : AppColors.lightSurface1;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
       child: Material(
-        color: cfg.color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
+        color: fill,
+        shape: RoundedRectangleBorder(
+          borderRadius: AppRadius.mdAll,
+          side: AppBorders.standard(isDark),
+        ),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          mouseCursor: onTap != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+          borderRadius: AppRadius.mdAll,
           child: Padding(
-            padding: EdgeInsets.fromLTRB(10, 10, onDelete != null ? 2 : 10, 10),
+            padding: EdgeInsets.fromLTRB(8, 8, onDelete != null ? 4 : 8, 8),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   width: 4,
                   height: 52,
-                  decoration: BoxDecoration(color: cfg.color, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: cfg.color, borderRadius: BorderRadius.circular(8)),
                 ),
                 const SizedBox(width: ConfidiaSpacing.sm),
                 Expanded(
@@ -672,7 +1096,7 @@ class _EventTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Wrap(
-                        spacing: 6,
+                        spacing: 8,
                         runSpacing: 4,
                         crossAxisAlignment: WrapCrossAlignment.center,
                         children: [
@@ -690,7 +1114,7 @@ class _EventTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(event.title, style: Theme.of(context).textTheme.titleSmall),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                         event.allDay
                             ? 'Toute la journée'

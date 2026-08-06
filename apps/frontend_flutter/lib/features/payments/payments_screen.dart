@@ -117,12 +117,12 @@ class _SummaryBanner extends StatelessWidget {
               children: [
                 Text('Montant total à régler', style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 4),
-                ShaderMask(
-                  shaderCallback: (b) => context.palette.brandGradient.createShader(b),
-                  child: Text(
-                    '${total.toStringAsFixed(2)} €',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w800),
-                  ),
+                Text(
+                  '${total.toStringAsFixed(2)} €',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        color: ConfidiaColors.textPrimary(Theme.of(context).brightness == Brightness.dark),
+                        fontWeight: FontWeight.w800,
+                      ),
                 ),
                 Text('$count paiement${count > 1 ? 's' : ''} en attente', style: Theme.of(context).textTheme.bodySmall),
               ],
@@ -135,7 +135,12 @@ class _SummaryBanner extends StatelessWidget {
                 Text('Prochaine échéance', style: Theme.of(context).textTheme.bodySmall),
                 const SizedBox(height: 4),
                 Text(next!.creditor, style: Theme.of(context).textTheme.titleSmall),
-                Text(DateFormat('d MMM yyyy', 'fr_FR').format(next!.dueDate), style: Theme.of(context).textTheme.labelMedium?.copyWith(color: context.palette.primary)),
+                Text(
+                  DateFormat('d MMM yyyy', 'fr_FR').format(next!.dueDate),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+                      ),
+                ),
               ],
             ),
         ],
@@ -158,7 +163,7 @@ class _PaymentList extends StatelessWidget {
     return ListView.separated(
       padding: ConfidiaInsets.page(context),
       itemCount: payments.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, i) {
         final stagger = ConfidiaPageRevealTiming.staggerCount(
           context,
@@ -188,6 +193,7 @@ class _PaymentCard extends StatelessWidget {
     return Material(
       color: isDark ? ConfidiaColors.darkSurfaceVariant.withValues(alpha: 0.5) : Colors.white,
       borderRadius: BorderRadius.circular(16),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.go('/payments/${payment.id}'),
         borderRadius: BorderRadius.circular(16),
@@ -205,11 +211,11 @@ class _PaymentCard extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [payment.status.themeColor(context.palette).withValues(alpha: 0.2), payment.status.themeColor(context.palette).withValues(alpha: 0.05)]),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(payment.icon, color: payment.status.themeColor(context.palette)),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -222,7 +228,7 @@ class _PaymentCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               StatusBadge(label: payment.status.label, color: payment.status.themeColor(context.palette)),
               const SizedBox(width: 12),
               Text(payment.amountFormatted, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),

@@ -38,9 +38,9 @@ class _ConfidiaAnimatedLogoState extends State<ConfidiaAnimatedLogo> with Single
   double _ringDiameter() {
     if (!widget.showText) return widget.size * 1.65;
 
-    final blockWidth = ConfidiaBrandMetrics.brandBlockWidth(widget.size);
-    final blockHeight = ConfidiaBrandMetrics.brandBlockHeight(widget.size);
-    return math.sqrt(blockWidth * blockWidth + blockHeight * blockHeight) * 1.2;
+    final blockWidth = ConfidiaBrandMetrics.brandBlockWidth(widget.size, showText: true);
+    final blockHeight = ConfidiaBrandMetrics.brandBlockHeight(widget.size, showText: true);
+    return math.sqrt(blockWidth * blockWidth + blockHeight * blockHeight) * 1.05;
   }
 
   Widget _buildRing(double ringSize, double pulse, double ringAngle) {

@@ -11,7 +11,7 @@ abstract final class ConfidiaAiAssets {
       palette.id == ConfidiaPaletteId.rose ? pink : blue;
 }
 
-/// Logo assistant IA : PNG fixe par thème, halo circulaire pulsant quand [speaking].
+/// Logo assistant IA : PNG fixe par thème, halo gris discret quand [speaking].
 class ConfidiaAiRobot extends StatefulWidget {
   final double size;
   final bool speaking;
@@ -68,11 +68,9 @@ class _ConfidiaAiRobotState extends State<ConfidiaAiRobot> with SingleTickerProv
       animation: _pulse,
       builder: (context, child) {
         final t = widget.speaking ? _pulse.value : 0.0;
-        final haloSize = widget.size * (1.05 + t * 0.18);
-        final primaryAlpha = (isDark ? 0.07 : 0.09) + t * (isDark ? 0.06 : 0.08);
-        final secondaryAlpha = (isDark ? 0.05 : 0.07) + t * (isDark ? 0.05 : 0.06);
-        // Marge pour que le blur du halo ne soit pas coupé par le SizedBox parent.
-        final glowPad = widget.speaking ? widget.size * 0.55 : pad;
+        final haloSize = widget.size * (1.05 + t * 0.12);
+        final haloAlpha = t * (isDark ? 0.08 : 0.06);
+        final glowPad = widget.speaking ? widget.size * 0.4 : pad;
 
         return SizedBox(
           width: widget.size + glowPad * 2,
@@ -89,13 +87,9 @@ class _ConfidiaAiRobotState extends State<ConfidiaAiRobot> with SingleTickerProv
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: palette.primary.withValues(alpha: primaryAlpha),
-                        blurRadius: widget.size * 0.42,
-                        spreadRadius: widget.size * 0.02,
-                      ),
-                      BoxShadow(
-                        color: palette.secondary.withValues(alpha: secondaryAlpha),
-                        blurRadius: widget.size * 0.28,
+                        color: (isDark ? Colors.white : const Color(0xFF94A3B8))
+                            .withValues(alpha: haloAlpha),
+                        blurRadius: widget.size * 0.36,
                         spreadRadius: 0,
                       ),
                     ],
@@ -115,7 +109,7 @@ class _ConfidiaAiRobotState extends State<ConfidiaAiRobot> with SingleTickerProv
         errorBuilder: (_, __, ___) => Icon(
           Icons.smart_toy_rounded,
           size: widget.size * 0.72,
-          color: palette.primary,
+          color: isDark ? Colors.white70 : Colors.black54,
         ),
       ),
     );

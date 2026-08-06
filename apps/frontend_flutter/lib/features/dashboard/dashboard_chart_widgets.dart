@@ -3,18 +3,24 @@ import 'dart:ui';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/widgets/confidia_chart_card.dart';
 import '../../shared/widgets/confidia_chart_tooltips.dart';
+import '../../shared/widgets/confidia_tappable.dart';
 import '../../shared/widgets/premium_bar_rod.dart';
 import '../../shared/widgets/premium_chart_motion.dart';
 import '../../shared/widgets/premium_chart_stage.dart';
 import '../../shared/widgets/premium_donut_chart.dart';
 import '../payments/payments_provider.dart';
 import 'dashboard_chart_data.dart';
+
+void _openDocumentsCategory(BuildContext context, String category) {
+  context.go('/documents?category=${Uri.encodeComponent(category)}');
+}
 
 Widget _chartArea(
   Widget chart, {
@@ -73,7 +79,7 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
               final lineAlpha = 1.0 - 0.25 * motion.focus;
 
               return Padding(
-                padding: const EdgeInsets.only(top: 4, right: 2),
+                padding: const EdgeInsets.only(top: 4, right: 4),
                 child: LineChart(
                   duration: Duration.zero,
                   LineChartData(
@@ -109,7 +115,7 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
                             if (i < 0 || i >= points.length) return const SizedBox.shrink();
                             final active = _touchedIndex == i;
                             return Padding(
-                              padding: const EdgeInsets.only(top: 6),
+                              padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 points[i].label,
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -233,6 +239,7 @@ class _DocumentsCategoryChartWidgetState extends State<DocumentsCategoryChartWid
                 baseOpacity: _touchedIndex != null ? 0.22 : 0.38,
                 onSectionEnter: (index) => setState(() => _touchedIndex = index),
                 onSectionExit: () => setState(() => _touchedIndex = null),
+                onSectionTap: (index) => _openDocumentsCategory(context, slices[index].label),
                 center: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -267,6 +274,7 @@ class _DocumentsCategoryChartWidgetState extends State<DocumentsCategoryChartWid
                 highlightedIndex: _touchedIndex,
                 onHover: (index) => setState(() => _touchedIndex = index),
                 onExit: () => setState(() => _touchedIndex = null),
+                onSelect: (index) => _openDocumentsCategory(context, slices[index].label),
               ),
             ),
           ],
@@ -283,6 +291,7 @@ class _CategoryBreakdownList extends StatelessWidget {
   final int? highlightedIndex;
   final ValueChanged<int> onHover;
   final VoidCallback onExit;
+  final ValueChanged<int> onSelect;
 
   const _CategoryBreakdownList({
     required this.slices,
@@ -291,6 +300,7 @@ class _CategoryBreakdownList extends StatelessWidget {
     required this.highlightedIndex,
     required this.onHover,
     required this.onExit,
+    required this.onSelect,
   });
 
   @override
@@ -299,7 +309,7 @@ class _CategoryBreakdownList extends StatelessWidget {
       padding: EdgeInsets.zero,
       physics: const BouncingScrollPhysics(),
       itemCount: slices.length,
-      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      separatorBuilder: (_, __) => const SizedBox(height: 8),
       itemBuilder: (context, i) {
         final slice = slices[i];
         final pct = total == 0 ? 0.0 : slice.value / total;
@@ -308,16 +318,20 @@ class _CategoryBreakdownList extends StatelessWidget {
         return MouseRegion(
           onEnter: (_) => onHover(i),
           onExit: (_) => onExit(),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
+          child: ConfidiaTappable(
+            onTap: () => onSelect(i),
+            pressScale: 0.98,
+            borderRadius: BorderRadius.circular(8),
+            child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 220),
                 curve: Curves.easeOut,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(8),
                   color: active
                       ? (isDark ? Colors.black : Colors.white).withValues(alpha: isDark ? 0.42 : 0.72)
                       : (isDark ? Colors.black : Colors.white).withValues(alpha: isDark ? 0.28 : 0.52),
@@ -357,7 +371,7 @@ class _CategoryBreakdownList extends StatelessWidget {
                           ),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(12),
                             color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.07 : 0.05),
@@ -373,7 +387,7 @@ class _CategoryBreakdownList extends StatelessWidget {
                                 ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
                         Text(
                           '${(pct * 100).round()}%',
                           style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -383,11 +397,11 @@ class _CategoryBreakdownList extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 7),
+                    const SizedBox(height: 8),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
+                      borderRadius: BorderRadius.circular(8),
                       child: SizedBox(
-                        height: 3,
+                        height: 4,
                         child: Stack(
                           children: [
                             Container(color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06)),
@@ -410,6 +424,7 @@ class _CategoryBreakdownList extends StatelessWidget {
                 ),
               ),
             ),
+          ),
           ),
         );
       },
@@ -465,7 +480,7 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
             hasFocus: hasFocus,
             builder: (context, motion) {
               return Padding(
-                padding: const EdgeInsets.only(top: 4, right: 2),
+                padding: const EdgeInsets.only(top: 4, right: 4),
                 child: BarChart(
                   duration: Duration.zero,
                   BarChartData(
@@ -500,7 +515,7 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
                             if (i < 0 || i >= months.length) return const SizedBox.shrink();
                             final active = _touchedGroup == i;
                             return Padding(
-                              padding: const EdgeInsets.only(top: 6),
+                              padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 months[i].label,
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -630,7 +645,7 @@ class _PaymentsOverviewChartWidgetState extends ConsumerState<PaymentsOverviewCh
             hasFocus: hasFocus,
             builder: (context, motion) {
               return Padding(
-                padding: const EdgeInsets.only(top: 6, right: 2),
+                padding: const EdgeInsets.only(top: 8, right: 4),
                 child: BarChart(
                   duration: Duration.zero,
                   BarChartData(
@@ -682,7 +697,7 @@ class _PaymentsOverviewChartWidgetState extends ConsumerState<PaymentsOverviewCh
                             if (i < 0 || i >= slices.length) return const SizedBox.shrink();
                             final active = _touchedIndex == i;
                             return Padding(
-                              padding: const EdgeInsets.only(top: 6),
+                              padding: const EdgeInsets.only(top: 8),
                               child: Text(
                                 slices[i].label,
                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -731,7 +746,7 @@ class _PaymentsOverviewChartWidgetState extends ConsumerState<PaymentsOverviewCh
                             isActive: !hasFocus || _touchedIndex == i,
                             motion: motion,
                             width: 20,
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(9)),
+                            borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
                           ),
                         ],
                       ),

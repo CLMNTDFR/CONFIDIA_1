@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
+import 'confidia_tappable.dart';
 
-/// Interrupteur premium compact  -  transparence, reflet et léger glow.
-class ConfidiaSwitch extends StatefulWidget {
+/// Interrupteur compact  -  piste discrète, pouce calme.
+class ConfidiaSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
 
@@ -14,11 +14,6 @@ class ConfidiaSwitch extends StatefulWidget {
     this.onChanged,
   });
 
-  @override
-  State<ConfidiaSwitch> createState() => _ConfidiaSwitchState();
-}
-
-class _ConfidiaSwitchState extends State<ConfidiaSwitch> {
   static const _trackW = 36.0;
   static const _trackH = 20.0;
   static const _thumb = 14.0;
@@ -27,50 +22,29 @@ class _ConfidiaSwitchState extends State<ConfidiaSwitch> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final enabled = widget.onChanged != null;
-    final on = widget.value;
+    final enabled = onChanged != null;
+    final on = value;
+    final ink = isDark ? Colors.white : Colors.black;
 
-    return GestureDetector(
-      onTap: enabled ? () => widget.onChanged!(!on) : null,
+    return ConfidiaTappable(
+      onTap: enabled ? () => onChanged!(!on) : null,
+      pressScale: 0.94,
+      borderRadius: AppRadius.pillAll,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 220),
         curve: Curves.easeOutCubic,
         width: _trackW,
         height: _trackH,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(_trackH / 2),
-          gradient: on
-              ? LinearGradient(
-                  colors: [
-                    context.palette.primary.withValues(alpha: enabled ? 0.95 : 0.5),
-                    context.palette.secondary.withValues(alpha: enabled ? 0.85 : 0.45),
-                  ],
-                )
-              : null,
+          borderRadius: AppRadius.pillAll,
           color: on
-              ? null
-              : (isDark ? Colors.white : Colors.black).withValues(alpha: enabled ? 0.08 : 0.05),
+              ? ink.withValues(alpha: enabled ? (isDark ? 0.34 : 0.22) : 0.14)
+              : ink.withValues(alpha: enabled ? 0.08 : 0.05),
           border: Border.all(
             color: on
-                ? context.palette.secondary.withValues(
-                    alpha: enabled ? AppOpacity.borderFocus : AppOpacity.borderStrong,
-                  )
+                ? ink.withValues(alpha: isDark ? 0.45 : 0.28)
                 : AppBorders.standard(isDark).color,
           ),
-          boxShadow: on && enabled
-              ? [
-                  BoxShadow(
-                    color: context.palette.primary.withValues(alpha: 0.35),
-                    blurRadius: 10,
-                    spreadRadius: -2,
-                  ),
-                  BoxShadow(
-                    color: context.palette.secondary.withValues(alpha: 0.2),
-                    blurRadius: 6,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
         ),
         child: AnimatedAlign(
           duration: const Duration(milliseconds: 220),
@@ -82,20 +56,15 @@ class _ConfidiaSwitchState extends State<ConfidiaSwitch> {
             margin: const EdgeInsets.symmetric(horizontal: _pad),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white.withValues(alpha: enabled ? 0.98 : 0.7),
+              color: on
+                  ? Colors.white
+                  : (isDark ? Colors.white : Colors.black).withValues(alpha: enabled ? 0.55 : 0.35),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.15),
-                  blurRadius: 4,
+                  color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.12),
+                  blurRadius: 3,
                   offset: const Offset(0, 1),
                 ),
-                if (on)
-                  BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.55),
-                    blurRadius: 2,
-                    spreadRadius: -1,
-                    offset: const Offset(-1, -1),
-                  ),
               ],
             ),
           ),
@@ -124,30 +93,44 @@ class ConfidiaSwitchTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onChanged != null ? () => onChanged!(!value) : null,
-      child: Padding(
-        padding: contentPadding ?? const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(subtitle!, style: Theme.of(context).textTheme.labelSmall),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final ink = (isDark ? Colors.white : Colors.black).withValues(
+      alpha: isDark ? AppOpacity.hoverInkDark : AppOpacity.hoverInkLight,
+    );
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: AppRadius.mdAll,
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onChanged != null ? () => onChanged!(!value) : null,
+        mouseCursor: onChanged != null ? SystemMouseCursors.click : SystemMouseCursors.basic,
+        borderRadius: AppRadius.mdAll,
+        hoverColor: ink,
+        splashColor: ink.withValues(alpha: AppOpacity.quiet),
+        child: Padding(
+          padding: contentPadding ?? const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(subtitle!, style: Theme.of(context).textTheme.labelSmall),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            ConfidiaSwitch(value: value, onChanged: onChanged),
-          ],
+              const SizedBox(width: 12),
+              ConfidiaSwitch(value: value, onChanged: onChanged),
+            ],
+          ),
         ),
       ),
     );

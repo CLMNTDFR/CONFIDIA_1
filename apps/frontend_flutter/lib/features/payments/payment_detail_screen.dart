@@ -103,7 +103,7 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
                         if (payment.documentId != null)
                           _LinkTile(
                             icon: Icons.description_rounded,
-                            color: context.palette.primary,
+                            color: ConfidiaColors.textSecondary(isDark),
                             title: 'Document lié',
                             subtitle: 'Consulter la fiche documentaire',
                             onTap: () => context.go('/documents/${payment.documentId}'),
@@ -113,7 +113,7 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
                         if (payment.emailId != null)
                           _LinkTile(
                             icon: Icons.mail_rounded,
-                            color: context.palette.secondary,
+                            color: ConfidiaColors.textSecondary(isDark),
                             title: 'Email source',
                             subtitle: 'Ouvrir dans la messagerie',
                             onTap: () => context.go('/messaging/${payment.emailId}'),
@@ -134,7 +134,7 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
                           color: ConfidiaColors.success.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(10),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         child: const Icon(Icons.check_circle_rounded, color: ConfidiaColors.success, size: 20),
                       ),
@@ -209,7 +209,7 @@ class _PaymentHeroCard extends StatelessWidget {
     return GlassCard(
       highlighted: true,
       clipContent: false,
-      padding: EdgeInsets.fromLTRB(isCompact ? 16 : 20, 18, isCompact ? 16 : 20, 18),
+      padding: EdgeInsets.fromLTRB(isCompact ? 16 : 20, 16, isCompact ? 16 : 20, 16),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -237,10 +237,10 @@ class _PaymentHeroCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _HeroIcon(icon: payment.icon, color: payment.status.themeColor(context.palette)),
-                  const SizedBox(width: 14),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 2),
+                      padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         payment.creditor,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700, height: 1.15),
@@ -249,14 +249,14 @@ class _PaymentHeroCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   StatusBadge(label: payment.status.label, color: payment.status.themeColor(context.palette)),
                 ],
               ),
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const SizedBox(width: 58),
+                  const SizedBox(width: 56),
                   Expanded(
                     child: Text(
                       payment.label,
@@ -289,7 +289,7 @@ class _PaymentHeroCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Center(child: _HeroAmount(amount: payment.amountFormatted)),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         if (dueCaption != null)
@@ -306,7 +306,7 @@ class _PaymentHeroCard extends StatelessWidget {
                             child: _HeroDueBlock(
                               caption: 'Échéance',
                               value: DateFormat('d MMM yyyy', 'fr_FR').format(payment.dueDate),
-                              color: context.palette.accent,
+                              color: ConfidiaColors.textSecondary(isDark),
                               compact: true,
                             ),
                           ),
@@ -341,7 +341,7 @@ class _PaymentHeroCard extends StatelessWidget {
                         child: _HeroDueBlock(
                           caption: 'Échéance',
                           value: DateFormat('d MMM yyyy', 'fr_FR').format(payment.dueDate),
-                          color: context.palette.accent,
+                          color: ConfidiaColors.textSecondary(isDark),
                           compact: true,
                         ),
                       ),
@@ -390,7 +390,7 @@ class _HeroIcon extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(color: color.withValues(alpha: 0.22), blurRadius: 14, offset: const Offset(0, 5)),
         ],
@@ -407,17 +407,15 @@ class _HeroAmount extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ShaderMask(
-      shaderCallback: (b) => context.palette.brandGradient.createShader(b),
-      child: Text(
-        amount,
-        style: Theme.of(context).textTheme.displaySmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-              letterSpacing: -0.5,
-              height: 1,
-            ),
-      ),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Text(
+      amount,
+      style: Theme.of(context).textTheme.displaySmall?.copyWith(
+            color: ConfidiaColors.textPrimary(isDark),
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+            height: 1,
+          ),
     );
   }
 }
@@ -470,11 +468,11 @@ class _HeroMetaChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(maxWidth: 110),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      constraints: const BoxConstraints(maxWidth: 112),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Row(
@@ -512,7 +510,7 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -520,10 +518,10 @@ class _InfoRow extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: context.palette.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(9),
+              color: ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(icon, size: 16, color: context.palette.primary),
+            child: Icon(icon, size: 16, color: ConfidiaColors.textSecondary(isDark)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -531,7 +529,7 @@ class _InfoRow extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label, style: Theme.of(context).textTheme.labelSmall),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600)),
               ],
             ),
@@ -564,15 +562,15 @@ class _LinkTile extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               Container(
-                width: 38,
-                height: 38,
+                width: 40,
+                height: 40,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(11),
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(icon, color: color, size: 18),
               ),

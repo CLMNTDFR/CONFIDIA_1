@@ -302,8 +302,8 @@ abstract final class SerenityService {
 
   static SerenityLevel _resolveLevel(int score) {
     if (score >= 80) return SerenityLevel.excellent;
-    if (score >= 65) return SerenityLevel.good;
-    if (score >= 50) return SerenityLevel.moderate;
+    if (score > 60) return SerenityLevel.good;
+    if (score >= 41) return SerenityLevel.moderate;
     return SerenityLevel.attention;
   }
 

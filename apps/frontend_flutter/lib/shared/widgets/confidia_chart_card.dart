@@ -56,7 +56,7 @@ class ConfidiaChartCard extends StatelessWidget {
         final fillHeight = constraints.hasBoundedHeight && constraints.maxHeight.isFinite;
 
         return GlassCard(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
           clipContent: !allowTooltipOverflow,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +69,7 @@ class ConfidiaChartCard extends StatelessWidget {
                       children: [
                         Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
                         if (subtitle != null) ...[
-                          const SizedBox(height: 2),
+                          const SizedBox(height: 4),
                           Text(subtitle!, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: ConfidiaColors.textSecondary(isDark))),
                         ],
                       ],
@@ -79,13 +79,13 @@ class ConfidiaChartCard extends StatelessWidget {
                 ],
               ),
               if (headerExtras != null && headerExtras!.isNotEmpty) ...[
-                const SizedBox(height: 10),
-                Wrap(spacing: 6, runSpacing: 6, children: headerExtras!),
+                const SizedBox(height: 8),
+                Wrap(spacing: 8, runSpacing: 8, children: headerExtras!),
               ],
               const SizedBox(height: 12),
               if (fillHeight) Expanded(child: chart) else chart,
               if (footer != null) ...[
-                const SizedBox(height: 10),
+                const SizedBox(height: 8),
                 footer!,
               ],
             ],
@@ -117,18 +117,18 @@ class ConfidiaChartMetricChip extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: isDark ? 0.14 : 0.08),
-        borderRadius: BorderRadius.circular(7),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 6,
-            height: 6,
+            width: 8,
+            height: 8,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           Text(
             value != null ? '$label · $value' : label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(

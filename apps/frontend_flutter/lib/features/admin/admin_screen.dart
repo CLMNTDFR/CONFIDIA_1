@@ -4,7 +4,6 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
@@ -16,6 +15,8 @@ class AdminScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authStateProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
 
     if (auth.user?.isAdmin != true) {
       return const Scaffold(
@@ -24,25 +25,25 @@ class AdminScreen extends ConsumerWidget {
     }
 
     return SingleChildScrollView(
-        padding: ConfidiaInsets.page(context),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            ConfidiaPageReveal(
-              index: 0,
-              staggerCount: 3,
-              child: StatsRow(stats: [
-                CompactStat(label: 'Utilisateurs', value: '3', icon: Icons.people_outline, color: context.palette.primary),
-                CompactStat(label: 'Documents', value: '6', icon: Icons.description_outlined, color: context.palette.accent),
-                CompactStat(label: 'Services', value: '3', icon: Icons.cloud_outlined, color: context.palette.secondary),
-                CompactStat(label: 'Uptime', value: '99.9%', icon: Icons.trending_up, color: ConfidiaColors.success),
-              ]),
-            ),
-            const SizedBox(height: ConfidiaSpacing.lg),
-            ConfidiaPageReveal(
-              index: 1,
-              staggerCount: 3,
-              child: Padding(
+      padding: ConfidiaInsets.page(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ConfidiaPageReveal(
+            index: 0,
+            staggerCount: 3,
+            child: StatsRow(stats: [
+              CompactStat(label: 'Utilisateurs', value: '3', icon: Icons.people_outline, color: muted),
+              CompactStat(label: 'Documents', value: '6', icon: Icons.description_outlined, color: muted),
+              CompactStat(label: 'Services', value: '3', icon: Icons.cloud_outlined, color: muted),
+              CompactStat(label: 'Uptime', value: '99.9%', icon: Icons.trending_up, color: ConfidiaColors.success),
+            ]),
+          ),
+          const SizedBox(height: ConfidiaSpacing.lg),
+          ConfidiaPageReveal(
+            index: 1,
+            staggerCount: 3,
+            child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
               child: Card(
                 child: Column(
@@ -63,12 +64,12 @@ class AdminScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            ),
-            const SizedBox(height: ConfidiaSpacing.lg),
-            ConfidiaPageReveal(
-              index: 2,
-              staggerCount: 4,
-              child: Padding(
+          ),
+          const SizedBox(height: ConfidiaSpacing.lg),
+          ConfidiaPageReveal(
+            index: 2,
+            staggerCount: 4,
+            child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
               child: Card(
                 child: Column(
@@ -87,16 +88,16 @@ class AdminScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            ),
-            const SizedBox(height: ConfidiaSpacing.lg),
-            ConfidiaPageReveal(
-              index: 3,
-              staggerCount: 4,
-              child: Padding(
+          ),
+          const SizedBox(height: ConfidiaSpacing.lg),
+          ConfidiaPageReveal(
+            index: 3,
+            staggerCount: 4,
+            child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
               child: Card(
                 child: ListTile(
-                  leading: Icon(Icons.account_tree_rounded, color: context.palette.primary),
+                  leading: Icon(Icons.account_tree_rounded, color: muted),
                   title: const Text('Gouvernance & accès'),
                   subtitle: const Text('Organigramme, rôles, droits et IA planning'),
                   trailing: const Icon(Icons.chevron_right_rounded),
@@ -104,10 +105,10 @@ class AdminScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            ),
-            const SizedBox(height: ConfidiaSpacing.xxl),
-          ],
-        ),
+          ),
+          const SizedBox(height: ConfidiaSpacing.xxl),
+        ],
+      ),
     );
   }
 }
@@ -127,15 +128,16 @@ class _ServiceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final muted = ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark);
     return ListTile(
-      leading: Icon(icon, color: context.palette.primary),
+      leading: Icon(icon, color: muted),
       title: Text(name),
       subtitle: Text(url),
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
           color: ConfidiaColors.success.withValues(alpha: 0.15),
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Text(
           status,
@@ -155,10 +157,12 @@ class _UserRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
     return ListTile(
       leading: CircleAvatar(
-        backgroundColor: context.palette.primary.withValues(alpha: 0.15),
-        child: Text(name[0], style: TextStyle(color: context.palette.primary)),
+        backgroundColor: ConfidiaColors.surface2(isDark),
+        child: Text(name[0], style: TextStyle(color: muted)),
       ),
       title: Text(name),
       subtitle: Text(email),

@@ -11,8 +11,10 @@ class SerenityScoreRing extends StatelessWidget {
   final double size;
   final double scoreFontSize;
   final double labelFontSize;
+  final double strokeWidth;
   /// Si false, l'anneau suit [score] immédiatement (compteur externe).
   final bool animateFromZero;
+  final bool showLabel;
 
   const SerenityScoreRing({
     super.key,
@@ -23,7 +25,9 @@ class SerenityScoreRing extends StatelessWidget {
     this.size = 54,
     this.scoreFontSize = 18,
     this.labelFontSize = 9,
+    this.strokeWidth = 3.5,
     this.animateFromZero = true,
+    this.showLabel = true,
   });
 
   @override
@@ -33,10 +37,11 @@ class SerenityScoreRing extends StatelessWidget {
       child: Text(
         '$score',
         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w900,
+              fontWeight: FontWeight.w800,
               color: color,
               height: 1,
               fontSize: scoreFontSize,
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
       ),
     );
@@ -45,7 +50,11 @@ class SerenityScoreRing extends StatelessWidget {
     if (reduceMotion || !animateFromZero) {
       ring = CustomPaint(
         size: Size(size, size),
-        painter: _SerenityScoreRingPainter(progress: score / 100, color: color),
+        painter: _SerenityScoreRingPainter(
+          progress: score / 100,
+          color: color,
+          strokeWidth: strokeWidth,
+        ),
         child: scoreText,
       );
     } else {
@@ -56,7 +65,11 @@ class SerenityScoreRing extends StatelessWidget {
         builder: (context, progress, child) {
           return CustomPaint(
             size: Size(size, size),
-            painter: _SerenityScoreRingPainter(progress: progress, color: color),
+            painter: _SerenityScoreRingPainter(
+              progress: progress,
+              color: color,
+              strokeWidth: strokeWidth,
+            ),
             child: child,
           );
         },
@@ -87,11 +100,13 @@ class SerenityScoreRing extends StatelessWidget {
             child: ring,
           );
 
+    if (!showLabel) return pulsed;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         pulsed,
-        const SizedBox(height: 3),
+        const SizedBox(height: 4),
         SizedBox(
           width: size + 18,
           child: Text(
@@ -115,26 +130,31 @@ class SerenityScoreRing extends StatelessWidget {
 class _SerenityScoreRingPainter extends CustomPainter {
   final double progress;
   final Color color;
+  final double strokeWidth;
 
-  _SerenityScoreRingPainter({required this.progress, required this.color});
+  _SerenityScoreRingPainter({
+    required this.progress,
+    required this.color,
+    this.strokeWidth = 3.5,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 4;
+    final radius = size.width / 2 - strokeWidth;
     const start = -math.pi / 2;
 
     final track = Paint()
       ..color = color.withValues(alpha: 0.14)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
     canvas.drawArc(Rect.fromCircle(center: center, radius: radius), start, math.pi * 2, false, track);
 
     final fill = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 3.5
+      ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
@@ -147,5 +167,7 @@ class _SerenityScoreRingPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _SerenityScoreRingPainter oldDelegate) =>
-      oldDelegate.progress != progress || oldDelegate.color != color;
+      oldDelegate.progress != progress ||
+      oldDelegate.color != color ||
+      oldDelegate.strokeWidth != strokeWidth;
 }

@@ -268,7 +268,12 @@ class _GuidedTourOverlayState extends ConsumerState<GuidedTourOverlay>
     final to = _holeTo;
     if (from == null && to == null) return null;
     if (from == null) return Rect.lerp(to!.deflate(12), to, t);
-    if (to == null) return Rect.lerp(from, from.deflate(12), t);
+    if (to == null) {
+      // Pas de cible (ex. retour accueil) : fermer le spotlight, pas de trou résiduel.
+      if (t >= 1) return null;
+      final collapsed = Rect.fromCenter(center: from.center, width: 0, height: 0);
+      return Rect.lerp(from, collapsed, Curves.easeInOutCubic.transform(t));
+    }
     return Rect.lerp(from, to, Curves.easeInOutCubic.transform(t));
   }
 
@@ -280,7 +285,7 @@ class _GuidedTourOverlayState extends ConsumerState<GuidedTourOverlay>
     required EdgeInsets safePadding,
   }) {
     const bubbleApproxHeight = 200.0;
-    const gap = 14.0;
+    const gap = 12.0;
     final minTop = safePadding.top + 8;
     final maxTop = screenSize.height - safePadding.bottom - bubbleApproxHeight;
 
@@ -482,7 +487,7 @@ class _TourSpeechBubbleState extends State<_TourSpeechBubble>
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
             decoration: BoxDecoration(
               color: isDark
                   ? const Color(0xFF16161F).withValues(alpha: 0.9)
@@ -511,7 +516,7 @@ class _TourSpeechBubbleState extends State<_TourSpeechBubble>
                     child: Row(
                       children: [
                         ConfidiaAiRobot(size: 36, speaking: widget.speaking),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         const Expanded(child: CofidIaBrand(fontSize: 14)),
                         Text(
                           '${widget.stepIndex + 1}/${widget.totalSteps}',
@@ -547,13 +552,13 @@ class _TourSpeechBubbleState extends State<_TourSpeechBubble>
                   ),
                 ),
                 if (widget.themeBrowser != null) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 16),
                   FadeTransition(
                     opacity: textFade,
                     child: _ThemeBrowserControls(data: widget.themeBrowser!, isDark: isDark),
                   ),
                 ],
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 FadeTransition(
                   opacity: textFade,
                   child: Row(
@@ -574,7 +579,7 @@ class _TourSpeechBubbleState extends State<_TourSpeechBubble>
                           foregroundColor: Colors.white,
                           disabledBackgroundColor: palette.primary.withValues(alpha: 0.28),
                           disabledForegroundColor: Colors.white.withValues(alpha: 0.7),
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         ),
                         child: Text(widget.isLast ? 'Terminer' : 'Suivant'),
@@ -602,9 +607,9 @@ class _ThemeBrowserControls extends StatelessWidget {
     final palette = context.palette;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 8, 8, 10),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(12),
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
         border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
@@ -654,11 +659,11 @@ class _ThemeBrowserControls extends StatelessWidget {
               final active = i == data.index;
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
+                margin: const EdgeInsets.symmetric(horizontal: 4),
                 width: active ? 16 : 6,
-                height: 6,
+                height: 8,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(99),
+                  borderRadius: BorderRadius.circular(32),
                   color: active
                       ? palette.primary
                       : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.35),
@@ -666,7 +671,7 @@ class _ThemeBrowserControls extends StatelessWidget {
               );
             }),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             data.allSeen
                 ? 'Les 4 ambiances ont été parcourues'
@@ -701,8 +706,11 @@ class _ThemeNavButton extends StatelessWidget {
       message: tooltip,
       child: Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: onTap,
+          mouseCursor: SystemMouseCursors.click,
           borderRadius: BorderRadius.circular(12),
           child: Ink(
             width: 40,

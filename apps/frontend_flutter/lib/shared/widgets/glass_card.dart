@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/spacing.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 
 /// Carte de contenu. Quasi sans flou : surface opaque et ombre douce.
+///
+/// [Material] + [clipBehavior] : les surbrillances InkWell / ListTile
+/// restent dans les coins arrondis (pas de splash rectangulaire).
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
@@ -33,34 +35,35 @@ class GlassCard extends StatelessWidget {
     final fill = base.withValues(
       alpha: isDark ? AppOpacity.contentDark : AppOpacity.contentLight,
     );
-    final decoration = BoxDecoration(
+
+    final surface = Material(
       color: fill,
-      borderRadius: radius,
-      border: Border.fromBorderSide(AppBorders.standard(isDark)),
-      boxShadow: AppShadows.card(isDark: isDark, palette: context.palette),
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      shape: RoundedRectangleBorder(
+        borderRadius: radius,
+        side: AppBorders.standard(isDark),
+      ),
+      clipBehavior: clipContent ? Clip.antiAlias : Clip.none,
+      child: onTap == null
+          ? Padding(padding: resolvedPadding, child: child)
+          : InkWell(
+              onTap: onTap,
+              mouseCursor: SystemMouseCursors.click,
+              hoverColor: (isDark ? Colors.white : Colors.black).withValues(
+                alpha: isDark ? AppOpacity.hoverInkDark : AppOpacity.hoverInkLight,
+              ),
+              splashColor: (isDark ? Colors.white : Colors.black).withValues(alpha: AppOpacity.quiet),
+              child: Padding(padding: resolvedPadding, child: child),
+            ),
     );
 
-    final content = clipContent
-        ? ClipRRect(
-            borderRadius: radius,
-            child: Container(padding: resolvedPadding, decoration: decoration, child: child),
-          )
-        : Container(
-            decoration: decoration,
-            padding: resolvedPadding,
-            child: child,
-          );
-
-    if (onTap != null) {
-      return Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: radius,
-          child: content,
-        ),
-      );
-    }
-    return content;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: AppShadows.card(isDark: isDark),
+      ),
+      child: surface,
+    );
   }
 }

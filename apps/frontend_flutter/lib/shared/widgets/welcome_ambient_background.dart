@@ -4,7 +4,6 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 
 /// Fond d'accueil post-login  -  orbes flottantes floues, translucides et sobres.
 class WelcomeAmbientBackground extends StatefulWidget {
@@ -34,7 +33,6 @@ class _WelcomeAmbientBackgroundState extends State<WelcomeAmbientBackground> wit
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final palette = context.palette;
 
     return Stack(
       fit: StackFit.expand,
@@ -44,50 +42,49 @@ class _WelcomeAmbientBackgroundState extends State<WelcomeAmbientBackground> wit
             color: isDark ? ConfidiaColors.darkBackground : ConfidiaColors.lightBackground,
           ),
         ),
-        AnimatedBuilder(
-          animation: _drift,
-          builder: (context, _) {
-            final t = _drift.value * math.pi * 2;
-            return Stack(
-              fit: StackFit.expand,
-              children: [
-                _AmbientOrb(
-                  isDark: isDark,
-                  color: palette.primary,
-                  center: Offset(
-                    0.22 + math.sin(t) * 0.06,
-                    0.18 + math.cos(t * 0.7) * 0.05,
+        if (isDark)
+          AnimatedBuilder(
+            animation: _drift,
+            builder: (context, _) {
+              final t = _drift.value * math.pi * 2;
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  _AmbientOrb(
+                    color: Colors.white.withValues(alpha: 0.07),
+                    center: Offset(
+                      0.22 + math.sin(t) * 0.06,
+                      0.18 + math.cos(t * 0.7) * 0.05,
+                    ),
+                    radius: 0.38,
                   ),
-                  radius: 0.38,
-                ),
-                _AmbientOrb(
-                  isDark: isDark,
-                  color: palette.secondary,
-                  center: Offset(
-                    0.78 + math.cos(t * 0.85) * 0.05,
-                    0.32 + math.sin(t * 0.6) * 0.04,
+                  _AmbientOrb(
+                    color: const Color(0xFF94A3B8).withValues(alpha: 0.08),
+                    center: Offset(
+                      0.78 + math.cos(t * 0.85) * 0.05,
+                      0.32 + math.sin(t * 0.6) * 0.04,
+                    ),
+                    radius: 0.32,
                   ),
-                  radius: 0.32,
-                ),
-                _AmbientOrb(
-                  isDark: isDark,
-                  color: palette.accent,
-                  center: Offset(
-                    0.5 + math.sin(t * 0.5 + 1) * 0.08,
-                    0.72 + math.cos(t * 0.45) * 0.05,
+                  _AmbientOrb(
+                    color: Colors.white.withValues(alpha: 0.05),
+                    center: Offset(
+                      0.5 + math.sin(t * 0.5 + 1) * 0.08,
+                      0.72 + math.cos(t * 0.45) * 0.05,
+                    ),
+                    radius: 0.28,
                   ),
-                  radius: 0.28,
-                ),
-              ],
-            );
-          },
-        ),
-        ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
-            child: const SizedBox.expand(),
+                ],
+              );
+            },
           ),
-        ),
+        if (isDark)
+          ClipRect(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 48, sigmaY: 48),
+              child: const SizedBox.expand(),
+            ),
+          ),
         widget.child,
       ],
     );
@@ -95,13 +92,11 @@ class _WelcomeAmbientBackgroundState extends State<WelcomeAmbientBackground> wit
 }
 
 class _AmbientOrb extends StatelessWidget {
-  final bool isDark;
   final Color color;
   final Offset center;
   final double radius;
 
   const _AmbientOrb({
-    required this.isDark,
     required this.color,
     required this.center,
     required this.radius,
@@ -123,12 +118,7 @@ class _AmbientOrb extends StatelessWidget {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           gradient: RadialGradient(
-            colors: [
-              color.withValues(alpha: isDark ? 0.16 : 0.11),
-              color.withValues(alpha: isDark ? 0.05 : 0.03),
-              Colors.transparent,
-            ],
-            stops: const [0.0, 0.45, 1.0],
+            colors: [color, Colors.transparent],
           ),
         ),
       ),

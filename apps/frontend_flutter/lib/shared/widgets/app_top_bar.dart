@@ -20,7 +20,7 @@ import 'confidia_button.dart';
 import 'confidia_chrome_material.dart';
 import 'confidia_page_header.dart';
 import 'confidia_tooltip.dart';
-import 'theme_toggle_button.dart';
+import 'serenity_score_ring.dart';
 import 'user_avatar.dart';
 
 class AppTopBar extends ConsumerWidget {
@@ -36,17 +36,22 @@ class AppTopBar extends ConsumerWidget {
   });
 
   static AppTopBar fromRoute(BuildContext context, {bool showNotifications = true}) {
-    final path = GoRouterState.of(context).matchedLocation;
-    final meta = routeMeta(path);
+    final state = GoRouterState.of(context);
+    final meta = routeMeta(state.matchedLocation, uri: state.uri);
     return AppTopBar(title: meta.$1, subtitle: meta.$2, showNotifications: showNotifications);
   }
 
-  static (String, String?) routeMeta(String path) {
+  static (String, String?) routeMeta(String path, {Uri? uri}) {
     if (path.startsWith('/dashboard')) return (ConfidiaRouteLabels.home, 'Widgets personnalisables');
+    // /documents/add avant /documents/ sinon titre « Document » à tort
+    if (path.startsWith('/documents/add')) {
+      final mode = uri?.queryParameters['mode'];
+      if (mode == 'camera') return ('Scanner', 'Photo ou scan');
+      if (mode == 'files') return ('Importer', 'Fichiers appareil');
+      return ('Ajouter', 'Nouveau document');
+    }
     if (path.startsWith('/documents/')) return ('Document', 'Détail et analyse');
     if (path.startsWith('/documents')) return (ConfidiaRouteLabels.documents, 'Bibliothèque');
-    if (path.startsWith('/scan')) return ('Scanner', 'Capture photo');
-    if (path.startsWith('/upload')) return ('Importer', 'Ajout de fichiers');
     if (path.startsWith('/payments/')) return ('Paiement', 'Détail et règlement');
     if (path.startsWith('/payments')) return (ConfidiaRouteLabels.payments, 'Factures et échéances');
     if (path.startsWith('/messaging/')) return ('Message', 'Analyse IA');
@@ -66,8 +71,6 @@ class AppTopBar extends ConsumerWidget {
     final auth = ref.watch(authStateProvider);
     final avatarBase64 = ref.watch(profileAvatarProvider);
     final unread = MockData.notifications.where((n) => !n.read).length;
-    final width = MediaQuery.of(context).size.width;
-    final showDate = width >= 720;
     final path = GoRouterState.of(context).matchedLocation;
     final backRoute = confidiaParentRoute(path);
 
@@ -76,66 +79,79 @@ class AppTopBar extends ConsumerWidget {
         height: ConfidiaSpacing.topBarHeight,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
-          child: Row(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                if (backRoute != null) ...[
-                  ConfidiaBackButton(parentRoute: backRoute),
-                  const SizedBox(width: 10),
-                ],
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              height: 1.15,
-                            ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (subtitle != null)
-                        Text(
-                          subtitle!,
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: ConfidiaColors.textSecondary(isDark),
+          // Largeur disponible (colonne contenu), pas la fenêtre : la sidebar
+          // ouverte réduit cette zone et provoquait des overflows.
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final w = constraints.maxWidth;
+              final showDate = w >= 820;
+              final showProfileName = w >= 980;
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        if (backRoute != null) ...[
+                          ConfidiaBackButton(parentRoute: backRoute),
+                          const SizedBox(width: 8),
+                        ],
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                title,
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.15,
+                                    ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                              if (subtitle != null)
+                                Text(
+                                  subtitle!,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: ConfidiaColors.textSecondary(isDark),
+                                      ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                            ],
+                          ),
                         ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          if (showDate) ...[
-            const _TopBarDate(),
-            const SizedBox(width: 12),
-          ],
-          const _SerenityScoreChip(),
-          const SizedBox(width: 8),
-          if (showNotifications)
-            KeyedSubtree(
-              key: OnboardingTargets.notifications,
-              child: ConfidiaIconButton(
-                icon: Icons.notifications_none_rounded,
-                tooltip: 'Notifications',
-                showBadge: unread > 0,
-                onPressed: () => context.go('/notifications'),
-              ),
-            ),
-          const SizedBox(width: 6),
-          const ThemeToggleButton(compact: true),
-          const SizedBox(width: 6),
-          if (auth.user != null)
-            _ProfileChip(user: auth.user!, imageBase64: avatarBase64, onTap: () => context.go('/profile')),
-        ],
+                  if (showDate) ...[
+                    const _TopBarDate(),
+                    const SizedBox(width: 12),
+                  ],
+                  const _SerenityScoreChip(),
+                  const SizedBox(width: 8),
+                  if (showNotifications)
+                    KeyedSubtree(
+                      key: OnboardingTargets.notifications,
+                      child: ConfidiaIconButton(
+                        icon: Icons.notifications_none_rounded,
+                        tooltip: 'Notifications',
+                        showBadge: unread > 0,
+                        onPressed: () => context.go('/notifications'),
+                      ),
+                    ),
+                  const SizedBox(width: 8),
+                  if (auth.user != null)
+                    _ProfileChip(
+                      user: auth.user!,
+                      imageBase64: avatarBase64,
+                      showName: showProfileName,
+                      onTap: () => context.go('/profile'),
+                    ),
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -166,44 +182,37 @@ class _TopBarDate extends StatelessWidget {
 class _SerenityScoreChip extends ConsumerWidget {
   const _SerenityScoreChip();
 
+  static const _size = 40.0;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final score = ref.watch(serenityBriefingProvider.select((b) => b.score));
     final accent = SerenityPalette.forScore(score, palette: context.palette);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          context.go('/dashboard');
-          ref.read(dayStartSessionProvider.notifier).openFromChip();
-        },
-        borderRadius: BorderRadius.circular(10),
-        child: ConfidiaTooltip(
-          message: 'Briefing du jour',
-          child: Container(
-            height: 32,
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            decoration: BoxDecoration(
-              color: accent.withValues(alpha: isDark ? 0.16 : 0.1),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: accent.withValues(alpha: 0.35)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.shield_rounded, size: 14, color: accent),
-                const SizedBox(width: 4),
-                Text(
-                  '$score',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: accent,
-                        fontWeight: FontWeight.w800,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                ),
-              ],
+    return ConfidiaTooltip(
+      message: 'Briefing du jour',
+      child: SizedBox(
+        width: _size,
+        height: _size,
+        child: Material(
+          color: Colors.transparent,
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: () {
+              context.go('/dashboard');
+              ref.read(dayStartSessionProvider.notifier).openFromChip();
+            },
+            customBorder: const CircleBorder(),
+            child: SerenityScoreRing(
+              score: score,
+              label: '',
+              color: accent,
+              size: _size,
+              scoreFontSize: 12,
+              strokeWidth: 3,
+              showLabel: false,
+              animateFromZero: false,
             ),
           ),
         ),
@@ -215,17 +224,24 @@ class _SerenityScoreChip extends ConsumerWidget {
 class _ProfileChip extends StatelessWidget {
   final UserModel user;
   final String? imageBase64;
+  final bool showName;
   final VoidCallback onTap;
 
-  const _ProfileChip({required this.user, this.imageBase64, required this.onTap});
+  const _ProfileChip({
+    required this.user,
+    this.imageBase64,
+    required this.showName,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final showName = MediaQuery.of(context).size.width >= 1100;
 
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(12),
@@ -240,7 +256,7 @@ class _ProfileChip extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              UserAvatar(user: user, radius: 14, imageBase64: imageBase64),
+              UserAvatar(user: user, radius: 16, imageBase64: imageBase64),
               if (showName) ...[
                 const SizedBox(width: 8),
                 Text(user.firstName, style: Theme.of(context).textTheme.labelMedium),

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 import '../../features/onboarding/onboarding_targets.dart';
 import '../navigation/confidia_route_labels.dart';
 import 'confidia_chrome_material.dart';
@@ -30,7 +29,7 @@ bool confidiaNavIsActive(String path, String currentPath) {
   return currentPath == path || currentPath.startsWith('$path/');
 }
 
-/// Item de sidebar desktop  -  sobre, typographie comme signal d'état.
+/// Item de sidebar desktop  -  surface2 + textPrimary pour l'actif.
 class ConfidiaSidebarNavItem extends StatefulWidget {
   final ConfidiaNavDestination destination;
   final bool isActive;
@@ -56,47 +55,61 @@ class _ConfidiaSidebarNavItemState extends State<ConfidiaSidebarNavItem> {
     final d = widget.destination;
     final active = widget.isActive;
     final hovered = _hovered && !active;
+    final activeColor = AppColors.textPrimary(isDark);
+    final idleColor = AppColors.textSecondary(isDark);
 
+    // Pendant l'animation de largeur, `collapsed` bascule avant la fin :
+    // on se base sur l'espace réel pour éviter les overflows.
     final item = Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: MouseRegion(
+        cursor: SystemMouseCursors.click,
         onEnter: (_) => setState(() => _hovered = true),
         onExit: (_) => setState(() => _hovered = false),
         child: Material(
-          color: hovered ? (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04) : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
+          color: active
+              ? AppColors.surface2(isDark)
+              : hovered
+                  ? (isDark ? Colors.white : Colors.black).withValues(alpha: AppOpacity.hoverInkLight)
+                  : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => context.go(d.path),
-            borderRadius: BorderRadius.circular(10),
-            child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: widget.collapsed ? 0 : 12, vertical: 10),
-              child: Row(
-                mainAxisAlignment: widget.collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
-                children: [
-                  Icon(
-                    active ? d.iconFilled : d.iconOutlined,
-                    size: 20,
-                    color: active
-                        ? context.palette.primary
-                        : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.75),
-                  ),
-                  if (!widget.collapsed) ...[
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        d.label,
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              color: active
-                                  ? context.palette.primary
-                                  : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.8),
-                              fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                            ),
+            mouseCursor: SystemMouseCursors.click,
+            borderRadius: BorderRadius.circular(8),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final showLabel = constraints.maxWidth >= 96;
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: showLabel ? 12 : 0, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: showLabel ? MainAxisAlignment.start : MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        active ? d.iconFilled : d.iconOutlined,
+                        size: 20,
+                        color: active ? activeColor : idleColor.withValues(alpha: 0.75),
                       ),
-                    ),
-                    if (d.badge != null) _NavBadge(count: d.badge!),
-                  ],
-                ],
-              ),
+                      if (showLabel) ...[
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            d.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  color: active ? activeColor : idleColor.withValues(alpha: 0.8),
+                                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                                ),
+                          ),
+                        ),
+                        if (d.badge != null) _NavBadge(count: d.badge!),
+                      ],
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -115,18 +128,27 @@ class _NavBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: context.palette.primary,
-        borderRadius: BorderRadius.circular(6),
+        color: AppColors.surface2(isDark),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.fromBorderSide(AppBorders.standard(isDark)),
       ),
-      child: Text('$count', style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w600)),
+      child: Text(
+        '$count',
+        style: TextStyle(
+          color: AppColors.textPrimary(isDark),
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
 
-/// Bottom bar mobile  -  sobre, lisible.
+/// Bottom bar mobile  -  actif sans couleur de marque.
 class ConfidiaMobileNavBar extends StatelessWidget {
   final String currentPath;
   final List<ConfidiaNavDestination> destinations;
@@ -155,7 +177,7 @@ class ConfidiaMobileNavBar extends StatelessWidget {
         child: SafeArea(
           top: false,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 6),
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
             child: Row(
               children: List.generate(destinations.length, (i) {
                 final destination = destinations[i];
@@ -186,48 +208,64 @@ class _MobileNavItem extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final d = destination;
+    final activeColor = AppColors.textPrimary(isDark);
+    final idleColor = AppColors.textSecondary(isDark);
 
     Widget icon = Icon(
       isActive ? d.iconFilled : d.iconOutlined,
       size: 22,
-      color: isActive
-          ? context.palette.primary
-          : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.7),
+      color: isActive ? activeColor : idleColor.withValues(alpha: 0.7),
     );
 
     if (d.badge != null && d.badge! > 0) {
       icon = Badge(
         isLabelVisible: true,
-        label: Text('${d.badge}', style: const TextStyle(fontSize: 9)),
-        backgroundColor: context.palette.primary,
+        label: Text(
+          '${d.badge}',
+          style: TextStyle(fontSize: 9, color: AppColors.textPrimary(isDark)),
+        ),
+        backgroundColor: AppColors.surface2(isDark),
         child: icon,
       );
     }
 
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.go(d.path),
+        mouseCursor: SystemMouseCursors.click,
+        hoverColor: (isDark ? Colors.white : Colors.black).withValues(
+          alpha: isDark ? AppOpacity.hoverInkDark : AppOpacity.hoverInkLight,
+        ),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              icon,
-              const SizedBox(height: 3),
-              Text(
-                d.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 9,
-                  fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
-                  color: isActive
-                      ? context.palette.primary
-                      : ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.75),
+          padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
+            decoration: BoxDecoration(
+              color: isActive ? AppColors.surface2(isDark) : Colors.transparent,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                icon,
+                const SizedBox(height: 4),
+                Text(
+                  d.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: isActive ? FontWeight.w700 : FontWeight.w400,
+                    color: isActive ? activeColor : idleColor.withValues(alpha: 0.75),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

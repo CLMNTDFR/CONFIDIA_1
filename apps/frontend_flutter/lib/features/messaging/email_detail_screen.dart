@@ -130,11 +130,11 @@ class EmailDetailScreen extends ConsumerWidget {
                       border: Border.all(color: SerenityPalette.excellent.withValues(alpha: 0.35)),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                       child: Row(
                         children: [
                           Icon(Icons.check_circle_rounded, color: SerenityPalette.excellent, size: 20),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               'Pris en compte',
@@ -231,7 +231,7 @@ class _AiInsightCard extends StatelessWidget {
           Row(
             children: [
               const ConfidiaAiRobot(size: 32),
-              const SizedBox(width: 10),
+              const SizedBox(width: 8),
               const Expanded(child: CofidIaBrand()),
               StatusBadge(label: 'Priorité ${insight.priority.label}', color: insight.priority.themeColor(context.palette)),
             ],
@@ -265,16 +265,18 @@ class _MetricChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
-        color: context.palette.primary.withValues(alpha: 0.08),
+        color: muted.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: context.palette.primary),
+          Icon(icon, size: 14, color: muted),
           const SizedBox(width: 4),
           Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
         ],
@@ -293,7 +295,11 @@ class _ActionChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ActionChip(
-      avatar: Icon(icon, size: 16, color: context.palette.primary),
+      avatar: Icon(
+        icon,
+        size: 16,
+        color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+      ),
       label: Text(label),
       onPressed: onTap,
     );

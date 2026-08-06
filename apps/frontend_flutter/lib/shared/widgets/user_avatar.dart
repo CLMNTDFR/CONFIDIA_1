@@ -3,7 +3,8 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 
-import '../../core/theme/theme_context.dart';
+import '../../core/theme/colors.dart';
+import '../../core/theme/tokens/tokens.dart';
 import '../models/user_model.dart';
 
 final Map<String, Uint8List> _avatarBytesCache = {};
@@ -36,13 +37,14 @@ class UserAvatar extends StatelessWidget {
       );
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return CircleAvatar(
       radius: radius,
-      backgroundColor: context.palette.primary.withValues(alpha: 0.15),
+      backgroundColor: AppColors.surface2(isDark),
       child: Text(
         user.initials,
         style: TextStyle(
-          color: context.palette.primary,
+          color: ConfidiaColors.textSecondary(isDark),
           fontWeight: FontWeight.w700,
           fontSize: radius * 0.7,
         ),
@@ -69,14 +71,15 @@ class UserAvatarLarge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bytes = decodeAvatarBase64(imageBase64);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     Widget avatar = Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: context.palette.secondary.withValues(alpha: 0.4), width: 2),
+        border: Border.all(color: ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.35), width: 2),
         boxShadow: [
           BoxShadow(
-            color: context.palette.primary.withValues(alpha: 0.12),
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.08),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -89,13 +92,13 @@ class UserAvatarLarge extends StatelessWidget {
             )
           : CircleAvatar(
               radius: radius,
-              backgroundColor: context.palette.primary.withValues(alpha: 0.12),
+              backgroundColor: AppColors.surface2(isDark),
               child: Text(
                 user.initials,
                 style: TextStyle(
                   fontSize: radius * 0.55,
                   fontWeight: FontWeight.w800,
-                  color: context.palette.primary,
+                  color: ConfidiaColors.textSecondary(isDark),
                 ),
               ),
             ),
@@ -104,7 +107,14 @@ class UserAvatarLarge extends StatelessWidget {
     if (onTap != null) {
       avatar = Material(
         color: Colors.transparent,
-        child: InkWell(onTap: onTap, customBorder: const CircleBorder(), child: avatar),
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          mouseCursor: SystemMouseCursors.click,
+          customBorder: const CircleBorder(),
+          child: avatar,
+        ),
       );
     }
 

@@ -4,9 +4,10 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 
-/// Champ de formulaire premium  -  typo compacte, bordures sobres.
+/// Champ de formulaire premium - typo compacte, bordures sobres.
 class ConfidiaTextFormField extends StatelessWidget {
   final TextEditingController? controller;
+  final FocusNode? focusNode;
   final String? labelText;
   final String? hintText;
   final IconData? prefixIcon;
@@ -15,12 +16,14 @@ class ConfidiaTextFormField extends StatelessWidget {
   final int maxLines;
   final String? Function(String?)? validator;
   final bool enabled;
+  final bool autofocus;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onFieldSubmitted;
 
   const ConfidiaTextFormField({
     super.key,
     this.controller,
+    this.focusNode,
     this.labelText,
     this.hintText,
     this.prefixIcon,
@@ -29,6 +32,7 @@ class ConfidiaTextFormField extends StatelessWidget {
     this.maxLines = 1,
     this.validator,
     this.enabled = true,
+    this.autofocus = false,
     this.textInputAction,
     this.onFieldSubmitted,
   });
@@ -47,7 +51,9 @@ class ConfidiaTextFormField extends StatelessWidget {
 
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       enabled: enabled,
+      autofocus: autofocus,
       obscureText: obscureText,
       maxLines: maxLines,
       validator: validator,
@@ -70,23 +76,20 @@ class ConfidiaTextFormField extends StatelessWidget {
         floatingLabelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
               fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: context.palette.primary,
+              color: ConfidiaColors.textSecondary(isDark),
               letterSpacing: 0.2,
             ),
         hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontSize: 13,
               color: ConfidiaColors.textSecondary(isDark),
             ),
-        contentPadding: EdgeInsets.symmetric(
-          horizontal: 14,
-          vertical: maxLines > 1 ? 12 : 11,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         prefixIcon: prefixIcon != null
             ? Icon(prefixIcon, size: 18, color: ConfidiaColors.textSecondary(isDark))
             : null,
-        prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
+        prefixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         suffixIcon: suffixIcon,
-        suffixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
+        suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         border: AppBorders.input(isDark: isDark),
         enabledBorder: AppBorders.input(isDark: isDark),
         focusedBorder: AppBorders.input(

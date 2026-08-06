@@ -34,9 +34,13 @@ class LogoutButton extends ConsumerWidget {
     return Center(
       child: Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => performLogout(context, ref),
+          mouseCursor: SystemMouseCursors.click,
           borderRadius: BorderRadius.circular(12),
+          hoverColor: ConfidiaColors.error.withValues(alpha: isDark ? 0.14 : 0.08),
           child: Ink(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
@@ -44,7 +48,7 @@ class LogoutButton extends ConsumerWidget {
               color: ConfidiaColors.error.withValues(alpha: isDark ? 0.1 : 0.05),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [

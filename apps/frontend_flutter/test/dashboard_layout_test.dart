@@ -8,14 +8,21 @@ void main() {
     notifier = DashboardLayoutNotifier();
   });
 
-  test('default layout hides greeting and exposes visible widgets', () {
+  test('default layout hides greeting and redundant widgets', () {
     expect(notifier.state.visible, isNotEmpty);
     expect(notifier.state.visible, isNot(contains(DashboardWidgetType.greeting)));
     expect(notifier.state.editMode, isFalse);
+    expect(notifier.state.hidden, equals(kDefaultHiddenDashboardWidgets));
+    expect(notifier.state.visible, isNot(contains(DashboardWidgetType.quickActions)));
+    expect(notifier.state.visible, isNot(contains(DashboardWidgetType.stats)));
+    expect(notifier.state.visible, isNot(contains(DashboardWidgetType.activity)));
+    expect(notifier.state.visible, isNot(contains(DashboardWidgetType.aiAnalyzed)));
+    expect(notifier.state.visible, isNot(contains(DashboardWidgetType.importantDocs)));
+    expect(notifier.state.visible.first, DashboardWidgetType.serenityBriefing);
   });
 
   test('toggleWidget hides and restores a block', () {
-    final target = DashboardWidgetType.stats;
+    final target = DashboardWidgetType.weekOverview;
     expect(notifier.state.visible, contains(target));
 
     notifier.toggleWidget(target);
@@ -40,14 +47,19 @@ void main() {
     expect(after.toSet(), before.toSet());
   });
 
-  test('reset restores default order and clears hidden', () {
-    notifier.toggleWidget(DashboardWidgetType.activity);
+  test('reset restores default order and default hidden', () {
+    notifier.toggleWidget(DashboardWidgetType.weekOverview);
     notifier.moveVisible(0, 2);
     notifier.reset();
 
-    expect(notifier.state.hidden, isEmpty);
+    expect(notifier.state.hidden, equals(kDefaultHiddenDashboardWidgets));
     expect(notifier.state.editMode, isFalse);
+    expect(notifier.state.order, equals(kDefaultDashboardOrder));
     expect(notifier.state.visible.first, DashboardWidgetType.serenityBriefing);
+  });
+
+  test('serenityBriefing label is Indice de sérénité', () {
+    expect(DashboardWidgetType.serenityBriefing.label, 'Indice de sérénité');
   });
 
   test('half-width flags stay stable for grid pairing', () {

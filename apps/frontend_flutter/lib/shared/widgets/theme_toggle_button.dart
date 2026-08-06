@@ -21,11 +21,17 @@ class ThemeToggleButton extends ConsumerWidget {
       border: Border.all(color: isDarkTheme ? ConfidiaColors.darkBorder : ConfidiaColors.lightBorder),
     );
 
+    final hover = (isDarkTheme ? Colors.white : Colors.black).withValues(alpha: isDarkTheme ? 0.08 : 0.05);
+
     if (compact) {
       return Material(
         color: Colors.transparent,
+        borderRadius: BorderRadius.circular(12),
+        clipBehavior: Clip.antiAlias,
         child: InkWell(
           onTap: () => ref.read(themeModeProvider.notifier).state = !isDark,
+          mouseCursor: SystemMouseCursors.click,
+          hoverColor: hover,
           borderRadius: BorderRadius.circular(12),
           child: Container(
             width: 40,
@@ -48,12 +54,16 @@ class ThemeToggleButton extends ConsumerWidget {
 
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => ref.read(themeModeProvider.notifier).state = !isDark,
+        mouseCursor: SystemMouseCursors.click,
+        hoverColor: hover,
         borderRadius: BorderRadius.circular(12),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: decoration,
           child: Row(
             mainAxisSize: MainAxisSize.min,

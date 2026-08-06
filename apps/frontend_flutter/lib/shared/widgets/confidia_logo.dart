@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
 import '../../core/theme/palette.dart';
 import '../../core/theme/theme_context.dart';
 
@@ -10,7 +9,14 @@ abstract final class ConfidiaLogoAssets {
   static const pink128 = 'assets/logo/confidia-logo-pink-128.png';
   static const pink256 = 'assets/logo/confidia-logo-pink-256.png';
 
-  static String forPalette(ConfidiaPalette palette, {required double displaySize}) {
+  /// Wordmark intégré (empreinte = « o ») · thème bleu / rose.
+  static const wordmarkBlue = 'assets/logo/confidia-wordmark-blue.png';
+  static const wordmarkPink = 'assets/logo/confidia-wordmark-pink.png';
+
+  /// Ratio intrinsèque des wordmarks (~998×208).
+  static const wordmarkAspect = 998 / 208;
+
+  static String markForPalette(ConfidiaPalette palette, {required double displaySize}) {
     final isRose = palette.id == ConfidiaPaletteId.rose;
     final hiRes = displaySize >= 36;
     return switch ((isRose, hiRes)) {
@@ -20,26 +26,26 @@ abstract final class ConfidiaLogoAssets {
       (true, true) => pink256,
     };
   }
+
+  static String wordmarkForPalette(ConfidiaPalette palette) {
+    return palette.id == ConfidiaPaletteId.rose ? wordmarkPink : wordmarkBlue;
+  }
+
+  /// Ancien alias conservé pour les appels existants.
+  static String forPalette(ConfidiaPalette palette, {required double displaySize}) =>
+      markForPalette(palette, displaySize: displaySize);
 }
 
-/// Espacement et typo partagés logo + texte (login, sidebar, top bar).
+/// Métriques du bloc marque (wordmark ou marque seule).
 abstract final class ConfidiaBrandMetrics {
-  static const gap = 6.0;
+  static double wordmarkWidth(double height) => height * ConfidiaLogoAssets.wordmarkAspect;
 
-  static double titleSize(double logoSize) => logoSize * 0.42;
-  static double taglineSize(double logoSize) => logoSize * 0.2;
-  static double titleTracking(double logoSize) => logoSize >= 40 ? 1.8 : 1.4;
-
-  static double brandBlockWidth(double logoSize) {
-    final titleWidth = titleSize(logoSize) * 0.58 * 8;
-    return logoSize + gap + titleWidth;
+  static double brandBlockWidth(double logoSize, {bool showText = true}) {
+    if (showText) return wordmarkWidth(logoSize);
+    return logoSize;
   }
 
-  static double brandBlockHeight(double logoSize) {
-    return logoSize > titleSize(logoSize) + 2 + taglineSize(logoSize)
-        ? logoSize
-        : titleSize(logoSize) + 2 + taglineSize(logoSize);
-  }
+  static double brandBlockHeight(double logoSize, {bool showText = true}) => logoSize;
 }
 
 /// Marque graphique seule (fond transparent).
@@ -53,7 +59,7 @@ class ConfidiaLogoMark extends StatelessWidget {
     final palette = context.palette;
     final dpr = MediaQuery.devicePixelRatioOf(context);
     return Image.asset(
-      ConfidiaLogoAssets.forPalette(palette, displaySize: size),
+      ConfidiaLogoAssets.markForPalette(palette, displaySize: size),
       width: size,
       height: size,
       fit: BoxFit.contain,
@@ -65,51 +71,48 @@ class ConfidiaLogoMark extends StatelessWidget {
   }
 }
 
-/// Texte CONFIDIA + tagline aligné sur le logo.
-class ConfidiaBrandText extends StatelessWidget {
-  final double logoSize;
+/// Wordmark Confidia (empreinte intégrée dans le « o »), thème bleu ou rose.
+class ConfidiaWordmark extends StatelessWidget {
+  final double height;
 
-  const ConfidiaBrandText({super.key, required this.logoSize});
+  const ConfidiaWordmark({super.key, required this.height});
 
   @override
   Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final palette = context.palette;
+    final dpr = MediaQuery.devicePixelRatioOf(context);
+    final width = ConfidiaBrandMetrics.wordmarkWidth(height);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        ShaderMask(
-          shaderCallback: (bounds) => palette.brandGradient.createShader(bounds),
-          child: Text(
-            'CONFIDIA',
+    return Image.asset(
+      ConfidiaLogoAssets.wordmarkForPalette(palette),
+      width: width,
+      height: height,
+      fit: BoxFit.contain,
+      alignment: Alignment.centerLeft,
+      cacheWidth: (width * dpr).round().clamp(1, 2048),
+      filterQuality: FilterQuality.high,
+      gaplessPlayback: true,
+      errorBuilder: (_, __, ___) => Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ConfidiaLogoMark(size: height),
+          const SizedBox(width: 8),
+          Text(
+            'Confidia',
             style: TextStyle(
-              fontSize: ConfidiaBrandMetrics.titleSize(logoSize),
+              fontSize: height * 0.55,
               fontWeight: FontWeight.w800,
-              letterSpacing: ConfidiaBrandMetrics.titleTracking(logoSize),
-              color: Colors.white,
+              color: palette.primary,
               height: 1,
             ),
           ),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          'Hub numérique',
-          style: TextStyle(
-            fontSize: ConfidiaBrandMetrics.taglineSize(logoSize),
-            fontWeight: FontWeight.w500,
-            color: ConfidiaColors.textSecondary(isDark),
-            letterSpacing: 0.25,
-            height: 1.1,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-/// Logo CONFIDIA statique  -  utilisé partout dans l'application.
+/// Logo CONFIDIA  -  wordmark si [showText], empreinte seule sinon.
 class ConfidiaLogo extends StatelessWidget {
   final double size;
   final bool showText;
@@ -122,16 +125,9 @@ class ConfidiaLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        ConfidiaLogoMark(size: size),
-        if (showText) ...[
-          const SizedBox(width: ConfidiaBrandMetrics.gap),
-          ConfidiaBrandText(logoSize: size),
-        ],
-      ],
-    );
+    if (showText) {
+      return ConfidiaWordmark(height: size);
+    }
+    return ConfidiaLogoMark(size: size);
   }
 }

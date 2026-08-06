@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 
-/// Chip / pill glowy sobre  -  filtres, actions, liens compacts.
+/// Chip / pill de sélection  -  filtres, actions, liens compacts.
 class ConfidiaGlowChip extends StatefulWidget {
   final String label;
   final bool selected;
@@ -54,10 +52,10 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
       final logo = widget.leading!;
       if (_isBrandChip) {
         return Container(
-          padding: const EdgeInsets.all(2),
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(5),
+            borderRadius: BorderRadius.circular(8),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: selected ? 0.1 : 0.06),
@@ -76,9 +74,7 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
       return Icon(
         widget.icon,
         size: iconSize,
-        color: selected
-            ? (_isBrandChip ? widget.accentColor : Colors.white)
-            : ConfidiaColors.textSecondary(isDark),
+        color: selected ? AppColors.textPrimary(isDark) : AppColors.textSecondary(isDark),
       );
     }
 
@@ -88,16 +84,18 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final accent = widget.accentColor ?? context.palette.primary;
+    final accent = widget.accentColor;
     final selected = widget.selected;
     final hovered = _hovered && !selected;
-    final brandSelected = _isBrandChip && selected;
     final fontSize = widget.compact ? 10.0 : 11.0;
     final iconSize = widget.compact ? 12.0 : 14.0;
-    final hPad = widget.compact ? 8.0 : 12.0;
-    final vPad = widget.compact ? 5.0 : 7.0;
+    final iconOnly = widget.label.isEmpty && (widget.icon != null || widget.leading != null);
+    final hPad = iconOnly ? (widget.compact ? 8.0 : 10.0) : (widget.compact ? 8.0 : 12.0);
+    final vPad = widget.compact ? 4.0 : 8.0;
+    final ink = isDark ? Colors.white : Colors.black;
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
@@ -112,83 +110,44 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
             curve: Curves.easeOutCubic,
             padding: EdgeInsets.symmetric(horizontal: hPad, vertical: vPad),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(9),
-              gradient: selected && !brandSelected
-                  ? LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        context.palette.primary.withValues(alpha: 0.9),
-                        context.palette.secondary.withValues(alpha: 0.75),
-                      ],
-                    )
-                  : null,
-              color: brandSelected
-                  ? accent.withValues(alpha: isDark ? 0.18 : 0.1)
-                  : selected
-                      ? null
-                      : hovered
-                          ? (_isBrandChip ? accent.withValues(alpha: 0.08) : context.palette.primary.withValues(alpha: isDark ? 0.1 : 0.06))
-                          : Colors.transparent,
-              border: Border.all(
-                color: brandSelected
-                    ? accent.withValues(alpha: AppOpacity.borderFocus)
-                    : selected
-                        ? Colors.white.withValues(alpha: AppOpacity.soft)
-                        : hovered
-                            ? (_isBrandChip
-                                ? accent.withValues(alpha: AppOpacity.borderFocus)
-                                : context.palette.secondary.withValues(alpha: AppOpacity.borderFocus))
-                            : AppBorders.standard(isDark).color,
-              ),
-              boxShadow: brandSelected
+              borderRadius: BorderRadius.circular(8),
+              color: selected
+                  ? AppColors.surface2(isDark)
+                  : hovered
+                      ? (accent != null
+                          ? accent.withValues(alpha: 0.08)
+                          : ink.withValues(alpha: isDark ? 0.1 : 0.06))
+                      : Colors.transparent,
+              border: Border.fromBorderSide(AppBorders.standard(isDark)),
+              boxShadow: hovered
                   ? [
                       BoxShadow(
-                        color: accent.withValues(alpha: 0.16),
+                        color: (accent ?? Colors.black).withValues(
+                          alpha: accent != null ? 0.12 : (isDark ? 0.12 : 0.06),
+                        ),
                         blurRadius: 8,
-                        spreadRadius: -3,
-                        offset: const Offset(0, 2),
+                        spreadRadius: -2,
                       ),
                     ]
-                  : selected
-                      ? [
-                          BoxShadow(
-                            color: accent.withValues(alpha: 0.28),
-                            blurRadius: 10,
-                            spreadRadius: -3,
-                            offset: const Offset(0, 2),
-                          ),
-                        ]
-                      : hovered
-                          ? [
-                              BoxShadow(
-                                color: (_isBrandChip ? accent : context.palette.secondary).withValues(alpha: 0.12),
-                                blurRadius: 8,
-                                spreadRadius: -2,
-                              ),
-                            ]
-                          : null,
+                  : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.leading != null || widget.icon != null) ...[
+                if (widget.leading != null || widget.icon != null)
                   _buildLeading(selected: selected, isDark: isDark, iconSize: iconSize),
-                  const SizedBox(width: 5),
-                ],
-                Text(
-                  widget.label,
-                  style: TextStyle(
-                    fontSize: fontSize,
-                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                    letterSpacing: 0.2,
-                    color: brandSelected
-                        ? accent
-                        : selected
-                            ? Colors.white
-                            : ConfidiaColors.textSecondary(isDark),
+                if (widget.label.isNotEmpty) ...[
+                  if (widget.leading != null || widget.icon != null) const SizedBox(width: 4),
+                  Text(
+                    widget.label,
+                    style: TextStyle(
+                      fontSize: fontSize,
+                      fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                      letterSpacing: 0.2,
+                      color: selected ? AppColors.textPrimary(isDark) : AppColors.textSecondary(isDark),
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -198,7 +157,7 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
   }
 }
 
-/// Barre glassy contenant des chips (filtres, actions rapides).
+/// Barre contenant des chips (filtres, actions rapides).
 class ConfidiaGlowChipBar extends StatelessWidget {
   final List<Widget> children;
   final bool centered;
@@ -216,14 +175,14 @@ class ConfidiaGlowChipBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     final bar = Container(
-      padding: padding ?? const EdgeInsets.all(3),
+      padding: padding ?? const EdgeInsets.all(4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
         border: Border.fromBorderSide(AppBorders.standard(isDark)),
         boxShadow: [
           BoxShadow(
-            color: context.palette.secondary.withValues(alpha: isDark ? 0.08 : 0.05),
+            color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.05),
             blurRadius: 12,
             spreadRadius: -4,
           ),
@@ -232,7 +191,7 @@ class ConfidiaGlowChipBar extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: children
-            .expand((c) => [Padding(padding: const EdgeInsets.symmetric(horizontal: 1), child: c)])
+            .expand((c) => [Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: c)])
             .toList(),
       ),
     );
@@ -260,14 +219,14 @@ class ConfidiaGlowChipScroll extends StatelessWidget {
       padding: padding,
       child: Row(
         children: children
-            .map((c) => Padding(padding: const EdgeInsets.only(right: 6), child: c))
+            .map((c) => Padding(padding: const EdgeInsets.only(right: 8), child: c))
             .toList(),
       ),
     );
   }
 }
 
-/// Lien compact « Voir tout »  -  glow sobre.
+/// Lien compact « Voir tout ».
 class ConfidiaGlowLink extends StatefulWidget {
   final String label;
   final VoidCallback onTap;
@@ -283,21 +242,25 @@ class _ConfidiaGlowLinkState extends State<ConfidiaGlowLink> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final linkColor = AppColors.textSecondary(isDark);
+
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            color: _hovered ? context.palette.primary.withValues(alpha: 0.08) : Colors.transparent,
+            color: _hovered ? (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06) : Colors.transparent,
             boxShadow: _hovered
                 ? [
                     BoxShadow(
-                      color: context.palette.primary.withValues(alpha: 0.15),
+                      color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.06),
                       blurRadius: 8,
                       spreadRadius: -2,
                     ),
@@ -307,7 +270,7 @@ class _ConfidiaGlowLinkState extends State<ConfidiaGlowLink> {
           child: Text(
             widget.label,
             style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: context.palette.primary,
+                  color: linkColor,
                   fontWeight: FontWeight.w600,
                   letterSpacing: 0.2,
                 ),

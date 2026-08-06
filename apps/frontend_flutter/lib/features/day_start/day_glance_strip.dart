@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 import '../../shared/utils/serenity_palette.dart';
+import '../../shared/widgets/confidia_tappable.dart';
 import 'day_briefing_model.dart';
 
 enum DayGlanceKind { documents, appointments, deadlines, payments, serenity }
@@ -48,14 +49,15 @@ class DayGlanceStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final palette = context.palette;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
     final items = <_GlanceItem>[
       _GlanceItem(
         kind: DayGlanceKind.documents,
         icon: Icons.description_outlined,
         value: '${metrics.newDocuments}',
         label: 'Documents',
-        accent: palette.primary,
+        accent: muted,
         route: '/documents',
       ),
       _GlanceItem(
@@ -63,7 +65,7 @@ class DayGlanceStrip extends StatelessWidget {
         icon: Icons.calendar_today_outlined,
         value: '${metrics.appointmentsToday}',
         label: 'Rendez-vous',
-        accent: palette.secondary,
+        accent: muted,
         route: '/calendar',
       ),
       _GlanceItem(
@@ -88,19 +90,24 @@ class DayGlanceStrip extends StatelessWidget {
           icon: Icons.shield_outlined,
           value: '${metrics.serenityScore}',
           label: 'Sérénité',
-          accent: SerenityPalette.forScore(metrics.serenityScore, palette: palette),
+          accent: SerenityPalette.forScore(metrics.serenityScore),
           route: '/dashboard',
         ),
     ];
 
+    final showTitle = layout == DayGlanceLayout.grid;
+    final quietChrome = layout == DayGlanceLayout.row;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'En un coup d\'œil',
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 10),
+        if (showTitle) ...[
+          Text(
+            'En un coup d\'œil',
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+        ],
         LayoutBuilder(
           builder: (context, constraints) {
             const gap = 8.0;
@@ -109,6 +116,7 @@ class DayGlanceStrip extends StatelessWidget {
             Widget card(_GlanceItem item) => _GlanceCard(
                   item: item,
                   dense: dense,
+                  quietChrome: quietChrome,
                   serenityScore: item.kind == DayGlanceKind.serenity ? metrics.serenityScore : null,
                   onTap: () {
                     beforeNavigate?.call();
@@ -151,116 +159,99 @@ class DayGlanceStrip extends StatelessWidget {
   }
 }
 
-class _GlanceCard extends StatefulWidget {
+class _GlanceCard extends StatelessWidget {
   final _GlanceItem item;
   final bool dense;
+  final bool quietChrome;
   final int? serenityScore;
   final VoidCallback onTap;
 
   const _GlanceCard({
     required this.item,
     required this.dense,
+    required this.quietChrome,
     required this.onTap,
     this.serenityScore,
   });
 
   @override
-  State<_GlanceCard> createState() => _GlanceCardState();
-}
-
-class _GlanceCardState extends State<_GlanceCard> {
-  bool _pressed = false;
-
-  @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final item = widget.item;
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final quiet = quietChrome;
+    final radius = BorderRadius.circular(12);
 
     return Semantics(
       button: true,
-      label: '${item.label}: ${item.kind == DayGlanceKind.serenity ? '${widget.serenityScore}/100' : item.value}',
-      child: GestureDetector(
-        onTapDown: (_) => setState(() => _pressed = true),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTapCancel: () => setState(() => _pressed = false),
-        onTap: widget.onTap,
-        child: AnimatedScale(
-          scale: _pressed ? 0.96 : 1,
-          duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 110),
-          child: AnimatedContainer(
-            duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 160),
-            width: double.infinity,
-            height: double.infinity,
-            padding: EdgeInsets.fromLTRB(8, widget.dense ? 10 : 12, 8, widget.dense ? 8 : 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              color: isDark
-                  ? ConfidiaColors.darkSurfaceElevated.withValues(alpha: 0.92)
-                  : Colors.white.withValues(alpha: 0.92),
-              border: Border.all(color: item.accent.withValues(alpha: _pressed ? 0.55 : 0.28)),
-              boxShadow: [
-                BoxShadow(
-                  color: item.accent.withValues(alpha: isDark ? 0.12 : 0.08),
-                  blurRadius: _pressed ? 4 : 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+      label: '${item.label}: ${item.kind == DayGlanceKind.serenity ? '$serenityScore/100' : item.value}',
+      child: ConfidiaTappable(
+        onTap: onTap,
+        pressScale: 0.96,
+        borderRadius: radius,
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          padding: EdgeInsets.fromLTRB(8, dense ? 8 : 12, 8, dense ? 8 : 8),
+          decoration: BoxDecoration(
+            borderRadius: radius,
+            color: AppColors.surface1(isDark),
+            border: Border.fromBorderSide(
+              quiet
+                  ? AppBorders.subtle(isDark)
+                  : BorderSide(color: item.accent.withValues(alpha: 0.22)),
             ),
-            child: Column(
-              children: [
-                Icon(item.icon, color: item.accent, size: widget.dense ? 18 : 20),
-                const Spacer(),
-                if (item.kind == DayGlanceKind.serenity)
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        TextSpan(
-                          text: '${widget.serenityScore}',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                color: item.accent,
-                                height: 1,
-                                fontSize: widget.dense ? 20 : 22,
-                              ),
-                        ),
-                        TextSpan(
-                          text: '/100',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: ConfidiaColors.textSecondary(isDark),
-                                fontWeight: FontWeight.w600,
-                                fontSize: 10,
-                              ),
-                        ),
-                      ],
-                    ),
-                    textAlign: TextAlign.center,
-                  )
-                else
-                  Text(
-                    item.value,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: ConfidiaColors.textPrimary(isDark),
-                          height: 1,
-                          fontSize: widget.dense ? 22 : 24,
-                        ),
+            boxShadow: quiet ? AppShadows.none : AppShadows.card(isDark: isDark),
+          ),
+          child: Column(
+            children: [
+              Icon(item.icon, color: item.accent, size: dense ? 18 : 20),
+              const Spacer(),
+              if (item.kind == DayGlanceKind.serenity)
+                Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(
+                        text: '$serenityScore',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              color: item.accent,
+                              height: 1,
+                              fontSize: dense ? 20 : 22,
+                            ),
+                      ),
+                      TextSpan(
+                        text: '/100',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: ConfidiaColors.textSecondary(isDark),
+                              fontWeight: FontWeight.w600,
+                            ),
+                      ),
+                    ],
                   ),
-                const Spacer(),
-                Text(
-                  item.label,
                   textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: ConfidiaColors.textSecondary(isDark),
+                )
+              else
+                Text(
+                  item.value,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        height: 1.1,
-                        fontSize: 10,
+                        color: ConfidiaColors.textPrimary(isDark),
+                        height: 1,
+                        fontSize: dense ? 22 : 24,
                       ),
                 ),
-              ],
-            ),
+              const Spacer(),
+              Text(
+                item.label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: ConfidiaColors.textSecondary(isDark),
+                      fontWeight: FontWeight.w600,
+                      height: 1.1,
+                    ),
+              ),
+            ],
           ),
         ),
       ),

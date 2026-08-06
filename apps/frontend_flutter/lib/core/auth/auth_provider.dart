@@ -5,8 +5,13 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../api/api_client.dart';
 import '../../shared/models/user_model.dart';
+import '../../shared/services/profile_api_service.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
+
+final profileApiServiceProvider = Provider<ProfileApiService>((ref) {
+  return ProfileApiService(ref.read(apiClientProvider).dio);
+});
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(apiClientProvider));
@@ -98,40 +103,16 @@ class AuthNotifier extends StateNotifier<AuthState> {
       await _apiClient.ensureConfigured();
       final response = await _apiClient.dio.get('/auth/me');
       final data = response.data as Map<String, dynamic>;
-      state = state.copyWith(
-        user: UserModel(
-          id: data['sub'] as String,
-          email: data['email'] as String,
-          firstName: data['given_name'] as String? ?? '',
-          lastName: data['family_name'] as String? ?? '',
-          roles: List<String>.from(data['roles'] ?? []),
-        ),
-      );
+      state = state.copyWith(user: UserModel.fromJson(data));
     } catch (_) {
-      // Use mock user when API unavailable
-      state = state.copyWith(
-        user: const UserModel(
-          id: 'demo',
-          email: 'demo@confidia.local',
-          firstName: 'Jean',
-          lastName: 'Dupont',
-          roles: ['USER'],
-        ),
-      );
+      state = state.copyWith(user: ProfileApiService.mockDemoUser);
     }
   }
 
   Future<void> loginDemo() async {
     state = state.copyWith(
       isAuthenticated: true,
-      user: const UserModel(
-        id: 'demo',
-        email: 'demo@confidia.local',
-        firstName: 'Jean',
-        lastName: 'Dupont',
-        roles: ['USER'],
-        organization: 'Particulier',
-      ),
+      user: ProfileApiService.mockDemoUser,
     );
   }
 
@@ -139,15 +120,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> loginDemoGuidedTour() async {
     state = state.copyWith(
       isAuthenticated: true,
-      user: const UserModel(
-        id: 'demo-first-visit',
-        email: 'premiere.visite@confidia.local',
-        firstName: 'Camille',
-        lastName: 'Martin',
-        roles: ['USER'],
-        organization: 'Particulier',
-      ),
+      user: ProfileApiService.mockGuidedTourUser,
     );
+  }
+
+  /// Met à jour l'utilisateur local (après PATCH /auth/me ou mock).
+  void updateLocalUser(UserModel user) {
+    state = state.copyWith(user: user);
   }
 
   Future<void> logout() async {

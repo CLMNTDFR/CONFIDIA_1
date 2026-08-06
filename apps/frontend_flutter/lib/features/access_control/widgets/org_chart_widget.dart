@@ -7,6 +7,7 @@ import '../../../core/theme/palette.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../core/theme/theme_context.dart';
 import '../../../shared/models/access_control_models.dart';
+import '../../../shared/widgets/confidia_button.dart';
 import '../../../shared/widgets/glass_card.dart';
 import 'org_chart_layout.dart';
 import 'org_chart_sheets.dart';
@@ -55,6 +56,22 @@ class OrgChartWidget extends StatefulWidget {
 class _OrgChartWidgetState extends State<OrgChartWidget> {
   String? _draggingId;
   int? _hoverLevel;
+  late final ScrollController _verticalScroll;
+  late final ScrollController _horizontalScroll;
+
+  @override
+  void initState() {
+    super.initState();
+    _verticalScroll = ScrollController();
+    _horizontalScroll = ScrollController();
+  }
+
+  @override
+  void dispose() {
+    _verticalScroll.dispose();
+    _horizontalScroll.dispose();
+    super.dispose();
+  }
 
   AccessMember? _memberFor(OrgNode node) {
     if (node.memberId != null) {
@@ -146,9 +163,11 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
         builder: (ctx) => Scaffold(
           appBar: AppBar(
             title: const Text('Organigramme'),
-            leading: IconButton(
-              icon: const Icon(Icons.close_rounded),
-              onPressed: () => Navigator.of(ctx).pop(),
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 8),
+              child: Center(
+                child: ConfidiaCloseButton(onPressed: () => Navigator.of(ctx).pop()),
+              ),
             ),
           ),
           body: Column(
@@ -211,13 +230,19 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
           final viewportWidth = constraints.maxWidth;
 
           final scrollable = Scrollbar(
+            controller: _verticalScroll,
             thumbVisibility: true,
             child: SingleChildScrollView(
+              controller: _verticalScroll,
+              primary: false,
               child: Scrollbar(
+                controller: _horizontalScroll,
                 thumbVisibility: true,
                 notificationPredicate: (n) => n.depth == 1,
                 child: SingleChildScrollView(
+                  controller: _horizontalScroll,
                   scrollDirection: Axis.horizontal,
+                  primary: false,
                   child: ConstrainedBox(
                     constraints: BoxConstraints(minWidth: viewportWidth),
                     child: Center(
@@ -249,7 +274,7 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
                             ),
                             ...layout.levelBands.where((b) => !b.isExtension).map(
                                   (band) => Positioned(
-                                    left: 10,
+                                    left: 12,
                                     top: band.rect.top + 6,
                                     child: IgnorePointer(
                                       child: Text(
@@ -337,8 +362,8 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
           if (!widget.enablePinchZoom) ...[
             Row(
               children: [
-                Icon(Icons.account_tree_rounded, size: 16, color: palette.secondary),
-                const SizedBox(width: 6),
+                Icon(Icons.account_tree_rounded, size: 16, color: ConfidiaColors.textSecondary(isDark)),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Organigramme',
@@ -409,11 +434,10 @@ class _OrgToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final palette = context.palette;
-
+    final muted = ConfidiaColors.textSecondary(isDark);
     Widget chip({required IconData icon, required String label, required VoidCallback onTap}) {
       return ActionChip(
-        avatar: Icon(icon, size: 16, color: palette.primary),
+        avatar: Icon(icon, size: 16, color: muted),
         label: Text(label),
         labelStyle: Theme.of(context).textTheme.labelSmall,
         backgroundColor: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
@@ -427,9 +451,9 @@ class _OrgToolbar extends StatelessWidget {
       child: Row(
         children: [
           chip(icon: Icons.link_rounded, label: 'Lien', onTap: onEditLink),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           chip(icon: Icons.layers_rounded, label: 'Niveaux', onTap: onManageLevels),
-          const SizedBox(width: 6),
+          const SizedBox(width: 8),
           chip(icon: Icons.badge_outlined, label: 'Rôles', onTap: onManageRoles),
         ],
       ),
@@ -505,14 +529,14 @@ class _LevelDropZone extends StatelessWidget {
               width: highlight ? 2 : 1,
               strokeAlign: BorderSide.strokeAlignInside,
             ),
-            borderRadius: BorderRadius.circular(isExtension ? 10 : 8),
+            borderRadius: BorderRadius.circular(isExtension ? 12 : 8),
           ),
           child: Center(
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (isExtension) Icon(Icons.add_rounded, size: 16, color: palette.primary),
-                if (isExtension) const SizedBox(width: 6),
+                if (isExtension) const SizedBox(width: 8),
                 Text(
                   label,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -563,7 +587,7 @@ class _OrgNodeCard extends StatelessWidget {
         height: OrgChartLayout.nodeHeight,
         decoration: BoxDecoration(
           color: isDark ? ConfidiaColors.darkSurfaceElevated.withValues(alpha: 0.96) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isDragging ? palette.secondary.withValues(alpha: 0.55) : ConfidiaColors.border(isDark),
             width: isDragging ? 1.5 : 1,
@@ -579,7 +603,7 @@ class _OrgNodeCard extends StatelessWidget {
                 ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(13),
+          borderRadius: BorderRadius.circular(12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -589,14 +613,14 @@ class _OrgNodeCard extends StatelessWidget {
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(8, 6, 8, 4),
+                  padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
                         children: [
                           CircleAvatar(
-                            radius: 15,
+                            radius: 16,
                             backgroundColor: roleColor.withValues(alpha: 0.14),
                             child: Text(
                               initials,
@@ -619,7 +643,7 @@ class _OrgNodeCard extends StatelessWidget {
                             ),
                         ],
                       ),
-                      const SizedBox(height: 5),
+                      const SizedBox(height: 4),
                       Text(
                         node.label,
                         maxLines: 2,
@@ -631,7 +655,7 @@ class _OrgNodeCard extends StatelessWidget {
                             ),
                       ),
                       if (node.subtitle != null) ...[
-                        const SizedBox(height: 2),
+                        const SizedBox(height: 4),
                         Text(
                           node.subtitle!,
                           maxLines: 1,
@@ -645,10 +669,10 @@ class _OrgNodeCard extends StatelessWidget {
                       ],
                       const Spacer(),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
                           color: roleColor.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                           border: Border.all(color: roleColor.withValues(alpha: 0.35)),
                         ),
                         child: Text(
@@ -681,13 +705,13 @@ class _OrgNodeCard extends StatelessWidget {
           padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             color: (isDark ? Colors.black : Colors.white).withValues(alpha: 0.82),
-            borderRadius: BorderRadius.circular(6),
-            border: Border.all(color: palette.primary.withValues(alpha: 0.4)),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: ConfidiaColors.border(isDark)),
             boxShadow: [
               BoxShadow(color: Colors.black.withValues(alpha: 0.12), blurRadius: 4, offset: const Offset(0, 1)),
             ],
           ),
-          child: Icon(Icons.open_with_rounded, size: 13, color: palette.primary),
+          child: Icon(Icons.open_with_rounded, size: 13, color: ConfidiaColors.textSecondary(isDark)),
         ),
       ),
     );
@@ -714,7 +738,7 @@ class _OrgNodeCard extends StatelessWidget {
                 feedback: Material(
                   color: Colors.transparent,
                   elevation: 8,
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                   child: SizedBox(
                     width: OrgChartLayout.nodeWidth,
                     height: OrgChartLayout.nodeHeight,

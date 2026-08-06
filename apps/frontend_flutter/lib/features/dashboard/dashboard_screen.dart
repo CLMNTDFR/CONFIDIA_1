@@ -31,6 +31,7 @@ import '../onboarding/onboarding_targets.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../day_start/day_briefing_provider.dart';
 import '../day_start/day_glance_strip.dart';
+import '../documents/document_add_sheet.dart';
 import 'dashboard_chart_widgets.dart';
 import 'dashboard_grid.dart';
 import 'dashboard_provider.dart';
@@ -324,11 +325,11 @@ class _EditSegmentRow extends StatelessWidget {
         ReorderableDragStartListener(
           index: segmentIndex,
           child: Container(
-            margin: const EdgeInsets.only(bottom: 6),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
             decoration: BoxDecoration(
               color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.06 : 0.04),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               border: Border.all(color: ConfidiaColors.border(isDark)),
             ),
             child: Row(
@@ -392,17 +393,17 @@ class _WidgetEditBar extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 6),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.07 : 0.04),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Row(
         children: [
-          Icon(icon, size: 16, color: context.palette.secondary),
-          const SizedBox(width: 6),
+          Icon(icon, size: 16, color: ConfidiaColors.textSecondary(isDark)),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(label, style: Theme.of(context).textTheme.labelMedium, overflow: TextOverflow.ellipsis),
           ),
@@ -470,11 +471,12 @@ class _EditActionChip extends StatelessWidget {
     return Material(
       color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.08),
       borderRadius: BorderRadius.circular(8),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(8),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -518,16 +520,16 @@ class _HiddenWidgetsPanel extends StatelessWidget {
                     (isDark ? const Color(0xFF0E0E16) : const Color(0xFFF8F6FC)).withValues(alpha: 0.98),
                   ],
                 ),
-                border: Border(top: BorderSide(color: context.palette.secondary.withValues(alpha: 0.35))),
+                border: Border(top: BorderSide(color: ConfidiaColors.border(isDark))),
               ),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.widgets_outlined, size: 16, color: context.palette.secondary),
+                        Icon(Icons.widgets_outlined, size: 16, color: ConfidiaColors.textSecondary(isDark)),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text('Blocs masqués · à réactiver', style: Theme.of(context).textTheme.labelLarge),
@@ -535,7 +537,7 @@ class _HiddenWidgetsPanel extends StatelessWidget {
                         Text(
                           '${hidden.length}',
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: context.palette.secondary,
+                                color: ConfidiaColors.textSecondary(isDark),
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
@@ -551,13 +553,11 @@ class _HiddenWidgetsPanel extends StatelessWidget {
                         itemBuilder: (context, index) {
                           final type = hidden[index];
                           return ActionChip(
-                            avatar: Icon(_iconForType(type), size: 16, color: context.palette.primary),
+                            avatar: Icon(_iconForType(type), size: 16, color: ConfidiaColors.textSecondary(isDark)),
                             label: Text(type.label),
                             labelStyle: Theme.of(context).textTheme.labelMedium,
-                            backgroundColor: isDark
-                                ? context.palette.primary.withValues(alpha: 0.18)
-                                : context.palette.primary.withValues(alpha: 0.12),
-                            side: BorderSide(color: context.palette.primary.withValues(alpha: 0.35)),
+                            backgroundColor: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.08 : 0.05),
+                            side: BorderSide(color: ConfidiaColors.border(isDark)),
                             onPressed: () => onRestore(type),
                           );
                         },
@@ -591,15 +591,16 @@ class _EditModeActions extends StatelessWidget {
         Expanded(
           child: Material(
             color: bgColor,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
+            clipBehavior: Clip.antiAlias,
             elevation: isDark ? 0 : 1,
             shadowColor: Colors.black.withValues(alpha: 0.08),
             child: InkWell(
               onTap: onReset,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
               child: Container(
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: ConfidiaColors.border(isDark)),
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -655,6 +656,7 @@ class _CustomizeFabState extends State<_CustomizeFab> {
     return Align(
       alignment: Alignment.centerRight,
       child: MouseRegion(
+        cursor: SystemMouseCursors.click,
         onEnter: supportsHover ? (_) => setState(() => _hovered = true) : null,
         onExit: supportsHover ? (_) => setState(() => _hovered = false) : null,
         child: GestureDetector(
@@ -677,7 +679,7 @@ class _CustomizeFabState extends State<_CustomizeFab> {
                   height: 44,
                   padding: EdgeInsets.symmetric(horizontal: expanded ? 16 : 12),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(20),
                     color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
                     border: Border.all(color: ConfidiaColors.border(isDark)),
                     boxShadow: [
@@ -738,11 +740,13 @@ class _StatsWidget extends ConsumerWidget {
         .where((p) => p.status == PaymentStatus.pending || p.status == PaymentStatus.waiting)
         .length));
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
     return StatsRow(stats: [
-      CompactStat(label: 'Documents', value: '${docs.length}', icon: Icons.folder_copy_rounded, color: context.palette.primary),
-      CompactStat(label: 'Paiements', value: '$pendingCount', icon: Icons.payments_rounded, color: context.palette.accent),
-      CompactStat(label: 'Alertes', value: '${notifications.where((n) => !n.read).length}', icon: Icons.notifications_rounded, color: context.palette.secondary),
-      CompactStat(label: 'Emails', value: '${MockEcosystem.emails.length}', icon: Icons.mail_rounded, color: ConfidiaColors.success),
+      CompactStat(label: 'Documents', value: '${docs.length}', icon: Icons.folder_copy_rounded, color: muted),
+      CompactStat(label: 'Paiements', value: '$pendingCount', icon: Icons.payments_rounded, color: muted),
+      CompactStat(label: 'Alertes', value: '${notifications.where((n) => !n.read).length}', icon: Icons.notifications_rounded, color: muted),
+      CompactStat(label: 'Emails', value: '${MockEcosystem.emails.length}', icon: Icons.mail_rounded, color: muted),
     ]);
   }
 }
@@ -768,10 +772,10 @@ class _QuickActionsWidget extends StatelessWidget {
           onTap: () => context.go('/payments'),
         ),
         ConfidiaGlowChip(
-          label: 'Scanner',
-          icon: Icons.document_scanner_rounded,
+          label: 'Ajouter',
+          icon: Icons.add_rounded,
           selected: false,
-          onTap: () => context.go('/scan'),
+          onTap: () => showDocumentAddSheet(context),
         ),
       ],
     );
@@ -852,7 +856,7 @@ class _DashboardCardShell extends StatelessWidget {
               header,
               if (fillHeight) Expanded(child: body) else body,
               if (footer != null) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: 8),
                 footer!,
               ],
             ],
@@ -924,7 +928,10 @@ class _AiAnalyzedWidget extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: ConfidiaSpacing.md),
-              StatusBadge(label: '${MockEcosystem.analyzedDocumentsCount} docs', color: context.palette.secondary),
+              StatusBadge(
+                label: '${MockEcosystem.analyzedDocumentsCount} docs',
+                color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+              ),
               const SizedBox(width: ConfidiaSpacing.sm),
               ConfidiaSeeAllButton(onTap: () => context.go('/documents')),
             ],
@@ -984,8 +991,15 @@ class _DeadlinesWidget extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Container(width: 3, height: 32, decoration: BoxDecoration(color: e.color ?? context.palette.primary, borderRadius: BorderRadius.circular(2))),
-                    const SizedBox(width: 10),
+                    Container(
+                      width: 4,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: e.color ?? ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(child: Text(e.title, style: Theme.of(context).textTheme.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis)),
                     Text(DateFormat('d MMM', 'fr_FR').format(e.start), style: Theme.of(context).textTheme.labelSmall),
                   ],
@@ -1030,7 +1044,11 @@ class _ActivityWidget extends StatelessWidget {
           ...notifications.take(3).map((n) => ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,
-                leading: Icon(Icons.bolt_rounded, size: 18, color: context.palette.primary),
+                leading: Icon(
+                  Icons.bolt_rounded,
+                  size: 18,
+                  color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+                ),
                 title: Text(n.title, style: Theme.of(context).textTheme.bodyMedium, maxLines: 1, overflow: TextOverflow.ellipsis),
                 subtitle: Text(n.message, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.bodySmall),
               )),
@@ -1069,10 +1087,14 @@ class _DocRow extends StatelessWidget {
     return ListTile(
       dense: true,
       contentPadding: EdgeInsets.zero,
-      leading: Icon(Icons.picture_as_pdf_rounded, color: context.palette.primary, size: 20),
+      leading: Icon(
+        Icons.picture_as_pdf_rounded,
+        color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+        size: 20,
+      ),
       title: Text(doc.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text('${doc.category ?? 'Non classé'} · ${doc.fileSizeFormatted}', style: Theme.of(context).textTheme.labelSmall),
-      trailing: doc.isImportant ? Icon(Icons.star_rounded, color: context.palette.secondary, size: 16) : null,
+      trailing: doc.isImportant ? const Icon(Icons.star_rounded, color: ConfidiaColors.warning, size: 16) : null,
       onTap: () => context.go('/documents/${doc.id}'),
     );
   }

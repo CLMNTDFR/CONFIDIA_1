@@ -34,6 +34,10 @@ abstract final class AppOpacity {
   static const double borderStrong = 0.1;
   static const double borderFocus = 0.32;
 
+  // Hover discret (boutons / zones cliquables)
+  static const double hoverInkDark = 0.08;
+  static const double hoverInkLight = 0.05;
+
   // Accents
   static const double tintFaint = 0.05;
   static const double tintQuiet = 0.07;

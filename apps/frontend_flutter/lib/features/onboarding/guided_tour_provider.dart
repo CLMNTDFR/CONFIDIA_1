@@ -96,7 +96,7 @@ final List<GuidedTourStep> guidedTourSteps = [
       GuidedTourStep(
         id: GuidedTourStepId.serenity,
         message:
-            'Voici votre Indice de sérénité : un aperçu clair de ce qui va bien, et de ce qui mérite votre attention.',
+            'Voici votre Indice de sérénité : le score du moment. Le détail et les priorités du jour sont dans Commencer ma journée.',
         targetKey: OnboardingTargets.serenity,
         bubbleAlignment: Alignment.bottomCenter,
         route: '/dashboard',
@@ -129,8 +129,7 @@ final List<GuidedTourStep> guidedTourSteps = [
       ),
       GuidedTourStep(
         id: GuidedTourStepId.notifications,
-        message:
-            'Les alertes importantes se retrouvent ici. Le bouton à côté permet aussi de basculer clair / sombre instantanément.',
+        message: 'Les alertes importantes se retrouvent ici, dans le centre de notifications.',
         targetKey: OnboardingTargets.notifications,
         bubbleAlignment: Alignment.bottomCenter,
         route: '/dashboard',

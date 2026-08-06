@@ -1,25 +1,38 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/spacing.dart';
+import '../../core/theme/tokens/app_spacing.dart';
 
-/// Insets liés au shell mobile (bottom bar flottante + safe area).
+/// Insets liés au shell mobile (bottom bar + safe area).
 abstract final class ConfidiaMobileShell {
-  /// Hauteur utile de la barre (icônes + labels + padding interne).
-  static const double navBarHeight = 58;
+  /// Hauteur du chrome nav hors safe area (padding 8×2 + icône + label + pads item).
+  static const double navBarHeight = AppSpacing.navBarHeight;
+
+  /// Air confortable entre le bas du contenu / FAB et le haut de la barre.
+  static const double contentGap = AppSpacing.md;
 
   static bool isMobileShell(BuildContext context) => MediaQuery.sizeOf(context).width < 900;
 
-  /// Espace à réserver sous le contenu scrollable.
-  static double bottomScrollInset(BuildContext context) {
+  /// Emprise réelle de la barre (chrome + home indicator), sans marge de confort.
+  static double barOccupiedHeight(BuildContext context) {
     if (!isMobileShell(context)) return 0;
     return navBarHeight + MediaQuery.viewPaddingOf(context).bottom;
   }
 
-  /// Décalage pour FAB / actions flottantes au-dessus de la barre.
-  static double fabBottom(BuildContext context, {double gap = ConfidiaSpacing.sm}) {
-    if (!isMobileShell(context)) return gap + ConfidiaSpacing.lg;
-    return bottomScrollInset(context) + gap;
+  /// Espace à réserver sous le contenu scrollable (barre + safe area + air).
+  static double bottomScrollInset(BuildContext context) {
+    if (!isMobileShell(context)) return 0;
+    return barOccupiedHeight(context) + contentGap;
   }
+
+  /// Décalage pour FAB / actions flottantes au-dessus de la barre.
+  static double fabBottom(BuildContext context, {double gap = contentGap}) {
+    if (!isMobileShell(context)) return gap + ConfidiaSpacing.lg;
+    return barOccupiedHeight(context) + gap;
+  }
+
+  /// Padding scroll supplémentaire pour ne pas passer sous un FAB (~40 px).
+  static double fabScrollClearance({double fabHeight = 40}) => fabHeight + contentGap;
 }
 
 /// Padding de page cohérent avec le shell mobile.

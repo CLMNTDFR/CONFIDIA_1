@@ -19,6 +19,7 @@ import '../../shared/widgets/logout_button.dart';
 import '../../shared/widgets/provider_chip.dart';
 import '../../shared/widgets/status_badge.dart';
 import '../onboarding/onboarding_targets.dart';
+import '../profile/profile_password_sheet.dart';
 
 void _noop(bool _) {}
 
@@ -34,7 +35,7 @@ class SettingsScreen extends ConsumerWidget {
       padding: ConfidiaInsets.page(context),
       children: [
         _SectionTitle(label: 'Organisation & accès'),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         KeyedSubtree(
           key: OnboardingTargets.gouvernanceTile,
           child: GlassCard(
@@ -49,7 +50,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Apparence'),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         KeyedSubtree(
           key: OnboardingTargets.appearanceSection,
           child: GlassCard(
@@ -64,7 +65,7 @@ class SettingsScreen extends ConsumerWidget {
                 ),
                 Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -72,9 +73,9 @@ class SettingsScreen extends ConsumerWidget {
                         'Thème couleur',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text('Palette de marque bleu ou rose', style: Theme.of(context).textTheme.labelSmall),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       ConfidiaPalettePicker(
                         value: paletteId,
                         onChanged: (id) => ref.read(colorPaletteProvider.notifier).state = id,
@@ -88,7 +89,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Notifications'),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         GlassCard(
           padding: EdgeInsets.zero,
           child: Column(
@@ -103,7 +104,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Comptes connectés'),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         LayoutBuilder(
           builder: (context, constraints) {
             final columns = constraints.maxWidth >= 640 ? 2 : 1;
@@ -114,7 +115,7 @@ class SettingsScreen extends ConsumerWidget {
                 crossAxisCount: columns,
                 crossAxisSpacing: ConfidiaSpacing.sm,
                 mainAxisSpacing: ConfidiaSpacing.sm,
-                mainAxisExtent: 118,
+                mainAxisExtent: 148,
               ),
               itemCount: MockEcosystem.connectedAccounts.length,
               itemBuilder: (context, i) => _ConnectedAccountCard(account: MockEcosystem.connectedAccounts[i]),
@@ -123,7 +124,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Stockage documentaire'),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         ...MockEcosystem.storageServices.map((svc) {
               final svcColor = svc.id == 'paperless' ? context.palette.primary : svc.color;
               return Padding(
@@ -156,7 +157,7 @@ class SettingsScreen extends ConsumerWidget {
                     Text(svc.description, style: Theme.of(context).textTheme.labelSmall),
                     const SizedBox(height: 8),
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius: BorderRadius.circular(8),
                       child: LinearProgressIndicator(
                         value: svc.usageRatio,
                         minHeight: 4,
@@ -176,7 +177,7 @@ class SettingsScreen extends ConsumerWidget {
             }),
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Sécurité'),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         GlassCard(
           padding: EdgeInsets.zero,
           child: Column(
@@ -184,7 +185,7 @@ class SettingsScreen extends ConsumerWidget {
               _CompactActionTile(
                 icon: Icons.lock_outline_rounded,
                 title: 'Changer le mot de passe',
-                onTap: () {},
+                onTap: () => showProfilePasswordSheet(context),
               ),
               const Divider(height: 1),
               ConfidiaSwitchTile(
@@ -197,7 +198,7 @@ class SettingsScreen extends ConsumerWidget {
         ),
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'À propos'),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         GlassCard(
           padding: EdgeInsets.zero,
           child: _CompactActionTile(
@@ -254,7 +255,7 @@ class _CompactActionTile extends StatelessWidget {
     return ListTile(
       dense: true,
       visualDensity: VisualDensity.compact,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 0),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
       leading: Icon(icon, size: 18, color: context.palette.primary),
       title: Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
       subtitle: subtitle != null ? Text(subtitle!, style: Theme.of(context).textTheme.labelSmall) : null,
@@ -274,7 +275,7 @@ class _ConnectedAccountCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GlassCard(
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -286,14 +287,14 @@ class _ConnectedAccountCard extends StatelessWidget {
               const StatusBadge(label: 'Connecté', color: ConfidiaColors.success),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Text(
             account.email,
             style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 8),
           Wrap(
             spacing: 4,
             runSpacing: 4,
@@ -324,16 +325,16 @@ class _AccountStatChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 11, color: ConfidiaColors.textSecondary(isDark)),
-          const SizedBox(width: 3),
+          const SizedBox(width: 4),
           Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontSize: 10)),
         ],
       ),

@@ -15,10 +15,10 @@ class MailProviderChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8, vertical: compact ? 2 : 4),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 8, vertical: compact ? 4 : 4),
       decoration: BoxDecoration(
         color: provider.brandColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: provider.brandColor.withValues(alpha: 0.3)),
       ),
       child: BrandLabel(
@@ -47,10 +47,10 @@ class CalendarSourceChip extends StatelessWidget {
     final color = source.themeColor(context.palette);
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 8, vertical: compact ? 2 : 4),
+      padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 8, vertical: compact ? 4 : 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(8),
       ),
       child: BrandLabel(
         assetPath: source.logoAsset,

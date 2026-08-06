@@ -121,8 +121,8 @@ class _StructureFormContentState extends ConsumerState<_StructureFormContent> {
           Text('Modèle de départ', style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600)),
           const SizedBox(height: 8),
           Wrap(
-            spacing: 6,
-            runSpacing: 6,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               ConfidiaGlowChip(
                 label: 'Famille',
@@ -176,14 +176,16 @@ class _StructureFormContentState extends ConsumerState<_StructureFormContent> {
                 final selected = _customIcon == icon;
                 return Material(
                   color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                  clipBehavior: Clip.antiAlias,
                   child: InkWell(
                     onTap: () => setState(() => _customIcon = icon),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(8),
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 160),
                       curve: Curves.easeOutCubic,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(8),
                         color: selected
                             ? palette.primary.withValues(alpha: isDark ? 0.2 : 0.1)
                             : (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),

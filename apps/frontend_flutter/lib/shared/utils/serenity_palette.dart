@@ -1,26 +1,27 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/palette.dart';
+import '../../core/theme/tokens/app_colors.dart';
 import '../models/serenity_briefing_model.dart';
 
-/// Couleurs sémantiques sérénité : vert ≥80, bleu ≥65, orange ≥50, rouge <50.
+/// Couleurs sémantiques sérénité : rouge 0-40, orange 41-60, vert >60 (toast success).
 abstract final class SerenityPalette {
-  static const excellent = Color(0xFF43A047);
-  static const good = Color(0xFF4B96B4);
+  static const excellent = AppColors.success;
+  static const good = AppColors.success;
   static const moderate = Color(0xFFFB8C00);
   static const attention = Color(0xFFE53935);
 
+  /// [palette] conservé pour compatibilité d'appel ; non utilisé dans les seuils.
   static Color forScore(int score, {ConfidiaPalette? palette}) {
-    if (score >= 80) return excellent;
-    if (score >= 65) return palette?.primary ?? good;
-    if (score >= 50) return moderate;
+    if (score > 60) return excellent;
+    if (score >= 41) return moderate;
     return attention;
   }
 
+  /// [palette] conservé pour compatibilité d'appel ; excellent/good partagent le vert succès.
   static Color forLevel(SerenityLevel level, ConfidiaPalette palette) {
     return switch (level) {
-      SerenityLevel.excellent => excellent,
-      SerenityLevel.good => palette.primary,
+      SerenityLevel.excellent || SerenityLevel.good => excellent,
       SerenityLevel.moderate => moderate,
       SerenityLevel.attention => attention,
     };

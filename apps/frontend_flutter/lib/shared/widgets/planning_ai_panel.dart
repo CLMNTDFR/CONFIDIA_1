@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
-import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
-import '../../shared/models/access_control_models.dart';
+import '../models/access_control_models.dart';
 import 'ai_streaming_text.dart';
 import 'cofid_ia_brand.dart';
+import 'confidia_ai_robot.dart';
+import 'confidia_button.dart';
 import 'confidia_glow_button.dart';
+import 'confidia_tappable.dart';
 import 'confidia_text_field.dart';
+import 'confidia_tooltip.dart';
 import 'glass_card.dart';
-import 'mobile_shell_insets.dart';
 
+/// Panneau Confid•IA (calendrier / gouvernance) : analyse, proposition, ajustement.
 class PlanningAiPanel extends StatefulWidget {
   final PlanningProposal? proposal;
   final bool loading;
@@ -21,6 +24,7 @@ class PlanningAiPanel extends StatefulWidget {
   final VoidCallback onReject;
   final void Function(String prompt) onRefine;
   final String analyzeLabel;
+  final bool initiallyExpanded;
 
   const PlanningAiPanel({
     super.key,
@@ -32,6 +36,7 @@ class PlanningAiPanel extends StatefulWidget {
     required this.onReject,
     required this.onRefine,
     this.analyzeLabel = 'Analyser le planning',
+    this.initiallyExpanded = false,
   });
 
   @override
@@ -42,23 +47,17 @@ class _PlanningAiPanelState extends State<PlanningAiPanel> {
   final _refineCtrl = TextEditingController();
   bool _streaming = false;
   bool _refineVisible = false;
-  bool _hasRefineText = false;
+  late bool _expanded;
   int _streamKey = 0;
 
   @override
   void initState() {
     super.initState();
-    _refineCtrl.addListener(_onRefineTextChanged);
-  }
-
-  void _onRefineTextChanged() {
-    final hasText = _refineCtrl.text.isNotEmpty;
-    if (hasText != _hasRefineText) setState(() => _hasRefineText = hasText);
+    _expanded = widget.initiallyExpanded;
   }
 
   @override
   void dispose() {
-    _refineCtrl.removeListener(_onRefineTextChanged);
     _refineCtrl.dispose();
     super.dispose();
   }
@@ -74,8 +73,21 @@ class _PlanningAiPanelState extends State<PlanningAiPanel> {
         _streamKey++;
         _refineVisible = false;
         _refineCtrl.clear();
+        _expanded = true;
       });
     }
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _expanded = !_expanded;
+      if (!_expanded) _streaming = false;
+    });
+  }
+
+  void _setStreaming(bool value) {
+    if (!mounted || _streaming == value) return;
+    setState(() => _streaming = value);
   }
 
   void _submitRefine() {
@@ -84,210 +96,265 @@ class _PlanningAiPanelState extends State<PlanningAiPanel> {
     widget.onRefine(prompt);
   }
 
+  String get _collapsedHint {
+    if (widget.proposal != null) return 'Proposition disponible';
+    if (widget.loading) return 'Analyse en cours…';
+    return 'Conflits et réajustements';
+  }
+
   @override
   Widget build(BuildContext context) {
     final proposal = widget.proposal;
     final hasResult = proposal != null;
     final isActive = widget.loading || _streaming;
-    final isMobile = ConfidiaMobileShell.isMobileShell(context);
-
-    final analyzeButton = ConfidiaGlowButton(
-      label: widget.loading ? 'Analyse en cours…' : widget.analyzeLabel,
-      icon: Icons.psychology_rounded,
-      onPressed: widget.loading ? null : widget.onAnalyze,
-    );
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
 
     return GlassCard(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (!hasResult && !isMobile) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: CofidIaPanelHeader(
-                    speaking: isActive,
-                    subtitle: 'Détecte les conflits et propose des réajustements sur l\'agenda affiché.',
+          ConfidiaTappable(
+            onTap: _toggleExpanded,
+            pressScale: 0.99,
+            borderRadius: AppRadius.mdAll,
+            hoverOverlay: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  ConfidiaAiRobot(size: 32, speaking: isActive && _expanded),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const CofidIaBrand(fontSize: 14, fontWeight: FontWeight.w700),
+                        const SizedBox(height: 2),
+                        Text(
+                          _collapsedHint,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: muted),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                analyzeButton,
-              ],
-            ),
-            if (widget.loading)
-              const Padding(
-                padding: EdgeInsets.only(top: 16),
-                child: Center(child: CircularProgressIndicator()),
-              ),
-          ]
-          else ...[
-            CofidIaPanelHeader(
-              speaking: isActive,
-              subtitle: hasResult
-                  ? null
-                  : 'Détecte les conflits et propose des réajustements sur l\'agenda affiché.',
-            ),
-            if (!hasResult) ...[
-              const SizedBox(height: 14),
-              Center(child: analyzeButton),
-              if (widget.loading)
-                const Padding(
-                  padding: EdgeInsets.only(top: 16),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-            ],
-          ],
-          if (hasResult) ...[
-            const SizedBox(height: ConfidiaSpacing.md),
-            if (proposal.conflicts.isNotEmpty) ...[
-              ...proposal.conflicts.map(
-                (c) => Padding(
-                  padding: const EdgeInsets.only(bottom: ConfidiaSpacing.sm),
-                  child: _ConflictTile(conflict: c),
-                ),
-              ),
-              const SizedBox(height: ConfidiaSpacing.sm),
-            ],
-            Divider(
-              height: 1,
-              color: AppBorders.subtle(Theme.of(context).brightness == Brightness.dark).color,
-            ),
-            const SizedBox(height: ConfidiaSpacing.sm),
-            AiStreamingText(
-              key: ValueKey(_streamKey),
-              text: proposal.proposal,
-              showThinkingRobot: false,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.55),
-              onStreamStart: () => setState(() => _streaming = true),
-              onComplete: () => setState(() => _streaming = false),
-            ),
-            if (proposal.alternatives.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Text('Alternatives', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 4),
-              ...proposal.alternatives.map(
-                (a) => Padding(
-                  padding: const EdgeInsets.only(bottom: 2),
-                  child: Text('• $a', style: Theme.of(context).textTheme.labelSmall),
-                ),
-              ),
-            ],
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                _ProposalIconButton(
-                  icon: Icons.check_rounded,
-                  tooltip: 'Accepter',
-                  primary: true,
-                  onPressed: widget.onAccept,
-                ),
-                const SizedBox(width: 6),
-                _ProposalIconButton(
-                  icon: Icons.close_rounded,
-                  tooltip: 'Refuser',
-                  onPressed: widget.onReject,
-                ),
-                const SizedBox(width: 6),
-                _ProposalIconButton(
-                  icon: Icons.refresh_rounded,
-                  tooltip: 'Nouvelle proposition',
-                  onPressed: widget.loading ? null : widget.onRegenerate,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: ConfidiaGlowButton(
-                    label: 'Ajuster',
-                    icon: Icons.tune_rounded,
-                    primary: _refineVisible,
-                    expand: true,
-                    onPressed: widget.loading
-                        ? null
-                        : () => setState(() => _refineVisible = true),
+                  AnimatedRotation(
+                    turns: _expanded ? 0.5 : 0,
+                    duration: AppDurations.fast,
+                    child: Icon(Icons.expand_more_rounded, size: 22, color: muted),
                   ),
-                ),
-              ],
-            ),
-            AnimatedCrossFade(
-              duration: const Duration(milliseconds: 220),
-              crossFadeState: _refineVisible ? CrossFadeState.showSecond : CrossFadeState.showFirst,
-              firstChild: const SizedBox.shrink(),
-              secondChild: Padding(
-                padding: const EdgeInsets.only(top: ConfidiaSpacing.sm),
-                child: _RefinePromptField(
-                  controller: _refineCtrl,
-                  enabled: !widget.loading,
-                  showSend: _hasRefineText,
-                  onSend: _submitRefine,
-                ),
+                ],
               ),
             ),
-          ],
+          ),
+          AnimatedSize(
+            duration: AppDurations.snappy,
+            curve: Curves.easeOutCubic,
+            alignment: Alignment.topCenter,
+            child: _expanded
+                ? Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Divider(height: 1, color: AppBorders.subtle(isDark).color),
+                        const SizedBox(height: 14),
+                        if (!hasResult)
+                          _EmptyState(
+                            loading: widget.loading,
+                            analyzeLabel: widget.analyzeLabel,
+                            onAnalyze: widget.onAnalyze,
+                          )
+                        else ...[
+                          if (proposal.conflicts.isNotEmpty) ...[
+                            for (final c in proposal.conflicts)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _ConflictTile(conflict: c),
+                              ),
+                            const SizedBox(height: 4),
+                          ],
+                          AiStreamingText(
+                            key: ValueKey(_streamKey),
+                            text: proposal.proposal,
+                            showThinkingRobot: false,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  height: 1.55,
+                                  color: ConfidiaColors.textPrimary(isDark).withValues(alpha: 0.92),
+                                ),
+                            onStreamStart: () => _setStreaming(true),
+                            onComplete: () => _setStreaming(false),
+                          ),
+                          if (proposal.alternatives.isNotEmpty) ...[
+                            const SizedBox(height: 14),
+                            Text(
+                              'Alternatives',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                    color: muted,
+                                    letterSpacing: 0.2,
+                                  ),
+                            ),
+                            const SizedBox(height: 6),
+                            for (final a in proposal.alternatives)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('·  ', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: muted)),
+                                    Expanded(
+                                      child: Text(
+                                        a,
+                                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                              color: muted,
+                                              height: 1.4,
+                                            ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                          ],
+                          const SizedBox(height: 16),
+                          _ProposalActions(
+                            loading: widget.loading,
+                            onAccept: widget.onAccept,
+                            onReject: widget.onReject,
+                            onRegenerate: widget.onRegenerate,
+                            onToggleRefine: () => setState(() => _refineVisible = !_refineVisible),
+                          ),
+                          AnimatedSize(
+                            duration: AppDurations.snappy,
+                            curve: Curves.easeOutCubic,
+                            child: _refineVisible
+                                ? Padding(
+                                    padding: const EdgeInsets.only(top: 10),
+                                    child: ValueListenableBuilder<TextEditingValue>(
+                                      valueListenable: _refineCtrl,
+                                      builder: (context, value, _) => _RefinePromptField(
+                                        controller: _refineCtrl,
+                                        enabled: !widget.loading,
+                                        showSend: value.text.isNotEmpty,
+                                        onSend: _submitRefine,
+                                      ),
+                                    ),
+                                  )
+                                : const SizedBox.shrink(),
+                          ),
+                        ],
+                      ],
+                    ),
+                  )
+                : const SizedBox.shrink(),
+          ),
         ],
       ),
     );
   }
 }
 
-class _ProposalIconButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback? onPressed;
-  final bool primary;
+class _EmptyState extends StatelessWidget {
+  final bool loading;
+  final String analyzeLabel;
+  final VoidCallback onAnalyze;
 
-  const _ProposalIconButton({
-    required this.icon,
-    required this.tooltip,
-    this.onPressed,
-    this.primary = false,
+  const _EmptyState({
+    required this.loading,
+    required this.analyzeLabel,
+    required this.onAnalyze,
   });
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final enabled = onPressed != null;
+    final muted = ConfidiaColors.textSecondary(isDark);
 
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(10),
-          child: Ink(
-            width: 40,
-            height: 40,
-            decoration: primary
-                ? BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    gradient: LinearGradient(
-                      colors: enabled
-                          ? [
-                              context.palette.primary.withValues(alpha: 0.92),
-                              context.palette.secondary.withValues(alpha: 0.78),
-                            ]
-                          : [
-                              context.palette.primary.withValues(alpha: 0.4),
-                              context.palette.secondary.withValues(alpha: 0.35),
-                            ],
-                    ),
-                    border: Border.all(color: Colors.white.withValues(alpha: enabled ? 0.18 : 0.08)),
-                  )
-                : BoxDecoration(
-                    borderRadius: BorderRadius.circular(10),
-                    color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
-                    border: Border.fromBorderSide(AppBorders.standard(isDark)),
-                  ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: primary
-                  ? Colors.white.withValues(alpha: enabled ? 1 : 0.6)
-                  : (enabled ? context.palette.primary : ConfidiaColors.textSecondary(isDark)),
-            ),
-          ),
-        ),
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 18, 16, 16),
+      decoration: BoxDecoration(
+        borderRadius: AppRadius.mdAll,
+        color: AppColors.surface2(isDark).withValues(alpha: isDark ? 0.45 : 0.55),
+        border: Border.fromBorderSide(AppBorders.subtle(isDark)),
       ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Détecte les conflits et propose des réajustements\nsur l\'agenda affiché.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: muted,
+                  height: 1.5,
+                ),
+          ),
+          const SizedBox(height: 16),
+          ConfidiaGlowButton(
+            label: loading ? 'Analyse en cours…' : analyzeLabel,
+            icon: Icons.psychology_rounded,
+            expand: true,
+            onPressed: loading ? null : onAnalyze,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProposalActions extends StatelessWidget {
+  final bool loading;
+  final VoidCallback onAccept;
+  final VoidCallback onReject;
+  final VoidCallback onRegenerate;
+  final VoidCallback onToggleRefine;
+
+  const _ProposalActions({
+    required this.loading,
+    required this.onAccept,
+    required this.onReject,
+    required this.onRegenerate,
+    required this.onToggleRefine,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ConfidiaGlowButton(
+          label: 'Accepter',
+          icon: Icons.check_rounded,
+          expand: true,
+          onPressed: loading ? null : onAccept,
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            ConfidiaIconButton(
+              icon: Icons.close_rounded,
+              tooltip: 'Refuser',
+              compact: true,
+              onPressed: loading ? null : onReject,
+            ),
+            const SizedBox(width: 6),
+            ConfidiaIconButton(
+              icon: Icons.refresh_rounded,
+              tooltip: 'Nouvelle proposition',
+              compact: true,
+              onPressed: loading ? null : onRegenerate,
+            ),
+            const Spacer(),
+            ConfidiaGlowButton(
+              label: 'Ajuster',
+              icon: Icons.tune_rounded,
+              primary: false,
+              onPressed: loading ? null : onToggleRefine,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -308,12 +375,13 @@ class _RefinePromptField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
 
     return TextFormField(
       controller: controller,
       enabled: enabled,
       minLines: 1,
-      maxLines: 6,
+      maxLines: 5,
       keyboardType: TextInputType.multiline,
       textInputAction: TextInputAction.newline,
       style: ConfidiaTextFormField.fieldStyle(context),
@@ -322,26 +390,27 @@ class _RefinePromptField extends StatelessWidget {
         hintText: 'Ex : Sophie récupère Léa à la place de Marc',
         isDense: true,
         filled: true,
-        fillColor: AppColors.surface1(isDark).withValues(
+        fillColor: AppColors.surface2(isDark).withValues(
           alpha: isDark ? AppOpacity.inputFillDark : AppOpacity.inputFillLight,
         ),
         hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontSize: 13,
-              color: ConfidiaColors.textSecondary(isDark),
+              color: muted.withValues(alpha: 0.45),
             ),
         contentPadding: EdgeInsets.fromLTRB(14, 12, showSend ? 4 : 14, 12),
-        prefixIcon: Icon(Icons.edit_rounded, size: 18, color: ConfidiaColors.textSecondary(isDark)),
-        prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
         suffixIcon: showSend
-            ? IconButton(
-                tooltip: 'Envoyer',
-                icon: Icon(Icons.send_rounded, size: 18, color: context.palette.primary),
-                onPressed: enabled ? onSend : null,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+            ? ConfidiaTooltip(
+                message: 'Envoyer',
+                child: IconButton(
+                  icon: Icon(Icons.arrow_upward_rounded, size: 18, color: context.palette.primary),
+                  onPressed: enabled ? onSend : null,
+                  mouseCursor: SystemMouseCursors.click,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
+                ),
               )
             : null,
-        suffixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
+        suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         border: AppBorders.input(isDark: isDark),
         enabledBorder: AppBorders.input(isDark: isDark),
         focusedBorder: AppBorders.input(
@@ -361,12 +430,17 @@ class _ConflictTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final high = conflict.severity == 'high';
+    final accent = high ? ConfidiaColors.error : ConfidiaColors.warning;
+    final muted = ConfidiaColors.textSecondary(isDark);
+
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(10),
-        color: context.palette.primary.withValues(alpha: 0.04),
-        border: Border.all(color: context.palette.primary.withValues(alpha: 0.12)),
+        borderRadius: AppRadius.mdAll,
+        color: AppColors.surface2(isDark).withValues(alpha: isDark ? 0.55 : 0.7),
+        border: Border.all(color: accent.withValues(alpha: isDark ? 0.28 : 0.22)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,16 +448,30 @@ class _ConflictTile extends StatelessWidget {
           Row(
             children: [
               Icon(
-                conflict.severity == 'high' ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
+                high ? Icons.warning_amber_rounded : Icons.info_outline_rounded,
                 size: 16,
-                color: conflict.severity == 'high' ? ConfidiaColors.error : ConfidiaColors.warning,
+                color: accent,
               ),
-              const SizedBox(width: 6),
-              Expanded(child: Text(conflict.title, style: Theme.of(context).textTheme.labelLarge)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  conflict.title,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w600),
+                ),
+              ),
             ],
           ),
-          const SizedBox(height: 4),
-          ...conflict.events.map((e) => Text('• $e', style: Theme.of(context).textTheme.labelSmall)),
+          if (conflict.events.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            for (final e in conflict.events)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 2),
+                child: Text(
+                  e,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: muted, height: 1.35),
+                ),
+              ),
+          ],
         ],
       ),
     );

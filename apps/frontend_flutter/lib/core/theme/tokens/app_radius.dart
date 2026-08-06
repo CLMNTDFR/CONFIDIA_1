@@ -1,35 +1,33 @@
 import 'package:flutter/material.dart';
 
-/// Rayons de bordure du Design System (esthétique glass / macOS).
-///
-/// Échelle : sm 8 · md 12 · lg 16 · xl 24 (alignée sur l'historique ConfidiaSpacing).
+/// Rayons autorisés uniquement : 8 · 12 · 16 · 20 · 24 · 28 · 32.
 abstract final class AppRadius {
   static const double sm = 8;
   static const double md = 12;
   static const double lg = 16;
-  static const double xl = 24;
-  static const double pill = 999;
+  static const double xl = 20;
+  static const double xxl = 24;
+  static const double xxxl = 28;
+  static const double huge = 32;
 
-  /// Chips / icon buttons / chrome compact (récurrent hors échelle sm).
-  static const double compact = 10;
+  /// Champs / boutons / chips (= [md]).
+  static const double control = md;
+  static const double button = md;
+  static const double chip = md;
 
-  /// Champs de formulaire.
-  static const double control = 11;
-
-  /// Boutons, snackbars, segmented.
-  static const double button = 12;
-
-  /// Chips Material du thème (= [compact]).
-  static const double chip = compact;
-
-  /// Cartes / panneaux glass (= [lg]).
+  /// Cartes (= [lg]).
   static const double card = lg;
+
+  /// Ancien « pill » : plus grand rayon autorisé (pas de 999).
+  static const double pill = huge;
 
   static BorderRadius get smAll => BorderRadius.circular(sm);
   static BorderRadius get mdAll => BorderRadius.circular(md);
   static BorderRadius get lgAll => BorderRadius.circular(lg);
   static BorderRadius get xlAll => BorderRadius.circular(xl);
-  static BorderRadius get compactAll => BorderRadius.circular(compact);
+  static BorderRadius get xxlAll => BorderRadius.circular(xxl);
+  static BorderRadius get xxxlAll => BorderRadius.circular(xxxl);
+  static BorderRadius get hugeAll => BorderRadius.circular(huge);
   static BorderRadius get controlAll => BorderRadius.circular(control);
   static BorderRadius get buttonAll => BorderRadius.circular(button);
   static BorderRadius get chipAll => BorderRadius.circular(chip);

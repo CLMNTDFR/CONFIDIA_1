@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
-import 'cofid_ia_brand.dart';
 import 'confidia_ai_robot.dart';
 import 'confidia_animated_logo.dart';
 
@@ -32,19 +30,13 @@ class LogoAuthTransition extends StatefulWidget {
   State<LogoAuthTransition> createState() => _LogoAuthTransitionState();
 }
 
-class _LogoAuthTransitionState extends State<LogoAuthTransition>
-    with TickerProviderStateMixin {
+class _LogoAuthTransitionState extends State<LogoAuthTransition> with SingleTickerProviderStateMixin {
   late final AnimationController _main;
-  late final AnimationController _breathe;
   late final Animation<double> _logoScale;
   late final Animation<double> _logoOpacity;
   late final Animation<double> _heroOpacity;
   late final Animation<double> _heroRise;
   late final Animation<double> _heroScale;
-  late final Animation<double> _glowOpacity;
-  late final Animation<double> _brandOpacity;
-  late final Animation<double> _textOpacity;
-  late final Animation<double> _textRise;
   late final Animation<double> _progress;
   late final Animation<double> _exitOpacity;
   bool _completing = false;
@@ -60,7 +52,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
   void initState() {
     super.initState();
     _main = AnimationController(vsync: this, duration: _cycleDuration);
-    _breathe = AnimationController(vsync: this, duration: const Duration(milliseconds: 2200));
     _buildAnimations();
     _main.addStatusListener(_onMainStatus);
     if (widget.active) _startCycle();
@@ -68,7 +59,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
 
   void _buildAnimations() {
     if (_isWelcome) {
-      // Quiet Settle: scène fixe, pas de bascule speaking / bulle.
       _heroOpacity = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(parent: _main, curve: const Interval(0.0, 0.18, curve: Curves.easeOutCubic)),
       );
@@ -78,26 +68,12 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
       _heroScale = Tween<double>(begin: 0.92, end: 1).animate(
         CurvedAnimation(parent: _main, curve: const Interval(0.0, 0.2, curve: Curves.easeOutCubic)),
       );
-      _glowOpacity = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _main, curve: const Interval(0.04, 0.22, curve: Curves.easeOut)),
-      );
-      _brandOpacity = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _main, curve: const Interval(0.14, 0.32, curve: Curves.easeOut)),
-      );
-      _textOpacity = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _main, curve: const Interval(0.2, 0.38, curve: Curves.easeOut)),
-      );
-      _textRise = Tween<double>(begin: 8, end: 0).animate(
-        CurvedAnimation(parent: _main, curve: const Interval(0.2, 0.38, curve: Curves.easeOutCubic)),
-      );
       _progress = Tween<double>(begin: 0, end: 1).animate(
-        CurvedAnimation(parent: _main, curve: const Interval(0.24, 0.84, curve: Curves.easeInOutCubic)),
+        CurvedAnimation(parent: _main, curve: const Interval(0.18, 0.84, curve: Curves.easeInOutCubic)),
       );
       _exitOpacity = Tween<double>(begin: 1, end: 0).animate(
         CurvedAnimation(parent: _main, curve: const Interval(0.86, 1.0, curve: Curves.easeIn)),
       );
-
-      // Unused on welcome; keep valid animations for connection branch reuse.
       _logoScale = const AlwaysStoppedAnimation(1);
       _logoOpacity = const AlwaysStoppedAnimation(0);
     } else {
@@ -128,10 +104,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
       _heroOpacity = const AlwaysStoppedAnimation(0);
       _heroRise = const AlwaysStoppedAnimation(0);
       _heroScale = const AlwaysStoppedAnimation(1);
-      _glowOpacity = const AlwaysStoppedAnimation(0);
-      _brandOpacity = const AlwaysStoppedAnimation(0);
-      _textOpacity = const AlwaysStoppedAnimation(0);
-      _textRise = const AlwaysStoppedAnimation(0);
       _progress = const AlwaysStoppedAnimation(0);
       _exitOpacity = const AlwaysStoppedAnimation(1);
     }
@@ -151,12 +123,14 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
 
   void _onMainStatus(AnimationStatus status) {
     if (status != AnimationStatus.completed) return;
-    if (_completing || !widget.loopUntilInactive) {
+    if (_isWelcome) {
       _fireComplete();
       return;
     }
-    if (widget.active) {
-      _main.forward(from: 0.32);
+    if (widget.loopUntilInactive && widget.active) {
+      _main.forward(from: 0);
+    } else {
+      _fireComplete();
     }
   }
 
@@ -169,12 +143,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
   void _startCycle() {
     _completeFired = false;
     _main.forward(from: 0);
-    if (_isWelcome) {
-      _breathe.repeat(reverse: true);
-    } else {
-      _breathe.stop();
-      _breathe.value = 0;
-    }
   }
 
   void _finishAndExit() {
@@ -187,7 +155,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
   void dispose() {
     _main.removeStatusListener(_onMainStatus);
     _main.dispose();
-    _breathe.dispose();
     super.dispose();
   }
 
@@ -196,7 +163,6 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
     if (!widget.active && !_completing) return const SizedBox.shrink();
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
     return AbsorbPointer(
       child: AnimatedOpacity(
@@ -218,10 +184,10 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
               ),
               Center(
                 child: AnimatedBuilder(
-                  animation: Listenable.merge([_main, _breathe]),
+                  animation: _main,
                   builder: (context, _) {
                     if (_isWelcome) {
-                      return _buildWelcomeContent(context, isDark, reduceMotion);
+                      return _buildWelcomeContent(context, isDark);
                     }
                     return _buildConnectionContent(context);
                   },
@@ -234,106 +200,43 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
     );
   }
 
-  Widget _buildWelcomeContent(BuildContext context, bool isDark, bool reduceMotion) {
-    final message = widget.subtitle ?? 'Chargement de votre espace…';
+  Widget _buildWelcomeContent(BuildContext context, bool isDark) {
     final palette = context.palette;
-    final breathe = reduceMotion ? 0.35 : _breathe.value;
-    final glowPulse = 0.55 + breathe * 0.45;
-    final sceneOpacity = _exitOpacity.value;
-
-    // Empreinte fixe : jamais de recalcul mid-scene (plus de speaking on/off).
-    const robotSize = 64.0;
-    const glowPad = 36.0;
-    const stageSize = robotSize + glowPad * 2;
 
     return Opacity(
-      opacity: sceneOpacity,
+      opacity: _exitOpacity.value,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.xl),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              width: stageSize,
-              height: stageSize,
-              child: Opacity(
-                opacity: _heroOpacity.value,
-                child: Transform.translate(
-                  offset: Offset(0, _heroRise.value),
-                  child: Transform.scale(
-                    scale: _heroScale.value,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      clipBehavior: Clip.none,
-                      children: [
-                        Opacity(
-                          opacity: _glowOpacity.value * glowPulse,
-                          child: Container(
-                            width: robotSize * 1.15,
-                            height: robotSize * 1.15,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: palette.primary.withValues(alpha: isDark ? 0.28 : 0.18),
-                                  blurRadius: 28 + breathe * 8,
-                                  spreadRadius: 2,
-                                ),
-                                BoxShadow(
-                                  color: palette.secondary.withValues(alpha: isDark ? 0.18 : 0.12),
-                                  blurRadius: 18,
-                                  spreadRadius: 0,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const ConfidiaAiRobot(size: robotSize, speaking: false),
-                      ],
+            Opacity(
+              opacity: _heroOpacity.value,
+              child: Transform.translate(
+                offset: Offset(0, _heroRise.value),
+                child: Transform.scale(
+                  scale: _heroScale.value,
+                  child: const ColorFiltered(
+                    colorFilter: ColorFilter.matrix(<double>[
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0.2126, 0.7152, 0.0722, 0, 0,
+                      0, 0, 0, 1, 0,
+                    ]),
+                    child: Opacity(
+                      opacity: 0.45,
+                      child: ConfidiaAiRobot(size: 64, speaking: false),
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 28,
-              child: Opacity(
-                opacity: _brandOpacity.value,
-                child: const Center(child: CofidIaBrand(fontSize: 18)),
-              ),
-            ),
-            const SizedBox(height: 14),
-            SizedBox(
-              height: 44,
-              child: Opacity(
-                opacity: _textOpacity.value,
-                child: Transform.translate(
-                  offset: Offset(0, _textRise.value),
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Text(
-                      message,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: isDark
-                                ? Colors.white.withValues(alpha: 0.82)
-                                : ConfidiaColors.lightTextPrimary.withValues(alpha: 0.78),
-                            fontWeight: FontWeight.w500,
-                            letterSpacing: 0.2,
-                            height: 1.4,
-                          ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 24),
             SizedBox(
               width: 196,
-              height: 3,
+              height: 4,
               child: ClipRRect(
-                borderRadius: BorderRadius.circular(999),
+                borderRadius: BorderRadius.circular(32),
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
@@ -343,13 +246,7 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
                     FractionallySizedBox(
                       alignment: Alignment.centerLeft,
                       widthFactor: _progress.value.clamp(0.0, 1.0),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [palette.primary, palette.secondary],
-                          ),
-                        ),
-                      ),
+                      child: ColoredBox(color: palette.primary),
                     ),
                   ],
                 ),

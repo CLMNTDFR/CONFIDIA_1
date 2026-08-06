@@ -28,7 +28,7 @@ class DashboardGridSegment {
 abstract final class DashboardGrid {
   static const double breakpoint = 720;
   static const double rowGap = ConfidiaSpacing.md;
-  static const double editChromeHeight = 50;
+  static const double editChromeHeight = 48;
 
   static bool isWideLayout(BuildContext context) => MediaQuery.sizeOf(context).width >= breakpoint;
 
