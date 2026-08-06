@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 import 'confidia_text_field.dart';
 
 /// Menu déroulant au style CONFIDIA, aligné sur [ConfidiaTextFormField].
@@ -39,9 +40,9 @@ class ConfidiaDropdownField<T> extends StatelessWidget {
       hintText: hintText,
       isDense: true,
       filled: true,
-      fillColor: isDark
-          ? ConfidiaColors.darkSurfaceElevated.withValues(alpha: 0.55)
-          : Colors.white.withValues(alpha: 0.92),
+      fillColor: AppColors.surface1(isDark).withValues(
+        alpha: isDark ? AppOpacity.inputFillDark : AppOpacity.inputFillLight,
+      ),
       labelStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
             fontSize: 12,
             fontWeight: FontWeight.w500,
@@ -62,25 +63,20 @@ class ConfidiaDropdownField<T> extends StatelessWidget {
           ? Icon(prefixIcon, size: 18, color: ConfidiaColors.textSecondary(isDark))
           : null,
       prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(11),
-        borderSide: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.85)),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(11),
-        borderSide: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.75)),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(11),
-        borderSide: BorderSide(color: context.palette.primary.withValues(alpha: 0.55), width: 1.5),
+      border: AppBorders.input(isDark: isDark),
+      enabledBorder: AppBorders.input(isDark: isDark),
+      focusedBorder: AppBorders.input(
+        isDark: isDark,
+        accent: context.palette.primary.withValues(alpha: AppOpacity.borderFocus),
+        width: AppBorders.focus,
       ),
       errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: ConfidiaColors.error),
+        borderRadius: AppRadius.controlAll,
+        borderSide: AppBorders.error(),
       ),
       focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(11),
-        borderSide: const BorderSide(color: ConfidiaColors.error, width: 1.5),
+        borderRadius: AppRadius.controlAll,
+        borderSide: AppBorders.error(width: AppBorders.focus),
       ),
     );
   }

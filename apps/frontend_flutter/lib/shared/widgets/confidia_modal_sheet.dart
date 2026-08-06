@@ -1,10 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
+import '../../core/theme/tokens/tokens.dart';
 import 'mobile_shell_insets.dart';
 
 enum ConfidiaSheetLayout { bottom, centered }
@@ -83,33 +81,13 @@ class ConfidiaSheet extends StatelessWidget {
       child: ClipRRect(
         borderRadius: radius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          filter: AppBlur.sheetFilter,
           child: Container(
             margin: _centered ? EdgeInsets.zero : EdgeInsets.fromLTRB(10, 0, 10, 10 + shellBottom),
             decoration: BoxDecoration(
               borderRadius: radius,
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: isDark
-                    ? [
-                        const Color(0xFF1A1A28).withValues(alpha: 0.96),
-                        const Color(0xFF101018).withValues(alpha: 0.98),
-                      ]
-                    : [
-                        Colors.white.withValues(alpha: 0.97),
-                        const Color(0xFFFAFAFE).withValues(alpha: 0.98),
-                      ],
-              ),
-              border: Border.all(color: context.palette.secondary.withValues(alpha: 0.2)),
-              boxShadow: [
-                BoxShadow(
-                  color: context.palette.primary.withValues(alpha: 0.12),
-                  blurRadius: 32,
-                  spreadRadius: -8,
-                  offset: Offset(0, _centered ? 8 : -4),
-                ),
-              ],
+              color: AppColors.surface1(isDark),
+              border: Border.fromBorderSide(AppBorders.standard(isDark)),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -120,7 +98,7 @@ class ConfidiaSheet extends StatelessWidget {
                     width: 36,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: ConfidiaColors.border(isDark),
+                      color: AppBorders.standard(isDark).color,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -158,7 +136,7 @@ class ConfidiaSheet extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Divider(height: 1, color: ConfidiaColors.border(isDark).withValues(alpha: 0.5)),
+                Divider(height: 1, color: AppBorders.subtle(isDark).color),
                 Flexible(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.fromLTRB(
@@ -171,7 +149,7 @@ class ConfidiaSheet extends StatelessWidget {
                   ),
                 ),
                 if (actions != null && actions!.isNotEmpty) ...[
-                  Divider(height: 1, color: ConfidiaColors.border(isDark).withValues(alpha: 0.5)),
+                  Divider(height: 1, color: AppBorders.subtle(isDark).color),
                   Padding(
                     padding: const EdgeInsets.all(ConfidiaSpacing.md),
                     child: Column(

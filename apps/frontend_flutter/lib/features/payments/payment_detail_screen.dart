@@ -109,7 +109,7 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
                             onTap: () => context.go('/documents/${payment.documentId}'),
                           ),
                         if (payment.documentId != null && payment.emailId != null)
-                          Divider(height: 1, color: ConfidiaColors.border(isDark).withValues(alpha: 0.5)),
+                          Divider(height: 1, color: ConfidiaColors.border(isDark)),
                         if (payment.emailId != null)
                           _LinkTile(
                             icon: Icons.mail_rounded,
@@ -281,7 +281,7 @@ class _PaymentHeroCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Divider(
                   height: 1,
-                  color: ConfidiaColors.border(isDark).withValues(alpha: 0.55),
+                  color: ConfidiaColors.border(isDark),
                 ),
               ),
               if (isCompact)
@@ -475,7 +475,7 @@ class _HeroMetaChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.6)),
+        border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

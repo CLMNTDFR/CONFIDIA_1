@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 
 class ConfidiaGlowSegment<T> {
   final T value;
@@ -55,7 +56,7 @@ class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.7)),
+        border: Border.fromBorderSide(AppBorders.standard(isDark)),
         boxShadow: [
           BoxShadow(
             color: context.palette.secondary.withValues(alpha: isDark ? 0.08 : 0.05),

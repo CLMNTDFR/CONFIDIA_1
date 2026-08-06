@@ -264,7 +264,7 @@ class _DayCard extends StatelessWidget {
             border: Border.all(
               color: selected || isToday
                   ? color.withValues(alpha: selected ? 0.7 : 0.45)
-                  : ConfidiaColors.border(isDark).withValues(alpha: 0.55),
+                  : ConfidiaColors.border(isDark),
               width: selected || isToday ? 1.5 : 1,
             ),
           ),

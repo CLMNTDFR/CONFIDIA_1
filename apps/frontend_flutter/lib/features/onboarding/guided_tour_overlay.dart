@@ -606,7 +606,7 @@ class _ThemeBrowserControls extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(14),
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.55)),
+        border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Column(
         children: [

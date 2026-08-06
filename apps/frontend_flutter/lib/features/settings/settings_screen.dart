@@ -62,7 +62,7 @@ class SettingsScreen extends ConsumerWidget {
                   value: isDark,
                   onChanged: (v) => ref.read(themeModeProvider.notifier).state = v,
                 ),
-                Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark).withValues(alpha: 0.5)),
+                Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   child: Column(
@@ -94,9 +94,9 @@ class SettingsScreen extends ConsumerWidget {
           child: Column(
             children: [
               ConfidiaSwitchTile(title: 'Notifications push', value: true, onChanged: _noop),
-              Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark).withValues(alpha: 0.5)),
+              Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
               ConfidiaSwitchTile(title: 'Rappels d\'échéances', value: true, onChanged: _noop),
-              Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark).withValues(alpha: 0.5)),
+              Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
               ConfidiaSwitchTile(title: 'Alertes documents', value: true, onChanged: _noop),
             ],
           ),

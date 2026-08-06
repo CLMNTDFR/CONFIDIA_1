@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 import '../../features/onboarding/onboarding_targets.dart';
 import '../navigation/confidia_route_labels.dart';
 import 'confidia_tooltip.dart';
@@ -159,10 +160,10 @@ class ConfidiaMobileNavBar extends StatelessWidget {
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: isDark
-                  ? const Color(0xFF12121A).withValues(alpha: 0.22)
-                  : Colors.white.withValues(alpha: 0.18),
+                  ? AppColors.darkSurface1.withValues(alpha: 0.22)
+                  : AppColors.lightSurface1.withValues(alpha: 0.18),
               border: Border(
-                top: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.28)),
+                top: AppBorders.standard(isDark, alpha: AppOpacity.borderMedium),
               ),
             ),
             child: SafeArea(

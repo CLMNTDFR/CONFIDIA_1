@@ -1,10 +1,8 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
+import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 
 class GlassCard extends StatelessWidget {
   final Widget child;
@@ -30,23 +28,15 @@ class GlassCard extends StatelessWidget {
 
     final radius = BorderRadius.circular(borderRadius);
     final resolvedPadding = padding ?? const EdgeInsets.all(ConfidiaSpacing.lg);
+    final base = highlighted ? AppColors.surface2(isDark) : AppColors.surface1(isDark);
+    final fill = base.withValues(
+      alpha: isDark ? AppOpacity.glassDark : AppOpacity.glassLight,
+    );
     final decoration = BoxDecoration(
-      color: isDark
-          ? ConfidiaColors.darkSurfaceElevated.withValues(alpha: 0.75)
-          : Colors.white.withValues(alpha: 0.82),
+      color: fill,
       borderRadius: radius,
-      border: Border.all(
-        color: highlighted
-            ? context.palette.primary.withValues(alpha: 0.4)
-            : (isDark ? ConfidiaColors.darkBorder : ConfidiaColors.lightBorder),
-      ),
-      boxShadow: [
-        BoxShadow(
-          color: isDark ? Colors.black.withValues(alpha: 0.3) : context.palette.primary.withValues(alpha: 0.04),
-          blurRadius: 24,
-          offset: const Offset(0, 8),
-        ),
-      ],
+      border: Border.fromBorderSide(AppBorders.standard(isDark)),
+      boxShadow: AppShadows.card(isDark: isDark, palette: context.palette),
     );
 
     final Widget content;
@@ -54,7 +44,7 @@ class GlassCard extends StatelessWidget {
       content = ClipRRect(
         borderRadius: radius,
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          filter: AppBlur.glassFilter,
           child: Container(padding: resolvedPadding, decoration: decoration, child: child),
         ),
       );
@@ -68,7 +58,7 @@ class GlassCard extends StatelessWidget {
               child: ClipRRect(
                 borderRadius: radius,
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  filter: AppBlur.glassFilter,
                   child: Container(color: decoration.color),
                 ),
               ),

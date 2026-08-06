@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../core/theme/colors.dart';
+import '../../core/theme/tokens/tokens.dart';
 
 class SkeletonBox extends StatelessWidget {
   final double? width;
@@ -13,8 +13,10 @@ class SkeletonBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final base = isDark ? ConfidiaColors.darkSurfaceVariant : const Color(0xFFE8E8EE);
-    final highlight = isDark ? ConfidiaColors.darkBorder : Colors.white;
+    final base = isDark ? AppColors.darkSurface2 : const Color(0xFFE8E8EE);
+    final highlight = isDark
+        ? Color.lerp(AppColors.darkSurface2, Colors.white, 0.12)!
+        : Colors.white;
 
     return Shimmer.fromColors(
       baseColor: base,
@@ -33,13 +35,15 @@ class SkeletonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
+          color: AppColors.surface1(isDark),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
+          border: Border.fromBorderSide(AppBorders.standard(isDark)),
         ),
         child: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,

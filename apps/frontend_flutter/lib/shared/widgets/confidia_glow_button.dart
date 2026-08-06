@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 
 /// Bouton d'action compact, glassy avec léger glow. Style premium sobre.
 class ConfidiaGlowButton extends StatefulWidget {
@@ -77,8 +77,8 @@ class _ConfidiaGlowButtonState extends State<ConfidiaGlowButton> with SingleTick
         : BoxDecoration(
             borderRadius: BorderRadius.circular(9),
             color: (isDark ? Colors.white : Colors.black).withValues(alpha: enabled ? 0.06 : 0.03),
-            border: Border.all(
-              color: ConfidiaColors.border(isDark).withValues(alpha: enabled ? 0.9 : 0.5),
+            border: Border.fromBorderSide(
+              enabled ? AppBorders.standard(isDark) : AppBorders.subtle(isDark),
             ),
           );
 

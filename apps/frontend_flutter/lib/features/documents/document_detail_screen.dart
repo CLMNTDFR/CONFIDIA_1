@@ -327,7 +327,7 @@ class _MetaTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.6)),
+        border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Row(
         children: [

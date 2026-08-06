@@ -6,6 +6,7 @@ import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
+import '../../core/theme/tokens/tokens.dart';
 import '../../features/day_start/day_start_overlay.dart';
 import '../../features/day_start/day_start_provider.dart';
 import '../../features/dashboard/serenity_briefing_provider.dart';
@@ -167,8 +168,10 @@ class _Sidebar extends StatelessWidget {
       curve: Curves.easeOutCubic,
       width: width,
       decoration: BoxDecoration(
-        color: isDark ? ConfidiaColors.darkSurface.withValues(alpha: 0.95) : Colors.white.withValues(alpha: 0.95),
-        border: Border(right: BorderSide(color: isDark ? ConfidiaColors.darkBorderSubtle : ConfidiaColors.lightBorder)),
+        color: AppColors.surface1(isDark).withValues(
+          alpha: isDark ? AppOpacity.chromeDark : AppOpacity.chromeLight,
+        ),
+        border: Border(right: AppBorders.subtle(isDark)),
         boxShadow: [
           BoxShadow(
             color: context.palette.secondary.withValues(alpha: isDark ? 0.06 : 0.04),
@@ -223,7 +226,7 @@ class _Sidebar extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(8, 4, 8, 10),
             child: Column(
               children: [
-                Divider(height: 1, color: ConfidiaColors.border(isDark).withValues(alpha: 0.5)),
+                Divider(height: 1, color: AppBorders.subtle(isDark).color),
                 const SizedBox(height: 4),
                 KeyedSubtree(
                   key: OnboardingTargets.settingsNav,
@@ -288,8 +291,8 @@ class _SidebarToggleButtonState extends State<_SidebarToggleButton> with SingleT
           height: 34,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: (widget.isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-            border: Border.all(color: ConfidiaColors.border(widget.isDark).withValues(alpha: 0.6)),
+            color: (widget.isDark ? Colors.white : Colors.black).withValues(alpha: AppOpacity.faint),
+            border: Border.fromBorderSide(AppBorders.standard(widget.isDark)),
           ),
           child: Icon(
             widget.collapsed ? Icons.menu_rounded : Icons.menu_open_rounded,

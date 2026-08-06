@@ -329,7 +329,7 @@ class _EditSegmentRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.06 : 0.04),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.45)),
+              border: Border.all(color: ConfidiaColors.border(isDark)),
             ),
             child: Row(
               children: [
@@ -397,7 +397,7 @@ class _WidgetEditBar extends StatelessWidget {
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.07 : 0.04),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.4)),
+        border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Row(
         children: [

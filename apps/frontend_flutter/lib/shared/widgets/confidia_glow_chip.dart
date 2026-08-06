@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 
 /// Chip / pill glowy sobre  -  filtres, actions, liens compacts.
 class ConfidiaGlowChip extends StatefulWidget {
@@ -131,12 +132,14 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
                           : Colors.transparent,
               border: Border.all(
                 color: brandSelected
-                    ? accent.withValues(alpha: 0.55)
+                    ? accent.withValues(alpha: AppOpacity.borderFocus)
                     : selected
-                        ? Colors.white.withValues(alpha: 0.15)
+                        ? Colors.white.withValues(alpha: AppOpacity.soft)
                         : hovered
-                            ? (_isBrandChip ? accent.withValues(alpha: 0.35) : context.palette.secondary.withValues(alpha: 0.35))
-                            : ConfidiaColors.border(isDark).withValues(alpha: 0.5),
+                            ? (_isBrandChip
+                                ? accent.withValues(alpha: AppOpacity.borderFocus)
+                                : context.palette.secondary.withValues(alpha: AppOpacity.borderFocus))
+                            : AppBorders.standard(isDark).color,
               ),
               boxShadow: brandSelected
                   ? [
@@ -217,7 +220,7 @@ class ConfidiaGlowChipBar extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.7)),
+        border: Border.fromBorderSide(AppBorders.standard(isDark)),
         boxShadow: [
           BoxShadow(
             color: context.palette.secondary.withValues(alpha: isDark ? 0.08 : 0.05),

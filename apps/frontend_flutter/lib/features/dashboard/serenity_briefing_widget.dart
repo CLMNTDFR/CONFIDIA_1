@@ -248,7 +248,7 @@ class _SerenitySection extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
-        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.65)),
+        border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -673,7 +673,7 @@ class _MetricPill extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(8),
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
-        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.6)),
+        border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Row(
         children: [

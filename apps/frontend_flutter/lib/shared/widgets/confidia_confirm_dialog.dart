@@ -1,10 +1,9 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 import 'confidia_glow_button.dart';
 
 /// Dialogue de confirmation au style CONFIDIA (glass, animation, boutons centrés).
@@ -77,33 +76,13 @@ class _ConfidiaConfirmDialog extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(22),
           child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+            filter: AppBlur.sheetFilter,
             child: Container(
               constraints: const BoxConstraints(maxWidth: 420),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(22),
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: isDark
-                      ? [
-                          const Color(0xFF1A1A28).withValues(alpha: 0.96),
-                          const Color(0xFF101018).withValues(alpha: 0.98),
-                        ]
-                      : [
-                          Colors.white.withValues(alpha: 0.97),
-                          const Color(0xFFFAFAFE).withValues(alpha: 0.98),
-                        ],
-                ),
-                border: Border.all(color: palette.secondary.withValues(alpha: 0.2)),
-                boxShadow: [
-                  BoxShadow(
-                    color: palette.primary.withValues(alpha: 0.14),
-                    blurRadius: 32,
-                    spreadRadius: -8,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
+                color: AppColors.surface1(isDark),
+                border: Border.fromBorderSide(AppBorders.standard(isDark)),
               ),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, ConfidiaSpacing.lg, ConfidiaSpacing.lg, ConfidiaSpacing.md),
@@ -114,9 +93,8 @@ class _ConfidiaConfirmDialog extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: accent.withValues(alpha: isDark ? 0.16 : 0.1),
+                        color: accent.withValues(alpha: isDark ? AppOpacity.muted : AppOpacity.tintSoft),
                         borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: accent.withValues(alpha: 0.25)),
                       ),
                       child: Icon(icon, color: accent, size: 22),
                     ),

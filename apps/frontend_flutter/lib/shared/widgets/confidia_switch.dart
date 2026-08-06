@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 
 /// Interrupteur premium compact  -  transparence, reflet et léger glow.
 class ConfidiaSwitch extends StatefulWidget {
@@ -52,8 +52,10 @@ class _ConfidiaSwitchState extends State<ConfidiaSwitch> {
               : (isDark ? Colors.white : Colors.black).withValues(alpha: enabled ? 0.08 : 0.05),
           border: Border.all(
             color: on
-                ? context.palette.secondary.withValues(alpha: enabled ? 0.35 : 0.2)
-                : ConfidiaColors.border(isDark).withValues(alpha: 0.8),
+                ? context.palette.secondary.withValues(
+                    alpha: enabled ? AppOpacity.borderFocus : AppOpacity.borderStrong,
+                  )
+                : AppBorders.standard(isDark).color,
           ),
           boxShadow: on && enabled
               ? [

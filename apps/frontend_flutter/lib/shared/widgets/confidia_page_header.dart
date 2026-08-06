@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 import '../navigation/confidia_parent_route.dart';
 
 /// Bouton retour (chevron) vers la route parente.
@@ -25,8 +25,8 @@ class ConfidiaBackButton extends StatelessWidget {
           height: 36,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(10),
-            color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.05),
-            border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.55)),
+            color: (isDark ? Colors.white : Colors.black).withValues(alpha: AppOpacity.faint),
+            border: Border.fromBorderSide(AppBorders.standard(isDark)),
           ),
           child: Icon(Icons.chevron_left_rounded, color: context.palette.primary, size: 22),
         ),

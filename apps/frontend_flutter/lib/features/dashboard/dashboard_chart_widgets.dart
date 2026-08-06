@@ -324,7 +324,7 @@ class _CategoryBreakdownList extends StatelessWidget {
                   border: Border.all(
                     color: active
                         ? slice.color.withValues(alpha: 0.28)
-                        : ConfidiaColors.border(isDark).withValues(alpha: 0.35),
+                        : ConfidiaColors.border(isDark),
                   ),
                 ),
                 child: Column(
@@ -362,7 +362,7 @@ class _CategoryBreakdownList extends StatelessWidget {
                             borderRadius: BorderRadius.circular(12),
                             color: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.07 : 0.05),
                             border: Border.all(
-                              color: ConfidiaColors.border(isDark).withValues(alpha: 0.45),
+                              color: ConfidiaColors.border(isDark),
                             ),
                           ),
                           child: Text(

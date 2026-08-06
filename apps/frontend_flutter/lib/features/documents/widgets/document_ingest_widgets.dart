@@ -184,7 +184,7 @@ class DocumentFileRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.7)),
+        border: Border.all(color: ConfidiaColors.border(isDark)),
       ),
       child: Row(
         children: [

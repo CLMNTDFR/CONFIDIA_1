@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 import 'cofid_ia_brand.dart';
 import 'confidia_ai_robot.dart';
 import 'confidia_animated_logo.dart';
@@ -211,8 +212,9 @@ class _LogoAuthTransitionState extends State<LogoAuthTransition>
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 28, sigmaY: 28),
                   child: ColoredBox(
-                    color: (isDark ? const Color(0xFF0A0A12) : Colors.white)
-                        .withValues(alpha: isDark ? 0.42 : 0.38),
+                    color: AppColors.surface0(isDark).withValues(
+                      alpha: isDark ? AppOpacity.veilDark : AppOpacity.veilLight,
+                    ),
                   ),
                 ),
               ),

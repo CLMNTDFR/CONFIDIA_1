@@ -14,9 +14,9 @@ abstract final class ConfidiaTheme {
       _cache.putIfAbsent('l-${palette.id.name}', () => _buildTheme(isDark: false, palette: palette));
 
   static ThemeData _buildTheme({required bool isDark, required ConfidiaPalette palette}) {
-    final surface = AppColors.surface(isDark);
-    final surfaceVariant = AppColors.surfaceVariant(isDark);
-    final border = AppColors.border(isDark);
+    final surface1 = AppColors.surface1(isDark);
+    final surface2 = AppColors.surface2(isDark);
+    final hairline = AppBorders.standard(isDark);
 
     return ThemeData(
       useMaterial3: true,
@@ -30,7 +30,7 @@ abstract final class ConfidiaTheme {
         secondary: palette.secondary,
         onSecondary: Colors.white,
         tertiary: palette.accent,
-        surface: surface,
+        surface: surface1,
         onSurface: AppColors.textPrimary(isDark),
         error: AppColors.error,
         onError: Colors.white,
@@ -43,19 +43,19 @@ abstract final class ConfidiaTheme {
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
       cardTheme: CardThemeData(
-        color: isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurface,
+        color: surface1,
         elevation: AppElevation.flat,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.cardAll,
-          side: BorderSide(color: border),
+          side: hairline,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         isDense: true,
         filled: true,
-        fillColor: isDark
-            ? AppColors.darkSurfaceElevated.withValues(alpha: AppOpacity.inputFillDark)
-            : Colors.white.withValues(alpha: AppOpacity.inputFillLight),
+        fillColor: surface1.withValues(
+          alpha: isDark ? AppOpacity.inputFillDark : AppOpacity.inputFillLight,
+        ),
         labelStyle: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w500,
@@ -74,17 +74,20 @@ abstract final class ConfidiaTheme {
         contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
         prefixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
         suffixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
-        border: AppBorders.input(isDark: isDark, alpha: AppOpacity.borderStrong),
-        enabledBorder: AppBorders.input(isDark: isDark, alpha: AppOpacity.borderMedium),
+        border: AppBorders.input(isDark: isDark, alpha: AppOpacity.borderMedium),
+        enabledBorder: AppBorders.input(isDark: isDark, alpha: AppOpacity.borderHairline),
         focusedBorder: AppBorders.input(
           isDark: isDark,
           accent: palette.primary.withValues(alpha: AppOpacity.borderFocus),
           width: AppBorders.focus,
         ),
-        errorBorder: AppBorders.input(isDark: isDark, accent: AppColors.error),
+        errorBorder: AppBorders.input(
+          isDark: isDark,
+          accent: AppColors.error.withValues(alpha: 0.7),
+        ),
         focusedErrorBorder: AppBorders.input(
           isDark: isDark,
-          accent: AppColors.error,
+          accent: AppColors.error.withValues(alpha: 0.85),
           width: AppBorders.focus,
         ),
       ),
@@ -100,7 +103,7 @@ abstract final class ConfidiaTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.textPrimary(isDark),
-          side: BorderSide(color: border),
+          side: hairline,
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg, vertical: 14),
           shape: RoundedRectangleBorder(borderRadius: AppRadius.buttonAll),
         ),
@@ -110,24 +113,24 @@ abstract final class ConfidiaTheme {
         foregroundColor: Colors.white,
         elevation: AppElevation.overlay,
       ),
-      dividerTheme: DividerThemeData(color: border, thickness: AppBorders.hairline),
+      dividerTheme: DividerThemeData(color: hairline.color, thickness: AppBorders.hairline),
       chipTheme: ChipThemeData(
-        backgroundColor: surfaceVariant,
-        side: BorderSide(color: border),
+        backgroundColor: surface2,
+        side: hairline,
         shape: RoundedRectangleBorder(borderRadius: AppRadius.chipAll),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: surface,
+        backgroundColor: surface1,
         indicatorColor: palette.primary.withValues(alpha: AppOpacity.indicator),
         height: AppSpacing.materialNavBarHeight,
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: isDark ? AppColors.darkSurfaceElevated : AppColors.lightSurface,
+        backgroundColor: surface1,
         behavior: SnackBarBehavior.floating,
         elevation: AppElevation.modal,
         shape: RoundedRectangleBorder(
           borderRadius: AppRadius.buttonAll,
-          side: BorderSide(color: border.withValues(alpha: 0.6)),
+          side: hairline,
         ),
         contentTextStyle: TextStyle(
           color: AppColors.textPrimary(isDark),

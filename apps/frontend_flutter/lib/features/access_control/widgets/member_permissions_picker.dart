@@ -76,7 +76,7 @@ class _MemberPermissionsPickerState extends State<MemberPermissionsPicker> {
             decoration: BoxDecoration(
               color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.03),
               borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.7)),
+              border: Border.all(color: ConfidiaColors.border(isDark)),
             ),
             child: Column(
               children: [

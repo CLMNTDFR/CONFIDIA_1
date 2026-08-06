@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 
 /// Scène graphique à plans  -  halo d'ambiance + contenu au premier plan.
 class PremiumChartStage extends StatelessWidget {
@@ -45,9 +45,7 @@ class PremiumChartStage extends StatelessWidget {
             child: DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: radius,
-                border: Border.all(
-                  color: ConfidiaColors.border(isDark).withValues(alpha: 0.22),
-                ),
+                border: Border.fromBorderSide(AppBorders.standard(isDark)),
               ),
             ),
           ),
@@ -119,7 +117,10 @@ class _ChartAmbientPainter extends CustomPainter {
     }
 
     final grid = Paint()
-      ..color = ConfidiaColors.border(isDark).withValues(alpha: isDark ? 0.08 : 0.05)
+      ..color = AppBorders.standard(
+        isDark,
+        alpha: isDark ? AppOpacity.borderMedium : AppOpacity.borderSubtle,
+      ).color
       ..strokeWidth = 1;
     const bands = 4;
     for (var i = 1; i < bands; i++) {

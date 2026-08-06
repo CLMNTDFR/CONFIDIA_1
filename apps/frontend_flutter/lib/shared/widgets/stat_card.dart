@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
+import '../../core/theme/tokens/tokens.dart';
 
 /// Statistique compacte · une ligne d'info dense.
 class CompactStat extends StatelessWidget {
@@ -25,9 +25,9 @@ class CompactStat extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
+        color: AppColors.surface1(isDark),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: ConfidiaColors.border(isDark)),
+        border: Border.fromBorderSide(AppBorders.standard(isDark)),
       ),
       child: Row(
         children: [

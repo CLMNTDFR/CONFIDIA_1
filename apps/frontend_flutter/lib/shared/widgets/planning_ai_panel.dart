@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 import '../../shared/models/access_control_models.dart';
 import 'ai_streaming_text.dart';
 import 'cofid_ia_brand.dart';
@@ -150,7 +151,7 @@ class _PlanningAiPanelState extends State<PlanningAiPanel> {
             ],
             Divider(
               height: 1,
-              color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark).withValues(alpha: 0.45),
+              color: AppBorders.subtle(Theme.of(context).brightness == Brightness.dark).color,
             ),
             const SizedBox(height: ConfidiaSpacing.sm),
             AiStreamingText(
@@ -275,7 +276,7 @@ class _ProposalIconButton extends StatelessWidget {
                 : BoxDecoration(
                     borderRadius: BorderRadius.circular(10),
                     color: isDark ? Colors.white.withValues(alpha: 0.06) : Colors.black.withValues(alpha: 0.04),
-                    border: Border.all(color: ConfidiaColors.border(isDark).withValues(alpha: 0.65)),
+                    border: Border.fromBorderSide(AppBorders.standard(isDark)),
                   ),
             child: Icon(
               icon,
@@ -321,9 +322,9 @@ class _RefinePromptField extends StatelessWidget {
         hintText: 'Ex : Sophie récupère Léa à la place de Marc',
         isDense: true,
         filled: true,
-        fillColor: isDark
-            ? ConfidiaColors.darkSurfaceElevated.withValues(alpha: 0.55)
-            : Colors.white.withValues(alpha: 0.92),
+        fillColor: AppColors.surface1(isDark).withValues(
+          alpha: isDark ? AppOpacity.inputFillDark : AppOpacity.inputFillLight,
+        ),
         hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontSize: 13,
               color: ConfidiaColors.textSecondary(isDark),
@@ -341,17 +342,12 @@ class _RefinePromptField extends StatelessWidget {
               )
             : null,
         suffixIconConstraints: const BoxConstraints(minWidth: 42, minHeight: 38),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.75)),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: ConfidiaColors.border(isDark).withValues(alpha: 0.75)),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(11),
-          borderSide: BorderSide(color: context.palette.primary.withValues(alpha: 0.55), width: 1.5),
+        border: AppBorders.input(isDark: isDark),
+        enabledBorder: AppBorders.input(isDark: isDark),
+        focusedBorder: AppBorders.input(
+          isDark: isDark,
+          accent: context.palette.primary.withValues(alpha: AppOpacity.borderFocus),
+          width: AppBorders.focus,
         ),
       ),
     );

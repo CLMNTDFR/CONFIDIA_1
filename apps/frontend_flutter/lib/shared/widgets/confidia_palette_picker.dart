@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/palette.dart';
 import '../../core/theme/theme_context.dart';
+import '../../core/theme/tokens/tokens.dart';
 
 /// Sélecteur de thème couleur (bleu / rose).
 class ConfidiaPalettePicker extends StatelessWidget {
@@ -71,9 +72,9 @@ class _PaletteOption extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: selected
-                  ? palette.primary.withValues(alpha: 0.65)
-                  : ConfidiaColors.border(isDark).withValues(alpha: 0.6),
-              width: selected ? 1.5 : 1,
+                  ? palette.primary.withValues(alpha: AppOpacity.borderFocus)
+                  : AppBorders.standard(isDark).color,
+              width: selected ? AppBorders.focus : AppBorders.hairline,
             ),
             color: selected
                 ? palette.primary.withValues(alpha: isDark ? 0.12 : 0.06)

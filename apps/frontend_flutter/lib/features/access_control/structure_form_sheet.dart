@@ -190,7 +190,7 @@ class _StructureFormContentState extends ConsumerState<_StructureFormContent> {
                         border: Border.all(
                           color: selected
                               ? palette.primary.withValues(alpha: 0.55)
-                              : ConfidiaColors.border(isDark).withValues(alpha: 0.7),
+                              : ConfidiaColors.border(isDark),
                           width: selected ? 1.5 : 1,
                         ),
                       ),
