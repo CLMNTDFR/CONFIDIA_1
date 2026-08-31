@@ -7,6 +7,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
 import '../../shared/models/user_model.dart';
+import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_tappable.dart';
 import '../../shared/widgets/glass_card.dart';
@@ -91,7 +92,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),
-        const _SectionTitle(label: 'Accès & services'),
+        const _SectionTitle(label: 'Accès & services', demo: true),
         const SizedBox(height: 8),
         GlassCard(
           padding: EdgeInsets.zero,
@@ -101,6 +102,7 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.account_tree_rounded,
                 title: 'Gouvernance & accès',
                 subtitle: 'Structures, rôles et droits',
+                demo: true,
                 onTap: () => context.go('/access-control'),
               ),
               Divider(height: 1, color: ConfidiaColors.border(isDark)),
@@ -108,6 +110,7 @@ class ProfileScreen extends ConsumerWidget {
                 icon: Icons.link_rounded,
                 title: 'Comptes & intégrations',
                 subtitle: 'Comptes connectés et stockage',
+                demo: true,
                 onTap: () => context.go('/settings'),
               ),
             ],
@@ -233,18 +236,27 @@ class _ProfileHero extends StatelessWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String label;
+  final bool demo;
 
-  const _SectionTitle({required this.label});
+  const _SectionTitle({required this.label, this.demo = false});
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
-            letterSpacing: 0.4,
-          ),
+    return Row(
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+                letterSpacing: 0.4,
+              ),
+        ),
+        if (demo) ...[
+          const SizedBox(width: 8),
+          const ConfidiaDemoBadge(compact: true),
+        ],
+      ],
     );
   }
 }
@@ -254,12 +266,14 @@ class _InfoTile extends StatelessWidget {
   final String title;
   final String? subtitle;
   final VoidCallback? onTap;
+  final bool demo;
 
   const _InfoTile({
     required this.icon,
     required this.title,
     this.subtitle,
     this.onTap,
+    this.demo = false,
   });
 
   @override
@@ -271,7 +285,14 @@ class _InfoTile extends StatelessWidget {
       leading: Icon(icon, size: 18, color: context.palette.primary),
       title: Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
       subtitle: subtitle != null ? Text(subtitle!, style: Theme.of(context).textTheme.labelSmall) : null,
-      trailing: onTap != null ? const Icon(Icons.chevron_right_rounded, size: 18) : null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (demo) const ConfidiaDemoBadge(compact: true),
+          if (demo && onTap != null) const SizedBox(width: 8),
+          if (onTap != null) const Icon(Icons.chevron_right_rounded, size: 18),
+        ],
+      ),
       mouseCursor: onTap != null ? SystemMouseCursors.click : null,
       onTap: onTap,
     );

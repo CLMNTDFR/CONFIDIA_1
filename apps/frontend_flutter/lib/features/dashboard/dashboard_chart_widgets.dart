@@ -62,6 +62,7 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
       subtitle: 'Pic · ${peak.value.toStringAsFixed(0)} € en ${peak.label}',
       linkRoute: '/payments',
       allowTooltipOverflow: true,
+      demo: true,
       headerExtras: [
         ConfidiaChartMetricChip(label: 'Courbe mensuelle', color: context.palette.primary),
       ],
@@ -465,6 +466,7 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
       subtitle: 'Documents, mails et paiements traités',
       linkRoute: '/dashboard',
       allowTooltipOverflow: true,
+      demo: true,
       headerExtras: series
           .map((s) => ConfidiaChartMetricChip(label: s.label, color: s.color))
           .toList(),
@@ -627,6 +629,7 @@ class _PaymentsOverviewChartWidgetState extends ConsumerState<PaymentsOverviewCh
       subtitle: '${total.toStringAsFixed(0)} € au total',
       linkRoute: '/payments',
       allowTooltipOverflow: true,
+      demo: true,
       headerExtras: slices
           .map((s) => ConfidiaChartMetricChip(
                 label: s.label,

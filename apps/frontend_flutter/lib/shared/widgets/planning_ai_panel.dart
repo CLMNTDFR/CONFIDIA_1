@@ -8,6 +8,7 @@ import 'ai_streaming_text.dart';
 import 'cofid_ia_brand.dart';
 import 'confidia_ai_robot.dart';
 import 'confidia_button.dart';
+import 'confidia_demo_badge.dart';
 import 'confidia_glow_button.dart';
 import 'confidia_tappable.dart';
 import 'confidia_text_field.dart';
@@ -130,7 +131,13 @@ class _PlanningAiPanelState extends State<PlanningAiPanel> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const CofidIaBrand(fontSize: 14, fontWeight: FontWeight.w700),
+                        const Row(
+                          children: [
+                            CofidIaBrand(fontSize: 14, fontWeight: FontWeight.w700),
+                            SizedBox(width: 8),
+                            ConfidiaDemoBadge(compact: true),
+                          ],
+                        ),
                         const SizedBox(height: 2),
                         Text(
                           _collapsedHint,

@@ -12,6 +12,7 @@ import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/calendar_event_model.dart';
 import '../../shared/widgets/brand_icon.dart';
 import '../../shared/widgets/confidia_confirm_dialog.dart';
+import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/confidia_tappable.dart';
@@ -531,6 +532,7 @@ class _CalendarFiltersPanel extends ConsumerWidget {
                 child: _FilterSectionLabel(
                   label: 'Sources connectées',
                   icon: Icons.cloud_sync_rounded,
+                  demo: true,
                 ),
               ),
               Container(
@@ -599,8 +601,9 @@ class _FilterHairline extends StatelessWidget {
 class _FilterSectionLabel extends StatelessWidget {
   final String label;
   final IconData icon;
+  final bool demo;
 
-  const _FilterSectionLabel({required this.label, required this.icon});
+  const _FilterSectionLabel({required this.label, required this.icon, this.demo = false});
 
   @override
   Widget build(BuildContext context) {
@@ -620,6 +623,10 @@ class _FilterSectionLabel extends StatelessWidget {
                 fontSize: 11,
               ),
         ),
+        if (demo) ...[
+          const SizedBox(width: 8),
+          const ConfidiaDemoBadge(compact: true),
+        ],
       ],
     );
   }

@@ -1,12 +1,16 @@
 import httpx
+from fastapi import HTTPException, status
+from jose import jwt
 
 from application.dto.auth_dto import TokenRequest, TokenResponse, UserInfoResponse
+from application.services.identity_service import IdentityService
 from core.config import Settings
 
 
 class AuthService:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, identity: IdentityService | None = None):
         self._settings = settings
+        self._identity = identity
 
     async def login(self, request: TokenRequest) -> TokenResponse:
         async with httpx.AsyncClient() as client:
@@ -21,19 +25,20 @@ class AuthService:
                 },
             )
             if response.status_code != 200:
-                from fastapi import HTTPException, status
-
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid credentials",
                 )
             data = response.json()
-            return TokenResponse(
-                access_token=data["access_token"],
-                refresh_token=data["refresh_token"],
-                token_type=data.get("token_type", "bearer"),
-                expires_in=data.get("expires_in", 300),
-            )
+
+        tokens = TokenResponse(
+            access_token=data["access_token"],
+            refresh_token=data["refresh_token"],
+            token_type=data.get("token_type", "bearer"),
+            expires_in=data.get("expires_in", 300),
+        )
+        await self._persist_identity(tokens.access_token)
+        return tokens
 
     async def refresh_token(self, refresh_token: str) -> TokenResponse:
         async with httpx.AsyncClient() as client:
@@ -47,19 +52,18 @@ class AuthService:
                 },
             )
             if response.status_code != 200:
-                from fastapi import HTTPException, status
-
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid refresh token",
                 )
             data = response.json()
-            return TokenResponse(
-                access_token=data["access_token"],
-                refresh_token=data.get("refresh_token", refresh_token),
-                token_type=data.get("token_type", "bearer"),
-                expires_in=data.get("expires_in", 300),
-            )
+
+        return TokenResponse(
+            access_token=data["access_token"],
+            refresh_token=data.get("refresh_token", refresh_token),
+            token_type=data.get("token_type", "bearer"),
+            expires_in=data.get("expires_in", 300),
+        )
 
     def get_user_info(self, token_payload: dict) -> UserInfoResponse:
         realm_access = token_payload.get("realm_access", {})
@@ -72,3 +76,9 @@ class AuthService:
             family_name=token_payload.get("family_name"),
             roles=roles,
         )
+
+    async def _persist_identity(self, access_token: str) -> None:
+        if self._identity is None:
+            return
+        claims = jwt.get_unverified_claims(access_token)
+        await self._identity.ensure_from_token_claims(claims)

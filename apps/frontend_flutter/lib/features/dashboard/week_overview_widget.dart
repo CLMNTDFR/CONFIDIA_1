@@ -10,6 +10,7 @@ import '../../core/theme/theme_context.dart';
 import '../../shared/models/week_overview_model.dart';
 import '../../shared/widgets/cofid_ia_brand.dart';
 import '../../shared/widgets/confidia_chart_card.dart';
+import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/glass_card.dart';
 import 'week_overview_provider.dart';
@@ -158,6 +159,13 @@ class _Header extends StatelessWidget {
                       child: CofidIaBrand(
                         fontSize: Theme.of(context).textTheme.labelSmall?.fontSize,
                         fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 6),
+                        child: ConfidiaDemoBadge(compact: true),
                       ),
                     ),
                     const TextSpan(text: ' analyse vos agendas pour définir vos priorités.'),

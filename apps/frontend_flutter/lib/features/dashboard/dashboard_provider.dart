@@ -86,6 +86,19 @@ extension DashboardWidgetTypeX on DashboardWidgetType {
         _ => null,
       };
 
+  bool get isDemo => switch (this) {
+        DashboardWidgetType.serenityBriefing => true,
+        DashboardWidgetType.stats => true,
+        DashboardWidgetType.expensesTrend => true,
+        DashboardWidgetType.paymentsOverview => true,
+        DashboardWidgetType.hubActivity => true,
+        DashboardWidgetType.quickActions => true,
+        DashboardWidgetType.pendingPayments => true,
+        DashboardWidgetType.connectedAccounts => true,
+        DashboardWidgetType.aiAnalyzed => true,
+        _ => false,
+      };
+
   String get iconName => switch (this) {
         DashboardWidgetType.greeting => 'waving_hand',
         DashboardWidgetType.serenityBriefing => 'psychology',

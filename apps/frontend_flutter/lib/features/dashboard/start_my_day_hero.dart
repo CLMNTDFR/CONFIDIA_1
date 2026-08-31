@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
+import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_tappable.dart';
 import '../day_start/day_start_provider.dart';
 import '../onboarding/onboarding_targets.dart';
@@ -62,12 +63,20 @@ class StartMyDayHero extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(
-                        title,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              title,
+                              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                             ),
+                          ),
+                          const SizedBox(width: 8),
+                          const ConfidiaDemoBadge(compact: true, onAccent: true),
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(

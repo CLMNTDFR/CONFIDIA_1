@@ -1,5 +1,7 @@
 # Installation CONFIDIA
 
+**Lancement quotidien (débutant, mode démo vs login réel, ports, tests) :** suis le [README à la racine du dépôt](../README.md). Cette page décrit l’installation **complète** (Paperless, Nextcloud, backend dans Docker).
+
 ## Prérequis
 
 | Outil | Version minimale |
@@ -54,6 +56,14 @@ chmod +x scripts/*.sh
 
 Premier démarrage : ~3-5 minutes (téléchargement images, init DB).
 
+Le backend applique les migrations Alembic au démarrage du conteneur (`alembic upgrade head`). En local :
+
+```bash
+cd apps/backend_fastapi
+source .venv/bin/activate
+alembic upgrade head
+```
+
 Services disponibles :
 
 | Service | URL | Credentials |
@@ -86,14 +96,16 @@ uvicorn api.main:app --reload --port 8000
 ```bash
 cd apps/frontend_flutter
 flutter pub get
-flutter run
+flutter run -d chrome --web-port=8082
 ```
+
+L’app web écoute sur **http://localhost:8082** et parle à l’API sur **http://localhost:8000**. Sans Flutter, tu n’as que l’API.
 
 #### Cibler une plateforme
 
 ```bash
 flutter run -d macos        # macOS
-flutter run -d chrome       # Web (expérimental)
+flutter run -d chrome --web-port=8082   # Web (port attendu par l'API / CORS)
 flutter run -d windows      # Windows
 flutter devices             # Lister les appareils
 ```
@@ -108,11 +120,8 @@ Sur l'écran de connexion, cliquer **Mode démo** pour utiliser les données moc
 # Backend health
 curl http://localhost:8000/health
 
-# Tests backend
-cd apps/backend_fastapi && pytest
-
-# Tests frontend
-cd apps/frontend_flutter && flutter test
+# Suite de non-régression (API + Flutter)
+./scripts/test.sh
 ```
 
 ## Arrêt des services

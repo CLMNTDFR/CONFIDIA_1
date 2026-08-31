@@ -10,7 +10,7 @@ flutter pub get
 flutter run -d chrome --web-port=8082
 ```
 
-Le backend doit tourner sur `http://localhost:8000` (voir `../../docs/Installation.md`).
+Le backend doit tourner sur `http://localhost:8000`. Procédure complète (Docker, API, Flutter, tests) : [README principal](../../README.md).
 
 ---
 

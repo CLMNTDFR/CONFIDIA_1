@@ -15,6 +15,7 @@ import '../../shared/widgets/cofid_ia_brand.dart';
 import '../../shared/widgets/confidia_ai_robot.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/confidia_chrome_material.dart';
+import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/stagger_fade.dart';
@@ -247,7 +248,13 @@ class _DayStartCardState extends ConsumerState<_DayStartCard> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const CofidIaBrand(fontSize: 15),
+                      const Row(
+                        children: [
+                          CofidIaBrand(fontSize: 15),
+                          SizedBox(width: 8),
+                          ConfidiaDemoBadge(compact: true),
+                        ],
+                      ),
                       Text(
                         'Briefing du jour',
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(

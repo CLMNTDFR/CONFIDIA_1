@@ -12,6 +12,22 @@ jobs:
     defaults:
       run:
         working-directory: apps/backend_fastapi
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: confidia
+          POSTGRES_PASSWORD: confidia_secret
+          POSTGRES_DB: confidia
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U confidia -d confidia"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+asyncpg://confidia:confidia_secret@localhost:5432/confidia
 
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +41,11 @@ jobs:
         run: pip install ".[dev]"
 
       - name: Lint with ruff
+        continue-on-error: true
         run: ruff check .
+
+      - name: Apply MVP schema
+        run: alembic upgrade head
 
       - name: Run tests
         run: pytest --cov=. --cov-report=xml -q

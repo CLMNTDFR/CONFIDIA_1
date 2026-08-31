@@ -5,6 +5,7 @@ import '../../core/theme/tokens/tokens.dart';
 import '../../features/onboarding/onboarding_targets.dart';
 import '../navigation/confidia_route_labels.dart';
 import 'confidia_chrome_material.dart';
+import 'confidia_demo_badge.dart';
 import 'confidia_tooltip.dart';
 
 /// Entrée de navigation partagée (sidebar + bottom bar).
@@ -14,6 +15,7 @@ class ConfidiaNavDestination {
   final String label;
   final String path;
   final int? badge;
+  final bool isDemo;
 
   const ConfidiaNavDestination({
     required this.iconOutlined,
@@ -21,6 +23,7 @@ class ConfidiaNavDestination {
     required this.label,
     required this.path,
     this.badge,
+    this.isDemo = false,
   });
 }
 
@@ -104,6 +107,10 @@ class _ConfidiaSidebarNavItemState extends State<ConfidiaSidebarNavItem> {
                                 ),
                           ),
                         ),
+                        if (d.isDemo) ...[
+                          const ConfidiaDemoBadge(compact: true),
+                          const SizedBox(width: 6),
+                        ],
                         if (d.badge != null) _NavBadge(count: d.badge!),
                       ],
                     ],
@@ -117,7 +124,8 @@ class _ConfidiaSidebarNavItemState extends State<ConfidiaSidebarNavItem> {
     );
 
     if (!widget.collapsed) return item;
-    return ConfidiaTooltip(message: d.label, preferBelow: false, child: item);
+    final tip = d.isDemo ? '${d.label} · Démo' : d.label;
+    return ConfidiaTooltip(message: tip, preferBelow: false, child: item);
   }
 }
 
@@ -185,6 +193,12 @@ class ConfidiaMobileNavBar extends StatelessWidget {
                   destination: destination,
                   isActive: i == selected,
                 );
+                if (destination.isDemo) {
+                  item = ConfidiaTooltip(
+                    message: '${destination.label} · Démo',
+                    child: item,
+                  );
+                }
                 if (destination.path == '/settings') {
                   item = KeyedSubtree(key: OnboardingTargets.settingsNav, child: item);
                 }
@@ -288,6 +302,7 @@ abstract final class ConfidiaNavDestinations {
         label: ConfidiaRouteLabels.messaging,
         path: '/messaging',
         badge: badge,
+        isDemo: true,
       );
 
   static ConfidiaNavDestination payments() => const ConfidiaNavDestination(
@@ -295,6 +310,7 @@ abstract final class ConfidiaNavDestinations {
         iconFilled: Icons.payments_rounded,
         label: ConfidiaRouteLabels.payments,
         path: '/payments',
+        isDemo: true,
       );
 
   static ConfidiaNavDestination documents() => const ConfidiaNavDestination(

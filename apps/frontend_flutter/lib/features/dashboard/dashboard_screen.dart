@@ -21,6 +21,7 @@ import '../../shared/widgets/confidia_ai_robot.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_chart_card.dart';
+import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/stat_card.dart';
@@ -212,6 +213,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         _WidgetEditBar(
           label: type.label,
           icon: _iconForType(type),
+          demo: type.isDemo,
           onHide: () => ref.read(dashboardLayoutProvider.notifier).toggleWidget(type),
           canMoveUp: canMoveUp,
           canMoveDown: canMoveDown,
@@ -377,6 +379,7 @@ class _WidgetEditBar extends StatelessWidget {
   final bool canMoveDown;
   final VoidCallback? onMoveUp;
   final VoidCallback? onMoveDown;
+  final bool demo;
 
   const _WidgetEditBar({
     required this.label,
@@ -386,6 +389,7 @@ class _WidgetEditBar extends StatelessWidget {
     this.canMoveDown = false,
     this.onMoveUp,
     this.onMoveDown,
+    this.demo = false,
   });
 
   @override
@@ -407,6 +411,10 @@ class _WidgetEditBar extends StatelessWidget {
           Expanded(
             child: Text(label, style: Theme.of(context).textTheme.labelMedium, overflow: TextOverflow.ellipsis),
           ),
+          if (demo) ...[
+            const ConfidiaDemoBadge(compact: true),
+            const SizedBox(width: 8),
+          ],
           _EditIconButton(
             icon: Icons.keyboard_arrow_up_rounded,
             tooltip: 'Monter',
@@ -554,7 +562,7 @@ class _HiddenWidgetsPanel extends StatelessWidget {
                           final type = hidden[index];
                           return ActionChip(
                             avatar: Icon(_iconForType(type), size: 16, color: ConfidiaColors.textSecondary(isDark)),
-                            label: Text(type.label),
+                            label: Text(type.isDemo ? '${type.label} · Démo' : type.label),
                             labelStyle: Theme.of(context).textTheme.labelMedium,
                             backgroundColor: (isDark ? Colors.white : Colors.black).withValues(alpha: isDark ? 0.08 : 0.05),
                             side: BorderSide(color: ConfidiaColors.border(isDark)),
@@ -742,12 +750,21 @@ class _StatsWidget extends ConsumerWidget {
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final muted = ConfidiaColors.textSecondary(isDark);
-    return StatsRow(stats: [
-      CompactStat(label: 'Documents', value: '${docs.length}', icon: Icons.folder_copy_rounded, color: muted),
-      CompactStat(label: 'Paiements', value: '$pendingCount', icon: Icons.payments_rounded, color: muted),
-      CompactStat(label: 'Alertes', value: '${notifications.where((n) => !n.read).length}', icon: Icons.notifications_rounded, color: muted),
-      CompactStat(label: 'Emails', value: '${MockEcosystem.emails.length}', icon: Icons.mail_rounded, color: muted),
-    ]);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: ConfidiaDemoBadge(compact: true),
+        ),
+        StatsRow(stats: [
+          CompactStat(label: 'Documents', value: '${docs.length}', icon: Icons.folder_copy_rounded, color: muted),
+          CompactStat(label: 'Paiements', value: '$pendingCount', icon: Icons.payments_rounded, color: muted),
+          CompactStat(label: 'Alertes', value: '${notifications.where((n) => !n.read).length}', icon: Icons.notifications_rounded, color: muted),
+          CompactStat(label: 'Emails', value: '${MockEcosystem.emails.length}', icon: Icons.mail_rounded, color: muted),
+        ]),
+      ],
+    );
   }
 }
 
@@ -756,26 +773,35 @@ class _QuickActionsWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ConfidiaGlowChipBar(
-      centered: true,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ConfidiaGlowChip(
-          label: 'Messagerie',
-          icon: Icons.mail_rounded,
-          selected: false,
-          onTap: () => context.go('/messaging'),
+        const Padding(
+          padding: EdgeInsets.only(bottom: 8),
+          child: ConfidiaDemoBadge(compact: true),
         ),
-        ConfidiaGlowChip(
-          label: 'Paiements',
-          icon: Icons.payments_rounded,
-          selected: false,
-          onTap: () => context.go('/payments'),
-        ),
-        ConfidiaGlowChip(
-          label: 'Ajouter',
-          icon: Icons.add_rounded,
-          selected: false,
-          onTap: () => showDocumentAddSheet(context),
+        ConfidiaGlowChipBar(
+          centered: true,
+          children: [
+            ConfidiaGlowChip(
+              label: 'Messagerie',
+              icon: Icons.mail_rounded,
+              selected: false,
+              onTap: () => context.go('/messaging'),
+            ),
+            ConfidiaGlowChip(
+              label: 'Paiements',
+              icon: Icons.payments_rounded,
+              selected: false,
+              onTap: () => context.go('/payments'),
+            ),
+            ConfidiaGlowChip(
+              label: 'Ajouter',
+              icon: Icons.add_rounded,
+              selected: false,
+              onTap: () => showDocumentAddSheet(context),
+            ),
+          ],
         ),
       ],
     );
@@ -798,7 +824,7 @@ class _PendingPaymentsWidget extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHeader(title: 'Paiements en attente', onTap: () => context.go('/payments')),
+          _SectionHeader(title: 'Paiements en attente', onTap: () => context.go('/payments'), demo: true),
           Row(
             children: [
               Expanded(
@@ -874,7 +900,7 @@ class _ConnectedAccountsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final accounts = MockEcosystem.connectedAccounts.take(4);
     return _DashboardCardShell(
-      header: _SectionHeader(title: 'Comptes connectés', onTap: () => context.go('/settings')),
+      header: _SectionHeader(title: 'Comptes connectés', onTap: () => context.go('/settings'), demo: true),
       body: Align(
         alignment: Alignment.topLeft,
         child: Wrap(
@@ -919,6 +945,13 @@ class _AiAnalyzedWidget extends StatelessWidget {
                         child: CofidIaBrand(
                           fontSize: Theme.of(context).textTheme.titleSmall?.fontSize,
                           fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const WidgetSpan(
+                        alignment: PlaceholderAlignment.middle,
+                        child: Padding(
+                          padding: EdgeInsets.only(left: 8),
+                          child: ConfidiaDemoBadge(compact: true),
                         ),
                       ),
                     ],
@@ -1061,7 +1094,8 @@ class _ActivityWidget extends StatelessWidget {
 class _SectionHeader extends StatelessWidget {
   final String title;
   final VoidCallback onTap;
-  const _SectionHeader({required this.title, required this.onTap});
+  final bool demo;
+  const _SectionHeader({required this.title, required this.onTap, this.demo = false});
 
   @override
   Widget build(BuildContext context) {
@@ -1069,8 +1103,18 @@ class _SectionHeader extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
-          const Spacer(),
+          Flexible(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          if (demo) ...[
+            const SizedBox(width: 8),
+            const ConfidiaDemoBadge(compact: true),
+          ],
           ConfidiaSeeAllButton(onTap: onTap),
         ],
       ),

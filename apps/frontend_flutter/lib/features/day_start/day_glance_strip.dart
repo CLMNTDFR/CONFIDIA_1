@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/tokens/tokens.dart';
 import '../../shared/utils/serenity_palette.dart';
+import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_tappable.dart';
 import 'day_briefing_model.dart';
 
@@ -19,6 +20,7 @@ class _GlanceItem {
   final String label;
   final Color accent;
   final String route;
+  final bool demo;
 
   const _GlanceItem({
     required this.kind,
@@ -27,6 +29,7 @@ class _GlanceItem {
     required this.label,
     required this.accent,
     required this.route,
+    this.demo = false,
   });
 }
 
@@ -83,6 +86,7 @@ class DayGlanceStrip extends StatelessWidget {
         label: 'Paiements',
         accent: ConfidiaColors.success,
         route: '/payments',
+        demo: true,
       ),
       if (showSerenity)
         _GlanceItem(
@@ -92,6 +96,7 @@ class DayGlanceStrip extends StatelessWidget {
           label: 'Sérénité',
           accent: SerenityPalette.forScore(metrics.serenityScore),
           route: '/dashboard',
+          demo: true,
         ),
     ];
 
@@ -201,56 +206,66 @@ class _GlanceCard extends StatelessWidget {
             ),
             boxShadow: quiet ? AppShadows.none : AppShadows.card(isDark: isDark),
           ),
-          child: Column(
+          child: Stack(
             children: [
-              Icon(item.icon, color: item.accent, size: dense ? 18 : 20),
-              const Spacer(),
-              if (item.kind == DayGlanceKind.serenity)
-                Text.rich(
-                  TextSpan(
-                    children: [
+              Column(
+                children: [
+                  Icon(item.icon, color: item.accent, size: dense ? 18 : 20),
+                  const Spacer(),
+                  if (item.kind == DayGlanceKind.serenity)
+                    Text.rich(
                       TextSpan(
-                        text: '$serenityScore',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: item.accent,
-                              height: 1,
-                              fontSize: dense ? 20 : 22,
-                            ),
+                        children: [
+                          TextSpan(
+                            text: '$serenityScore',
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: item.accent,
+                                  height: 1,
+                                  fontSize: dense ? 20 : 22,
+                                ),
+                          ),
+                          TextSpan(
+                            text: '/100',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: ConfidiaColors.textSecondary(isDark),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                          ),
+                        ],
                       ),
-                      TextSpan(
-                        text: '/100',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: ConfidiaColors.textSecondary(isDark),
-                              fontWeight: FontWeight.w600,
-                            ),
-                      ),
-                    ],
-                  ),
-                  textAlign: TextAlign.center,
-                )
-              else
-                Text(
-                  item.value,
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: ConfidiaColors.textPrimary(isDark),
-                        height: 1,
-                        fontSize: dense ? 22 : 24,
-                      ),
-                ),
-              const Spacer(),
-              Text(
-                item.label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: ConfidiaColors.textSecondary(isDark),
-                      fontWeight: FontWeight.w600,
-                      height: 1.1,
+                      textAlign: TextAlign.center,
+                    )
+                  else
+                    Text(
+                      item.value,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: ConfidiaColors.textPrimary(isDark),
+                            height: 1,
+                            fontSize: dense ? 22 : 24,
+                          ),
                     ),
+                  const Spacer(),
+                  Text(
+                    item.label,
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: ConfidiaColors.textSecondary(isDark),
+                          fontWeight: FontWeight.w600,
+                          height: 1.1,
+                        ),
+                  ),
+                ],
               ),
+              if (item.demo)
+                const Positioned(
+                  top: 0,
+                  right: 0,
+                  child: ConfidiaDemoBadge(compact: true),
+                ),
             ],
           ),
         ),

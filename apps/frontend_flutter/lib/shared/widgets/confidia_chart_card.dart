@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/theme/colors.dart';
+import 'confidia_demo_badge.dart';
 import 'confidia_tooltip.dart';
 import 'glass_card.dart';
 
@@ -35,6 +36,7 @@ class ConfidiaChartCard extends StatelessWidget {
   final Widget? footer;
   final List<Widget>? headerExtras;
   final bool allowTooltipOverflow;
+  final bool demo;
 
   const ConfidiaChartCard({
     super.key,
@@ -45,6 +47,7 @@ class ConfidiaChartCard extends StatelessWidget {
     this.footer,
     this.headerExtras,
     this.allowTooltipOverflow = false,
+    this.demo = false,
   });
 
   @override
@@ -67,7 +70,20 @@ class ConfidiaChartCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700)),
+                        Row(
+                          children: [
+                            Flexible(
+                              child: Text(
+                                title,
+                                style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            if (demo) ...[
+                              const SizedBox(width: 8),
+                              const ConfidiaDemoBadge(compact: true),
+                            ],
+                          ],
+                        ),
                         if (subtitle != null) ...[
                           const SizedBox(height: 4),
                           Text(subtitle!, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: ConfidiaColors.textSecondary(isDark))),

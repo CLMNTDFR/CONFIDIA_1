@@ -12,7 +12,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('CONFIDIA'), findsWidgets);
     expect(find.text('Connexion'), findsOneWidget);
+    expect(find.text('Mode démo'), findsOneWidget);
+    expect(find.textContaining('CONFIDIA'), findsWidgets);
   });
 }

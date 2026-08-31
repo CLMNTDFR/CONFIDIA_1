@@ -12,6 +12,7 @@ import '../../shared/models/connected_account_model.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/brands/brand_assets.dart';
 import '../../shared/widgets/brand_icon.dart';
+import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_palette_picker.dart';
 import '../../shared/widgets/confidia_switch.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
@@ -34,7 +35,7 @@ class SettingsScreen extends ConsumerWidget {
     return ListView(
       padding: ConfidiaInsets.page(context),
       children: [
-        _SectionTitle(label: 'Organisation & accès'),
+        _SectionTitle(label: 'Organisation & accès', demo: true),
         const SizedBox(height: 8),
         KeyedSubtree(
           key: OnboardingTargets.gouvernanceTile,
@@ -44,6 +45,7 @@ class SettingsScreen extends ConsumerWidget {
               icon: Icons.account_tree_rounded,
               title: 'Gouvernance & accès',
               subtitle: 'Organigramme, rôles, droits et assistant IA',
+              demo: true,
               onTap: () => context.go('/access-control'),
             ),
           ),
@@ -103,7 +105,7 @@ class SettingsScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),
-        _SectionTitle(label: 'Comptes connectés'),
+        _SectionTitle(label: 'Comptes connectés', demo: true),
         const SizedBox(height: 8),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -219,18 +221,27 @@ class SettingsScreen extends ConsumerWidget {
 
 class _SectionTitle extends StatelessWidget {
   final String label;
+  final bool demo;
 
-  const _SectionTitle({required this.label});
+  const _SectionTitle({required this.label, this.demo = false});
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
-            letterSpacing: 0.4,
-          ),
+    return Row(
+      children: [
+        Text(
+          label,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
+                letterSpacing: 0.4,
+              ),
+        ),
+        if (demo) ...[
+          const SizedBox(width: 8),
+          const ConfidiaDemoBadge(compact: true),
+        ],
+      ],
     );
   }
 }
@@ -241,6 +252,7 @@ class _CompactActionTile extends StatelessWidget {
   final String? subtitle;
   final VoidCallback onTap;
   final bool showChevron;
+  final bool demo;
 
   const _CompactActionTile({
     required this.icon,
@@ -248,6 +260,7 @@ class _CompactActionTile extends StatelessWidget {
     this.subtitle,
     required this.onTap,
     this.showChevron = true,
+    this.demo = false,
   });
 
   @override
@@ -259,7 +272,14 @@ class _CompactActionTile extends StatelessWidget {
       leading: Icon(icon, size: 18, color: context.palette.primary),
       title: Text(title, style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w500)),
       subtitle: subtitle != null ? Text(subtitle!, style: Theme.of(context).textTheme.labelSmall) : null,
-      trailing: showChevron ? const Icon(Icons.chevron_right_rounded, size: 18) : null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (demo) const ConfidiaDemoBadge(compact: true),
+          if (demo && showChevron) const SizedBox(width: 8),
+          if (showChevron) const Icon(Icons.chevron_right_rounded, size: 18),
+        ],
+      ),
       onTap: onTap,
     );
   }
@@ -284,6 +304,8 @@ class _ConnectedAccountCard extends StatelessWidget {
             children: [
               MailProviderChip(provider: account.provider, compact: true),
               const Spacer(),
+              const ConfidiaDemoBadge(compact: true),
+              const SizedBox(width: 6),
               const StatusBadge(label: 'Connecté', color: ConfidiaColors.success),
             ],
           ),

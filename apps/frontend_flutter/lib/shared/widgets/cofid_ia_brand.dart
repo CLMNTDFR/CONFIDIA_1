@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 import 'confidia_ai_robot.dart';
+import 'confidia_demo_badge.dart';
 
 /// Nom de marque « Confid•IA » en monochrome (textPrimary + textSecondary).
 class CofidIaBrand extends StatelessWidget {
@@ -83,7 +84,13 @@ class CofidIaPanelHeader extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CofidIaBrand(),
+              Row(
+                children: [
+                  const Flexible(child: CofidIaBrand()),
+                  const SizedBox(width: 8),
+                  const ConfidiaDemoBadge(compact: true),
+                ],
+              ),
               if (subtitle != null) ...[
                 const SizedBox(height: 4),
                 Text(subtitle!, style: Theme.of(context).textTheme.bodySmall),

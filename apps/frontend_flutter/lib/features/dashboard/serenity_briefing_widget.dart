@@ -10,6 +10,7 @@ import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 import '../../shared/models/serenity_briefing_model.dart';
 import '../../shared/utils/serenity_palette.dart';
+import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_tooltip.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/serenity_score_ring.dart';
@@ -39,11 +40,19 @@ class SerenityBriefingWidget extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Indice de sérénité',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            'Indice de sérénité',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                           ),
+                        ),
+                        const SizedBox(width: 8),
+                        const ConfidiaDemoBadge(compact: true),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     const _ScoreLegend(),

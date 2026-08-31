@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/auth/auth_provider.dart';
+import '../../core/mvp/confidia_mvp_scope.dart';
 import '../navigation/confidia_parent_route.dart';
 import '../navigation/confidia_route_labels.dart';
 import '../../shared/models/user_model.dart';
@@ -18,6 +19,7 @@ import '../../shared/data/mock_data.dart';
 import '../../shared/utils/serenity_palette.dart';
 import 'confidia_button.dart';
 import 'confidia_chrome_material.dart';
+import 'confidia_demo_badge.dart';
 import 'confidia_page_header.dart';
 import 'confidia_tooltip.dart';
 import 'serenity_score_ring.dart';
@@ -101,14 +103,24 @@ class AppTopBar extends ConsumerWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                title,
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.15,
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      title,
+                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                            fontWeight: FontWeight.w700,
+                                            height: 1.15,
+                                          ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
+                                  ),
+                                  if (ConfidiaMvpScope.isDemoPath(path)) ...[
+                                    const SizedBox(width: 8),
+                                    const ConfidiaDemoBadge(),
+                                  ],
+                                ],
                               ),
                               if (subtitle != null)
                                 Text(
@@ -190,7 +202,7 @@ class _SerenityScoreChip extends ConsumerWidget {
     final accent = SerenityPalette.forScore(score, palette: context.palette);
 
     return ConfidiaTooltip(
-      message: 'Briefing du jour',
+      message: 'Briefing du jour · Démo',
       child: SizedBox(
         width: _size,
         height: _size,

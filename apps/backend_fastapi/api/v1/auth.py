@@ -1,6 +1,6 @@
-from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
 
+from api.deps import get_identity_service
 from application.dto.auth_dto import (
     RefreshTokenRequest,
     TokenRequest,
@@ -8,6 +8,7 @@ from application.dto.auth_dto import (
     UserInfoResponse,
 )
 from application.services.auth_service import AuthService
+from application.services.identity_service import IdentityService
 from core.config import Settings, get_settings
 from core.security import TokenPayload, decode_token
 
@@ -18,8 +19,9 @@ router = APIRouter()
 async def login(
     request: TokenRequest,
     settings: Settings = Depends(get_settings),
+    identity: IdentityService = Depends(get_identity_service),
 ):
-    service = AuthService(settings)
+    service = AuthService(settings, identity)
     return await service.login(request)
 
 
@@ -33,7 +35,11 @@ async def refresh_token(
 
 
 @router.get("/me", response_model=UserInfoResponse)
-async def get_current_user(token: TokenPayload = Depends(decode_token)):
+async def get_current_user(
+    token: TokenPayload = Depends(decode_token),
+    identity: IdentityService = Depends(get_identity_service),
+):
+    await identity.ensure_from_token_claims(token.raw)
     service = AuthService(get_settings())
     return service.get_user_info(token.raw)
 

@@ -20,6 +20,10 @@ cd "$ROOT_DIR/docker"
 docker compose up -d
 
 echo ""
+echo "Note : stack Docker complète, y compris l'API sur le port 8000."
+echo "Ne lance pas uvicorn en local en plus. Pour le MVP léger (Postgres + Keycloak,"
+echo "puis uvicorn + Flutter), voir le README.md à la racine ou ./scripts/dev-mvp.sh"
+echo ""
 echo "✅ Services started:"
 echo "   Keycloak:  http://localhost:8080  (admin/admin)"
 echo "   Paperless: http://localhost:8001  (admin/admin)"
