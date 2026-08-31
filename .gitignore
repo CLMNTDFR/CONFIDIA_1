@@ -41,8 +41,8 @@ apps/frontend_flutter/.pub/
 apps/frontend_flutter/**/Generated.xcconfig
 apps/frontend_flutter/**/flutter_export_environment.sh
 
-# Docker volumes (local data)
-docker/data/
+# Local uploaded documents (MVP disk storage)
+apps/backend_fastapi/var/
 
 # Secrets
 *.pem

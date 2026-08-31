@@ -15,5 +15,6 @@ void main() {
     expect(find.text('Connexion'), findsOneWidget);
     expect(find.text('Mode démo'), findsOneWidget);
     expect(find.textContaining('CONFIDIA'), findsWidgets);
+    expect(find.textContaining('Créer un compte'), findsOneWidget);
   });
 }

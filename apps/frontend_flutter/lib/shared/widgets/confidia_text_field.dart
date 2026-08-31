@@ -18,7 +18,14 @@ class ConfidiaTextFormField extends StatelessWidget {
   final bool enabled;
   final bool autofocus;
   final TextInputAction? textInputAction;
+  final TextInputType? keyboardType;
+  final TextCapitalization textCapitalization;
+  final bool autocorrect;
+  final bool enableSuggestions;
+  final ValueChanged<String>? onChanged;
   final ValueChanged<String>? onFieldSubmitted;
+  final Iterable<String>? autofillHints;
+  final bool readOnly;
 
   const ConfidiaTextFormField({
     super.key,
@@ -34,7 +41,14 @@ class ConfidiaTextFormField extends StatelessWidget {
     this.enabled = true,
     this.autofocus = false,
     this.textInputAction,
+    this.keyboardType,
+    this.textCapitalization = TextCapitalization.none,
+    this.autocorrect = true,
+    this.enableSuggestions = true,
+    this.onChanged,
     this.onFieldSubmitted,
+    this.autofillHints,
+    this.readOnly = false,
   });
 
   static TextStyle fieldStyle(BuildContext context) {
@@ -58,6 +72,14 @@ class ConfidiaTextFormField extends StatelessWidget {
       maxLines: maxLines,
       validator: validator,
       textInputAction: textInputAction,
+      keyboardType: keyboardType,
+      textCapitalization: textCapitalization,
+      autocorrect: autocorrect,
+      enableSuggestions: enableSuggestions,
+      enableIMEPersonalizedLearning: false,
+      autofillHints: autofillHints,
+      readOnly: readOnly,
+      onChanged: onChanged,
       onFieldSubmitted: onFieldSubmitted,
       style: fieldStyle(context),
       decoration: InputDecoration(

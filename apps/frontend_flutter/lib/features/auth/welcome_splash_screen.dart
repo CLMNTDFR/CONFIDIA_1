@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../shared/data/mock_data.dart';
 import '../../shared/widgets/logo_auth_transition.dart';
 import '../../shared/widgets/welcome_ambient_background.dart';
 import '../calendar/calendar_provider.dart';
 import '../dashboard/dashboard_provider.dart';
+import '../documents/documents_provider.dart';
+import '../onboarding/guided_tour_provider.dart';
+import '../../core/auth/auth_provider.dart';
 
 class WelcomeSplashScreen extends ConsumerStatefulWidget {
   const WelcomeSplashScreen({super.key});
@@ -29,8 +31,11 @@ class _WelcomeSplashScreenState extends ConsumerState<WelcomeSplashScreen> {
   Future<void> _warmUp() async {
     ref.read(dashboardLayoutProvider);
     ref.read(calendarProvider);
-    MockData.documents.length;
-    MockData.notifications.length;
+    await ref.read(documentsProvider.notifier).refresh();
+    final auth = ref.read(authStateProvider);
+    if (!auth.isDemoSession && await ref.read(authStateProvider.notifier).isFirstLoginPending()) {
+      ref.read(guidedTourProvider.notifier).arm();
+    }
   }
 
   Future<void> _runSplash() async {

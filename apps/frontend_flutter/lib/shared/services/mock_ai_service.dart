@@ -9,7 +9,11 @@ class MockAiService {
 
   AiInsightModel? insightForEmail(String emailId) => MockEcosystem.emailInsights[emailId];
 
-  AiInsightModel? insightForDocument(int documentId) => MockEcosystem.documentInsights[documentId];
+  AiInsightModel? insightForDocument(String documentId) {
+    final n = int.tryParse(documentId);
+    if (n == null) return null;
+    return MockEcosystem.documentInsights[n];
+  }
 
   AiInsightModel analyzeEmail(EmailModel email) {
     return insightForEmail(email.id) ??
@@ -44,8 +48,17 @@ class MockAiService {
     required int appointmentCount,
     required int newDocCount,
   }) {
+    final empty = priorityCount == 0 &&
+        urgentPaymentCount == 0 &&
+        appointmentCount == 0 &&
+        newDocCount == 0;
+    final who = firstName.trim().isEmpty ? 'Voici' : '$firstName, voici';
+    if (empty) {
+      return '$who votre espace encore vide. Importez un document ou ajoutez un rendez-vous, '
+          'et je préparerai votre journée.';
+    }
     final parts = <String>[
-      '$firstName, voici votre journée en quelques secondes.',
+      '$who votre journée en quelques secondes.',
       'Votre indice de sérénité est à $currentScore/100.',
     ];
     if (priorityCount > 0) {

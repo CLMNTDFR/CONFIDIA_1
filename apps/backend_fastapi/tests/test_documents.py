@@ -20,7 +20,7 @@ async def test_list_mock_documents(paperless_client):
 async def test_get_mock_document(paperless_client):
     doc = await paperless_client.get_document(1)
     assert doc is not None
-    assert doc.id == 1
+    assert doc.id == "1"
 
 
 @pytest.mark.asyncio

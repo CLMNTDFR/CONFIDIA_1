@@ -20,7 +20,7 @@ class PaperlessClient(DocumentRepository):
 
     def _parse_document(self, data: dict) -> DocumentDTO:
         return DocumentDTO(
-            id=data["id"],
+            id=str(data["id"]),
             title=data.get("title", "Untitled"),
             content=data.get("content"),
             created=datetime.fromisoformat(data["created"].replace("Z", "+00:00")),
@@ -60,7 +60,7 @@ class PaperlessClient(DocumentRepository):
     async def get_document(self, document_id: int) -> DocumentDTO | None:
         if not self._token:
             docs, _ = self._mock_documents()
-            return next((d for d in docs if d.id == document_id), None)
+            return next((d for d in docs if d.id == str(document_id)), None)
 
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -78,7 +78,7 @@ class PaperlessClient(DocumentRepository):
         if not self._token:
             now = datetime.now()
             return DocumentDTO(
-                id=999,
+                id="999",
                 title=metadata.title or filename,
                 created=now,
                 modified=now,
@@ -103,7 +103,7 @@ class PaperlessClient(DocumentRepository):
             response.raise_for_status()
             task_id = response.json().get("task_id")
             return DocumentDTO(
-                id=0,
+                id="0",
                 title=metadata.title or filename,
                 created=datetime.now(),
                 modified=datetime.now(),
@@ -136,7 +136,7 @@ class PaperlessClient(DocumentRepository):
         now = datetime.now()
         all_docs = [
             DocumentDTO(
-                id=1,
+                id="1",
                 title="Facture EDF - Janvier 2026",
                 content="Facture électricité mensuelle",
                 created=now,
@@ -150,7 +150,7 @@ class PaperlessClient(DocumentRepository):
                 is_important=True,
             ),
             DocumentDTO(
-                id=2,
+                id="2",
                 title="Contrat assurance habitation",
                 content="Police d'assurance multirisque habitation",
                 created=now,
@@ -164,7 +164,7 @@ class PaperlessClient(DocumentRepository):
                 is_important=True,
             ),
             DocumentDTO(
-                id=3,
+                id="3",
                 title="Avis d'imposition 2025",
                 content="Avis d'imposition sur le revenu",
                 created=now,
@@ -177,7 +177,7 @@ class PaperlessClient(DocumentRepository):
                 file_size=512_000,
             ),
             DocumentDTO(
-                id=4,
+                id="4",
                 title="Attestation employeur",
                 content="Attestation de travail",
                 created=now,
@@ -190,7 +190,7 @@ class PaperlessClient(DocumentRepository):
                 file_size=128_000,
             ),
             DocumentDTO(
-                id=5,
+                id="5",
                 title="Passeport - Scan",
                 content="Copie passeport",
                 created=now,
@@ -203,7 +203,7 @@ class PaperlessClient(DocumentRepository):
                 is_important=True,
             ),
             DocumentDTO(
-                id=6,
+                id="6",
                 title="Relevé bancaire - Février 2026",
                 content="Relevé de compte courant",
                 created=now,

@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from api.deps import get_identity_service
 from application.dto.auth_dto import (
     RefreshTokenRequest,
+    RegisterRequest,
     TokenRequest,
     TokenResponse,
     UserInfoResponse,
@@ -13,6 +14,16 @@ from core.config import Settings, get_settings
 from core.security import TokenPayload, decode_token
 
 router = APIRouter()
+
+
+@router.post("/register", response_model=TokenResponse, status_code=201)
+async def register(
+    request: RegisterRequest,
+    settings: Settings = Depends(get_settings),
+    identity: IdentityService = Depends(get_identity_service),
+):
+    service = AuthService(settings, identity)
+    return await service.register(request)
 
 
 @router.post("/login", response_model=TokenResponse)

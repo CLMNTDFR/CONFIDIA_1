@@ -1,11 +1,12 @@
 import 'package:confidia/features/payments/payments_provider.dart';
 import 'package:confidia/shared/models/payment_model.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers/session_containers.dart';
 
 void main() {
   test('pending list and totals stay consistent', () {
-    final container = ProviderContainer();
+    final container = sessionContainer(demoAuthNotifier());
     addTearDown(container.dispose);
 
     final notifier = container.read(paymentsProvider.notifier);

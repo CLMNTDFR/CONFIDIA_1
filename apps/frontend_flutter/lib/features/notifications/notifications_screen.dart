@@ -1,52 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
-import '../../shared/data/mock_data.dart';
 import '../../shared/models/notification_model.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
+import '../../shared/widgets/workspace_empty_hint.dart';
+import 'notifications_provider.dart';
 
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
 
   @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
-}
-
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  late List<NotificationModel> _notifications;
-
-  @override
-  void initState() {
-    super.initState();
-    _notifications = List.from(MockData.notifications);
-  }
-
-  void _markAllRead() {
-    setState(() {
-      _notifications = _notifications.map((n) {
-        return NotificationModel(
-          id: n.id,
-          title: n.title,
-          message: n.message,
-          type: n.type,
-          read: true,
-          createdAt: n.createdAt,
-          actionUrl: n.actionUrl,
-        );
-      }).toList();
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final unread = _notifications.where((n) => !n.read).length;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final notifications = ref.watch(notificationsProvider);
+    final unread = ref.watch(notificationsUnreadCountProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Column(
@@ -64,7 +38,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   child: Text(
                     unread > 0
                         ? '$unread notification${unread > 1 ? 's' : ''} non lue${unread > 1 ? 's' : ''}'
-                        : 'Tout est à jour',
+                        : notifications.isEmpty
+                            ? 'Aucune notification'
+                            : 'Tout est à jour',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: ConfidiaColors.textSecondary(isDark),
                           fontWeight: unread > 0 ? FontWeight.w600 : FontWeight.w400,
@@ -77,7 +53,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     label: 'Tout marquer comme lu',
                     icon: Icons.done_all_rounded,
                     primary: false,
-                    onPressed: _markAllRead,
+                    onPressed: () => ref.read(notificationsProvider.notifier).markAllRead(),
                   ),
                 ],
               ],
@@ -85,14 +61,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         ),
         Expanded(
-          child: ListView.builder(
+          child: notifications.isEmpty
+              ? const Center(
+                  child: WorkspaceEmptyHint(
+                    icon: Icons.notifications_none_rounded,
+                    title: 'Boîte d\'alertes vide',
+                    subtitle: 'Les rappels de documents, échéances et messages apparaîtront ici.',
+                  ),
+                )
+              : ListView.builder(
                 padding: ConfidiaInsets.page(context).copyWith(top: ConfidiaSpacing.xs),
-                itemCount: _notifications.length,
+                itemCount: notifications.length,
                 itemBuilder: (context, index) {
-                  final notif = _notifications[index];
+                  final notif = notifications[index];
                   final stagger = ConfidiaPageRevealTiming.staggerCount(
                     context,
-                    _notifications.length,
+                    notifications.length,
                     itemExtent: 108,
                     overhead: 300,
                   );
@@ -104,17 +88,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       child: _NotificationCard(
                         notification: notif,
                         onTap: () {
-                          setState(() {
-                            _notifications[index] = NotificationModel(
-                              id: notif.id,
-                              title: notif.title,
-                              message: notif.message,
-                              type: notif.type,
-                              read: true,
-                              createdAt: notif.createdAt,
-                              actionUrl: notif.actionUrl,
-                            );
-                          });
+                          ref.read(notificationsProvider.notifier).markRead(notif.id);
                           if (notif.actionUrl != null) context.go(notif.actionUrl!);
                         },
                       ),

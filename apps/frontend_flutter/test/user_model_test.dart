@@ -45,6 +45,12 @@ void main() {
       'English (US)',
     );
     expect(
+      const UserModel(id: '5', email: 'x', firstName: 'X', lastName: 'Y', locale: 'fr-FR').localeLabel,
+      'Français',
+    );
+    expect(UserModel.normalizeLocale('fr-FR'), 'fr_FR');
+    expect(UserModel.fromJson({'id': '6', 'email': 'x', 'first_name': 'A', 'last_name': 'B', 'locale': 'fr-FR'}).locale, 'fr_FR');
+    expect(
       user.copyWith(timezone: 'America/New_York').timezoneLabel,
       'America/New York',
     );
@@ -105,7 +111,7 @@ void main() {
     expect(out['first_name'], 'Jean');
     expect(out['phone'], '+33 6 12 34 56 78');
     expect(out['organization'], 'Particulier');
-    expect(out['locale'], 'fr_FR');
+    expect(out['locale'], 'fr-FR');
     expect(out['timezone'], 'Europe/Paris');
   });
 

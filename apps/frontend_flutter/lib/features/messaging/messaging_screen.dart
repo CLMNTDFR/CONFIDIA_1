@@ -3,10 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
+import '../../shared/models/connected_account_model.dart';
 import '../../shared/models/email_model.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/glass_card.dart';
@@ -95,14 +97,17 @@ class MessagingScreen extends ConsumerWidget {
   }
 }
 
-class _AccountsSidebar extends StatelessWidget {
+class _AccountsSidebar extends ConsumerWidget {
   final MailProvider? selected;
   final ValueChanged<MailProvider?> onSelect;
 
   const _AccountsSidebar({required this.selected, required this.onSelect});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final demo = ref.watch(authStateProvider).isDemoSession;
+    final accounts = demo ? MockEcosystem.connectedAccounts : const <ConnectedAccountModel>[];
+    final inboxCount = ref.watch(messagingProvider).length;
     return Container(
       margin: const EdgeInsets.only(left: ConfidiaSpacing.lg, top: ConfidiaSpacing.lg),
       child: GlassCard(
@@ -112,9 +117,15 @@ class _AccountsSidebar extends StatelessWidget {
           children: [
             Text('Comptes', style: Theme.of(context).textTheme.titleSmall),
             const SizedBox(height: 8),
-            _AccountTile(label: 'Boîte unifiée', email: '${MockEcosystem.emails.length} messages', provider: null, selected: selected == null, onTap: () => onSelect(null)),
+            _AccountTile(label: 'Boîte unifiée', email: '$inboxCount message${inboxCount > 1 ? 's' : ''}', provider: null, selected: selected == null, onTap: () => onSelect(null)),
             const Divider(height: 16),
-            ...MockEcosystem.connectedAccounts.map((acc) => _AccountTile(
+            if (accounts.isEmpty)
+              Text(
+                'Aucun compte mail connecté.',
+                style: Theme.of(context).textTheme.bodySmall,
+              )
+            else
+            ...accounts.map((acc) => _AccountTile(
                   label: acc.provider.label,
                   email: acc.email,
                   provider: acc.provider,

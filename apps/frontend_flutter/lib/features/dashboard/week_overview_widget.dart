@@ -86,6 +86,15 @@ class _WeekOverviewWidgetState extends ConsumerState<WeekOverviewWidget> {
               _selectedIndex = _selectedIndex == index ? null : index;
             }),
           ),
+          if (overview.days.every((d) => d.totalAppointments == 0)) ...[
+            const SizedBox(height: 12),
+            Text(
+              'Aucun rendez-vous cette semaine. Ajoutez-en depuis le calendrier.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: ConfidiaColors.textSecondary(isDark),
+                  ),
+            ),
+          ],
           AnimatedSize(
             duration: _detailsAnimDuration,
             curve: Curves.easeOutCubic,

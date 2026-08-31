@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/theme_provider.dart';
@@ -107,20 +108,35 @@ class SettingsScreen extends ConsumerWidget {
         const SizedBox(height: ConfidiaSpacing.md),
         _SectionTitle(label: 'Comptes connectés', demo: true),
         const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 640 ? 2 : 1;
-            return GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: columns,
-                crossAxisSpacing: ConfidiaSpacing.sm,
-                mainAxisSpacing: ConfidiaSpacing.sm,
-                mainAxisExtent: 148,
-              ),
-              itemCount: MockEcosystem.connectedAccounts.length,
-              itemBuilder: (context, i) => _ConnectedAccountCard(account: MockEcosystem.connectedAccounts[i]),
+        Builder(
+          builder: (context) {
+            final demo = ref.watch(authStateProvider).isDemoSession;
+            final accounts = demo ? MockEcosystem.connectedAccounts : const <ConnectedAccountModel>[];
+            if (accounts.isEmpty) {
+              return GlassCard(
+                padding: const EdgeInsets.all(16),
+                child: Text(
+                  'Aucun compte externe n\'est rattaché à cet espace.',
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              );
+            }
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final columns = constraints.maxWidth >= 640 ? 2 : 1;
+                return GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    crossAxisSpacing: ConfidiaSpacing.sm,
+                    mainAxisSpacing: ConfidiaSpacing.sm,
+                    mainAxisExtent: 148,
+                  ),
+                  itemCount: accounts.length,
+                  itemBuilder: (context, i) => _ConnectedAccountCard(account: accounts[i]),
+                );
+              },
             );
           },
         ),

@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
+import 'confidia_menu.dart';
+import 'confidia_tappable.dart';
 import 'confidia_text_field.dart';
 
 /// Menu déroulant au style CONFIDIA, aligné sur [ConfidiaTextFormField].
-class ConfidiaDropdownField<T> extends StatelessWidget {
+class ConfidiaDropdownField<T> extends StatefulWidget {
   final T? value;
   final List<T> items;
   final String Function(T item) itemLabel;
@@ -82,31 +84,86 @@ class ConfidiaDropdownField<T> extends StatelessWidget {
   }
 
   @override
+  State<ConfidiaDropdownField<T>> createState() => _ConfidiaDropdownFieldState<T>();
+}
+
+class _ConfidiaDropdownFieldState<T> extends State<ConfidiaDropdownField<T>> {
+  bool _open = false;
+
+  bool get _enabled => widget.onChanged != null;
+
+  Future<void> _pick(FormFieldState<T> field) async {
+    if (!_enabled || widget.items.isEmpty || _open) return;
+    setState(() => _open = true);
+    final selected = await showConfidiaMenu<T>(
+      context: context,
+      matchAnchorWidth: true,
+      items: [
+        for (final item in widget.items)
+          ConfidiaMenuEntry<T>(
+            value: item,
+            label: widget.itemLabel(item),
+            selected: item == widget.value,
+          ),
+      ],
+    );
+    if (!mounted) return;
+    setState(() => _open = false);
+    if (selected == null) return;
+    widget.onChanged?.call(selected);
+    field.didChange(selected);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return DropdownButtonFormField<T>(
-      value: value,
-      isExpanded: true,
-      borderRadius: BorderRadius.circular(12),
-      icon: Icon(
-        Icons.keyboard_arrow_down_rounded,
-        color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
-        size: 22,
-      ),
-      dropdownColor: Theme.of(context).brightness == Brightness.dark
-          ? ConfidiaColors.darkSurfaceElevated
-          : Colors.white,
-      style: ConfidiaTextFormField.fieldStyle(context),
-      decoration: decoration(context, labelText: labelText, hintText: hintText, prefixIcon: prefixIcon),
-      items: items
-          .map(
-            (item) => DropdownMenuItem(
-              value: item,
-              child: Text(itemLabel(item), overflow: TextOverflow.ellipsis),
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final muted = ConfidiaColors.textSecondary(isDark);
+
+    return FormField<T>(
+      initialValue: widget.value,
+      validator: (_) => widget.validator?.call(widget.value),
+      enabled: _enabled,
+      builder: (field) {
+        final hasValue = widget.value != null;
+        return ConfidiaTappable(
+          onTap: _enabled ? () => _pick(field) : null,
+          pressScale: 0.99,
+          borderRadius: AppRadius.controlAll,
+          child: InputDecorator(
+            isFocused: _open,
+            isEmpty: !hasValue,
+            decoration: ConfidiaDropdownField.decoration(
+              context,
+              labelText: widget.labelText,
+              hintText: widget.hintText,
+              prefixIcon: widget.prefixIcon,
+            ).copyWith(
+              enabled: _enabled,
+              errorText: field.errorText,
+              suffixIcon: Padding(
+                padding: const EdgeInsets.only(right: 6),
+                child: AnimatedRotation(
+                  turns: _open ? 0.5 : 0,
+                  duration: AppDurations.quick,
+                  curve: Curves.easeOutCubic,
+                  child: Icon(Icons.keyboard_arrow_down_rounded, color: muted, size: 22),
+                ),
+              ),
+              suffixIconConstraints: const BoxConstraints(minWidth: 40, minHeight: 40),
             ),
-          )
-          .toList(),
-      onChanged: onChanged,
-      validator: validator,
+            child: Text(
+              hasValue ? widget.itemLabel(widget.value as T) : '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: ConfidiaTextFormField.fieldStyle(context).copyWith(
+                color: _enabled
+                    ? ConfidiaColors.textPrimary(isDark)
+                    : muted.withValues(alpha: 0.55),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

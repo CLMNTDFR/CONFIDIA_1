@@ -51,4 +51,15 @@ void main() {
     notifier.skip();
     expect(container.read(guidedTourProvider).active, isFalse);
   });
+
+  test('startNow opens the tour immediately like visite guidée', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(guidedTourProvider.notifier);
+    notifier.startNow();
+    expect(container.read(guidedTourProvider).armed, isFalse);
+    expect(container.read(guidedTourProvider).active, isTrue);
+    expect(container.read(guidedTourProvider).stepIndex, 0);
+  });
 }

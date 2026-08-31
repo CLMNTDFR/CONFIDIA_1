@@ -1,10 +1,11 @@
 import 'package:confidia/features/messaging/messaging_provider.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'helpers/session_containers.dart';
 
 void main() {
   test('unreadCount provider tracks markRead', () {
-    final container = ProviderContainer();
+    final container = sessionContainer(demoAuthNotifier());
     addTearDown(container.dispose);
 
     final initialUnread = container.read(messagingUnreadCountProvider);
@@ -17,7 +18,7 @@ void main() {
   });
 
   test('toggleStar flips starred flag', () {
-    final container = ProviderContainer();
+    final container = sessionContainer(demoAuthNotifier());
     addTearDown(container.dispose);
 
     final email = container.read(messagingProvider).first;
@@ -27,7 +28,7 @@ void main() {
   });
 
   test('markProcessed sets read and processed', () {
-    final container = ProviderContainer();
+    final container = sessionContainer(demoAuthNotifier());
     addTearDown(container.dispose);
 
     final email = container.read(messagingProvider).firstWhere((e) => !e.isProcessed);

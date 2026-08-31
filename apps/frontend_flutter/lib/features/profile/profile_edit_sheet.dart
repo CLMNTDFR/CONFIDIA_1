@@ -131,7 +131,9 @@ class _ProfileEditContentState extends ConsumerState<_ProfileEditContent> {
     _emailCtrl = TextEditingController(text: u.email);
     _phoneCtrl = TextEditingController(text: u.phone ?? '');
     _orgCtrl = TextEditingController(text: u.organization ?? '');
-    _locale = _localeOptions.contains(u.locale) ? u.locale : 'fr_FR';
+    _locale = _localeOptions.contains(UserModel.normalizeLocale(u.locale))
+        ? UserModel.normalizeLocale(u.locale)
+        : 'fr_FR';
     _timezone = _timezoneOptions.contains(u.timezone) ? u.timezone : 'Europe/Paris';
   }
 

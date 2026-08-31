@@ -16,6 +16,7 @@ abstract final class SerenityService {
     required List<NotificationModel> notifications,
     required List<DocumentModel> documents,
     DateTime? now,
+    bool seedHistory = false,
   }) {
     final reference = now ?? DateTime.now();
     final horizon = reference.add(const Duration(days: 30));
@@ -144,19 +145,44 @@ abstract final class SerenityService {
     final level = _resolveLevel(score);
     final calendarLabel = SerenityPalette.calendarLoadLabel(busyDays);
     final priorityToday = unprocessedEmails.clamp(0, 3);
+    final displayName = firstName.trim();
+    final greeting = displayName.isEmpty ? 'Bonjour.' : 'Bonjour $displayName.';
 
-    final headline = SerenityPalette.serenityHeadline(level, score, priorityToday);
+    final workspaceEmpty = unprocessedEmails == 0 &&
+        pendingPayments.isEmpty &&
+        unreadNotifications == 0 &&
+        upcomingEvents.isEmpty &&
+        documents.isEmpty &&
+        importantDocs == 0;
 
-    final summaryParts = <String>[
-      '$firstName, votre indice de sérénité est $score/100 (${level.label.toLowerCase()}).',
-      'Votre $calendarLabel sur les 30 prochains jours.',
-    ];
-    if (soonPayment != null) {
-      final days = soonPayment.dueDate.difference(reference).inDays.clamp(0, 30);
-      summaryParts.add('Une facture ${soonPayment.creditor} arrive à échéance dans $days jour(s).');
-    }
-    if (priorityToday > 0) {
-      summaryParts.add('$priorityToday courrier(s) mérite(nt) votre attention aujourd\'hui.');
+    final headline = workspaceEmpty
+        ? 'Votre espace est prêt ($score/100)'
+        : SerenityPalette.serenityHeadline(level, score, priorityToday);
+
+    final List<String> summaryParts;
+    if (workspaceEmpty) {
+      summaryParts = [
+        if (displayName.isEmpty)
+          'Votre espace est encore vide : aucun document, rendez-vous ni échéance.'
+        else
+          '$displayName, votre espace est encore vide : aucun document, rendez-vous ni échéance.',
+        'Importez un fichier ou créez un événement pour que l\'indice suive votre quotidien.',
+      ];
+    } else {
+      summaryParts = [
+        if (displayName.isEmpty)
+          'Votre indice de sérénité est $score/100 (${level.label.toLowerCase()}).'
+        else
+          '$displayName, votre indice de sérénité est $score/100 (${level.label.toLowerCase()}).',
+        'Votre $calendarLabel sur les 30 prochains jours.',
+      ];
+      if (soonPayment != null) {
+        final days = soonPayment.dueDate.difference(reference).inDays.clamp(0, 30);
+        summaryParts.add('Une facture ${soonPayment.creditor} arrive à échéance dans $days jour(s).');
+      }
+      if (priorityToday > 0) {
+        summaryParts.add('$priorityToday courrier(s) mérite(nt) votre attention aujourd\'hui.');
+      }
     }
 
     final metrics = [
@@ -189,13 +215,13 @@ abstract final class SerenityService {
     return SerenityBriefing(
       score: score,
       level: level,
-      greeting: 'Bonjour $firstName.',
+      greeting: greeting,
       headline: headline,
       summary: summaryParts.join(' '),
       metrics: metrics,
       factors: factors..sort((a, b) => b.impact.compareTo(a.impact)),
       actions: _buildActions(factors),
-      scoreHistory: _buildScoreHistory(score, reference),
+      scoreHistory: _buildScoreHistory(score, reference, seedHistory: seedHistory),
       generatedAt: reference,
     );
   }
@@ -216,6 +242,7 @@ abstract final class SerenityService {
     bool settlePendingPayments = false,
     bool clearUnreadNotifications = false,
     DateTime? now,
+    bool seedHistory = false,
   }) {
     final reference = now ?? DateTime.now();
     final soonHorizon = reference.add(const Duration(days: 8));
@@ -260,6 +287,7 @@ abstract final class SerenityService {
       notifications: projectedNotifications,
       documents: documents,
       now: reference,
+      seedHistory: seedHistory,
     ).score;
   }
 
@@ -277,9 +305,16 @@ abstract final class SerenityService {
     return double.parse(estimate.clamp(2.0, 100.0).toStringAsFixed(2));
   }
 
-  /// Historique mock : forte amplitude, récupération progressive vers le score actuel.
-  static List<SerenityScorePoint> _buildScoreHistory(int currentScore, DateTime now) {
+  /// Historique : en démo, courbe fictive 14 j. En session live, uniquement le point du jour.
+  static List<SerenityScorePoint> _buildScoreHistory(
+    int currentScore,
+    DateTime now, {
+    bool seedHistory = false,
+  }) {
     final today = DateTime(now.year, now.month, now.day);
+    if (!seedHistory) {
+      return [SerenityScorePoint(date: today, score: currentScore)];
+    }
     const template = [34, 28, 31, 39, 36, 44, 41, 50, 47, 56, 53, 61, 58];
     final points = <SerenityScorePoint>[];
 

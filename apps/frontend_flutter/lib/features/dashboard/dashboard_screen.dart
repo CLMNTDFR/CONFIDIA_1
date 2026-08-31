@@ -5,15 +5,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/ai_insight_model.dart';
+import '../../shared/models/connected_account_model.dart';
+import '../../shared/models/notification_model.dart';
 import '../../shared/models/payment_model.dart';
 import '../../shared/services/mock_ai_service.dart';
 import '../../shared/widgets/provider_chip.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../shared/widgets/workspace_empty_hint.dart';
 import '../payments/payments_provider.dart';
 import '../../shared/models/document_model.dart';
 import '../../shared/widgets/cofid_ia_brand.dart';
@@ -27,6 +31,9 @@ import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/stat_card.dart';
 import '../../shared/widgets/stagger_fade.dart';
 import '../calendar/calendar_provider.dart';
+import '../documents/documents_provider.dart';
+import '../messaging/messaging_provider.dart';
+import '../notifications/notifications_provider.dart';
 import '../onboarding/guided_tour_provider.dart';
 import '../onboarding/onboarding_targets.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
@@ -39,6 +46,7 @@ import 'dashboard_provider.dart';
 import 'serenity_briefing_widget.dart';
 import 'start_my_day_hero.dart';
 import 'week_overview_widget.dart';
+import 'first_login_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -123,6 +131,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           padding: EdgeInsets.only(bottom: ConfidiaSpacing.md),
                           child: glanceStrip,
                         ),
+                        if (_showFirstLoginCard(ref)) ...[
+                          const Padding(
+                            padding: EdgeInsets.only(bottom: ConfidiaSpacing.md),
+                            child: FirstLoginWelcomeCard(),
+                          ),
+                        ],
                         ...DashboardGrid.buildRows(
                           context: context,
                           types: layout.visible,
@@ -164,6 +178,14 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  bool _showFirstLoginCard(WidgetRef ref) {
+    final auth = ref.watch(authStateProvider);
+    if (!auth.isAuthenticated || auth.isDemoSession) return false;
+    if (ref.watch(guidedTourProvider.select((s) => s.active))) return false;
+    if (ref.watch(firstLoginBannerDismissedProvider)) return false;
+    return true;
+  }
+
   Widget _buildWidget(
     BuildContext context,
     WidgetRef ref,
@@ -175,8 +197,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     VoidCallback? onMoveUp,
     VoidCallback? onMoveDown,
   }) {
-    final docs = MockEcosystem.documents;
-    final notifications = MockEcosystem.notifications;
+    final docs = ref.watch(documentsProvider).items;
+    final notifications = ref.watch(notificationsProvider);
 
     final content = switch (type) {
       DashboardWidgetType.greeting => const SizedBox.shrink(),
@@ -742,11 +764,12 @@ class _StatsWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final docs = MockEcosystem.documents;
-    final notifications = MockEcosystem.notifications;
+    final docs = ref.watch(documentsProvider).items;
+    final notifications = ref.watch(notificationsProvider);
     final pendingCount = ref.watch(paymentsProvider.select((list) => list
         .where((p) => p.status == PaymentStatus.pending || p.status == PaymentStatus.waiting)
         .length));
+    final emailCount = ref.watch(messagingProvider).length;
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final muted = ConfidiaColors.textSecondary(isDark);
@@ -761,7 +784,7 @@ class _StatsWidget extends ConsumerWidget {
           CompactStat(label: 'Documents', value: '${docs.length}', icon: Icons.folder_copy_rounded, color: muted),
           CompactStat(label: 'Paiements', value: '$pendingCount', icon: Icons.payments_rounded, color: muted),
           CompactStat(label: 'Alertes', value: '${notifications.where((n) => !n.read).length}', icon: Icons.notifications_rounded, color: muted),
-          CompactStat(label: 'Emails', value: '${MockEcosystem.emails.length}', icon: Icons.mail_rounded, color: muted),
+          CompactStat(label: 'Emails', value: '$emailCount', icon: Icons.mail_rounded, color: muted),
         ]),
       ],
     );
@@ -825,6 +848,12 @@ class _PendingPaymentsWidget extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(title: 'Paiements en attente', onTap: () => context.go('/payments'), demo: true),
+          if (payments.isEmpty)
+            const WorkspaceEmptyHint(
+              icon: Icons.payments_outlined,
+              title: 'Aucun paiement en attente',
+            )
+          else ...[
           Row(
             children: [
               Expanded(
@@ -855,6 +884,7 @@ class _PendingPaymentsWidget extends ConsumerWidget {
                 trailing: Text(p.amountFormatted, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700)),
                 onTap: () => context.go('/payments/${p.id}'),
               )),
+          ],
         ],
       ),
     );
@@ -893,15 +923,24 @@ class _DashboardCardShell extends StatelessWidget {
   }
 }
 
-class _ConnectedAccountsWidget extends StatelessWidget {
+class _ConnectedAccountsWidget extends ConsumerWidget {
   const _ConnectedAccountsWidget();
 
   @override
-  Widget build(BuildContext context) {
-    final accounts = MockEcosystem.connectedAccounts.take(4);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final demo = ref.watch(authStateProvider).isDemoSession;
+    final accounts = demo
+        ? MockEcosystem.connectedAccounts.take(4).toList()
+        : const <ConnectedAccountModel>[];
     return _DashboardCardShell(
       header: _SectionHeader(title: 'Comptes connectés', onTap: () => context.go('/settings'), demo: true),
-      body: Align(
+      body: accounts.isEmpty
+          ? const WorkspaceEmptyHint(
+              icon: Icons.link_off_rounded,
+              title: 'Aucun compte externe',
+              expand: true,
+            )
+          : Align(
         alignment: Alignment.topLeft,
         child: Wrap(
           spacing: 8,
@@ -909,23 +948,29 @@ class _ConnectedAccountsWidget extends StatelessWidget {
           children: accounts.map((a) => MailProviderChip(provider: a.provider)).toList(),
         ),
       ),
-      footer: Text(
-        '${MockEcosystem.connectedAccounts.length} comptes · Synchronisation active',
-        style: Theme.of(context).textTheme.bodySmall,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      footer: accounts.isEmpty
+          ? null
+          : Text(
+              '${MockEcosystem.connectedAccounts.length} comptes · Synchronisation active',
+              style: Theme.of(context).textTheme.bodySmall,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
     );
   }
 }
 
-class _AiAnalyzedWidget extends StatelessWidget {
+class _AiAnalyzedWidget extends ConsumerWidget {
   const _AiAnalyzedWidget();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final demo = ref.watch(authStateProvider).isDemoSession;
     const ai = MockAiService();
-    final docs = MockEcosystem.documents.take(3);
+    final docs = demo
+        ? MockEcosystem.documents.take(3).toList()
+        : ref.watch(documentsProvider).items.take(3).toList();
+    final badgeCount = demo ? MockEcosystem.analyzedDocumentsCount : docs.length;
 
     return GlassCard(
       padding: const EdgeInsets.all(16),
@@ -962,7 +1007,7 @@ class _AiAnalyzedWidget extends StatelessWidget {
               ),
               const SizedBox(width: ConfidiaSpacing.md),
               StatusBadge(
-                label: '${MockEcosystem.analyzedDocumentsCount} docs',
+                label: '$badgeCount docs',
                 color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
               ),
               const SizedBox(width: ConfidiaSpacing.sm),
@@ -970,6 +1015,13 @@ class _AiAnalyzedWidget extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
+          if (docs.isEmpty)
+            const WorkspaceEmptyHint(
+              icon: Icons.auto_awesome_outlined,
+              title: 'Aucune analyse pour le moment',
+              subtitle: 'Importez un document. L\'extraction automatique des montants arrivera plus tard.',
+            )
+          else
           ...docs.map((d) {
             final insight = ai.analyzeDocument(d);
             return ListTile(
@@ -996,7 +1048,14 @@ class _RecentDocsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return _DashboardCardShell(
       header: _SectionHeader(title: 'Documents récents', onTap: () => context.go('/documents')),
-      body: ListView(
+      body: docs.isEmpty
+          ? const WorkspaceEmptyHint(
+              icon: Icons.folder_open_rounded,
+              title: 'Aucun document récent',
+              subtitle: 'Importez un fichier pour le retrouver ici.',
+              expand: true,
+            )
+          : ListView(
         padding: EdgeInsets.zero,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -1020,6 +1079,13 @@ class _DeadlinesWidget extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(title: 'Prochaines échéances', onTap: () => context.go('/calendar')),
+          if (sorted.isEmpty)
+            const WorkspaceEmptyHint(
+              icon: Icons.event_busy_rounded,
+              title: 'Aucune échéance',
+              subtitle: 'Créez un rendez-vous ou une échéance dans le calendrier.',
+            )
+          else
           ...sorted.take(3).map((e) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
@@ -1052,7 +1118,14 @@ class _ImportantDocsWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return _DashboardCardShell(
       header: _SectionHeader(title: 'Documents importants', onTap: () => context.go('/documents')),
-      body: ListView(
+      body: docs.isEmpty
+          ? const WorkspaceEmptyHint(
+              icon: Icons.star_outline_rounded,
+              title: 'Aucun document important',
+              subtitle: 'Les pièces marquées importantes apparaîtront ici.',
+              expand: true,
+            )
+          : ListView(
         padding: EdgeInsets.zero,
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
@@ -1063,7 +1136,7 @@ class _ImportantDocsWidget extends StatelessWidget {
 }
 
 class _ActivityWidget extends StatelessWidget {
-  final List notifications;
+  final List<NotificationModel> notifications;
   const _ActivityWidget({required this.notifications});
 
   @override
@@ -1074,6 +1147,13 @@ class _ActivityWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _SectionHeader(title: 'Activité', onTap: () => context.go('/notifications')),
+          if (notifications.isEmpty)
+            const WorkspaceEmptyHint(
+              icon: Icons.notifications_none_rounded,
+              title: 'Aucune alerte',
+              subtitle: 'Les notifications de votre compte s\'afficheront ici.',
+            )
+          else
           ...notifications.take(3).map((n) => ListTile(
                 dense: true,
                 contentPadding: EdgeInsets.zero,

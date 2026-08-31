@@ -2,15 +2,38 @@ import httpx
 from fastapi import HTTPException, status
 from jose import jwt
 
-from application.dto.auth_dto import TokenRequest, TokenResponse, UserInfoResponse
+from application.dto.auth_dto import RegisterRequest, TokenRequest, TokenResponse, UserInfoResponse
 from application.services.identity_service import IdentityService
 from core.config import Settings
+from infrastructure.keycloak.admin_client import (
+    KeycloakAdminClient,
+    KeycloakAdminError,
+    KeycloakUserExistsError,
+)
 
 
 class AuthService:
     def __init__(self, settings: Settings, identity: IdentityService | None = None):
         self._settings = settings
         self._identity = identity
+
+    async def register(self, request: RegisterRequest) -> TokenResponse:
+        admin = KeycloakAdminClient(self._settings)
+        try:
+            await admin.create_user(
+                username=request.username,
+                email=request.email,
+                first_name=request.first_name,
+                last_name=request.last_name,
+                password=request.password,
+            )
+        except KeycloakUserExistsError as exc:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=exc.message) from exc
+        except KeycloakAdminError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc
+        return await self.login(
+            TokenRequest(username=request.username, password=request.password)
+        )
 
     async def login(self, request: TokenRequest) -> TokenResponse:
         async with httpx.AsyncClient() as client:

@@ -1,27 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
-import '../../shared/data/mock_data.dart';
 import '../../shared/models/document_model.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/premium_search_field.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import 'document_source_actions.dart';
+import 'documents_provider.dart';
 
-class DocumentsScreen extends StatefulWidget {
+class DocumentsScreen extends ConsumerStatefulWidget {
   final String? initialCategory;
 
   const DocumentsScreen({super.key, this.initialCategory});
 
   @override
-  State<DocumentsScreen> createState() => _DocumentsScreenState();
+  ConsumerState<DocumentsScreen> createState() => _DocumentsScreenState();
 }
 
-class _DocumentsScreenState extends State<DocumentsScreen> {
+class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   String _searchQuery = '';
   late String _selectedCategory;
   final Set<String> _selectedTags = {};
@@ -31,6 +32,9 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
     super.initState();
     final initial = widget.initialCategory?.trim();
     _selectedCategory = (initial != null && initial.isNotEmpty) ? initial : 'Tous';
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(documentsProvider.notifier).refresh();
+    });
   }
 
   @override
@@ -44,7 +48,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   List<DocumentModel> get _filteredDocs {
-    var docs = MockData.documents;
+    var docs = ref.watch(documentsProvider).items;
     if (_searchQuery.isNotEmpty) {
       final q = _searchQuery.toLowerCase();
       docs = docs.where((d) =>
@@ -60,7 +64,8 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
   }
 
   List<String> get _categoryChips {
-    final cats = [...MockData.categories];
+    final fromDocs = ref.watch(documentsProvider).items.map((d) => d.category).whereType<String>();
+    final cats = <String>{'Tous', ...fromDocs}.toList();
     if (_selectedCategory != 'Tous' && !cats.contains(_selectedCategory)) {
       cats.add(_selectedCategory);
     }
@@ -69,6 +74,7 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final docsState = ref.watch(documentsProvider);
     final docs = _filteredDocs;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -108,8 +114,22 @@ class _DocumentsScreenState extends State<DocumentsScreen> {
             ),
           ),
         ),
-        if (docs.isEmpty)
-          const SliverFillRemaining(child: Center(child: Text('Aucun document trouvé')))
+        if (docsState.loading && docsState.items.isEmpty)
+          const SliverFillRemaining(child: Center(child: CircularProgressIndicator()))
+        else if (docsState.error != null && docsState.items.isEmpty)
+          SliverFillRemaining(child: Center(child: Text(docsState.error!)))
+        else if (docs.isEmpty)
+          const SliverFillRemaining(
+            child: Center(
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 32),
+                child: Text(
+                  'Aucun document. Importez un fichier pour commencer : il restera dans votre espace, avec aperçu et téléchargement.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            ),
+          )
         else
           SliverPadding(
             padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),

@@ -70,6 +70,25 @@ void main() {
       );
       expect(briefing.score, 100);
       expect(briefing.factors, isEmpty);
+      expect(briefing.headline, contains('espace est prêt'));
+      expect(briefing.summary, contains('encore vide'));
+      expect(briefing.scoreHistory, hasLength(1));
+      expect(briefing.scoreHistory.single.score, 100);
+    });
+
+    test('demo history seeds fourteen days of fake scores', () {
+      final briefing = SerenityService.build(
+        firstName: 'Amandine',
+        emails: const [],
+        events: const [],
+        payments: const [],
+        notifications: const [],
+        documents: const [],
+        now: now,
+        seedHistory: true,
+      );
+      expect(briefing.scoreHistory, hasLength(14));
+      expect(briefing.scoreHistory.last.score, 100);
     });
 
     test('penalizes unprocessed emails and pending payments', () {

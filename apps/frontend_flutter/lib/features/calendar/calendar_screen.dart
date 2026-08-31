@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
@@ -734,12 +735,20 @@ class _AgendaSelector extends ConsumerWidget {
   }
 }
 
-class _ConnectedSourcesRow extends StatelessWidget {
+class _ConnectedSourcesRow extends ConsumerWidget {
   const _ConnectedSourcesRow();
 
   @override
-  Widget build(BuildContext context) {
-    final sources = MockEcosystem.connectedCalendars;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final demo = ref.watch(authStateProvider).isDemoSession;
+    final sources = demo ? MockEcosystem.connectedCalendars : const <(CalendarSource, bool, int)>[];
+
+    if (sources.isEmpty) {
+      return Text(
+        'Aucun agenda externe. Le calendrier CONFIDIA est interne : ajoutez vos rendez-vous ici.',
+        style: Theme.of(context).textTheme.bodySmall,
+      );
+    }
 
     return LayoutBuilder(
       builder: (context, constraints) {

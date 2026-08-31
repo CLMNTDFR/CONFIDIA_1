@@ -10,12 +10,12 @@ import '../../features/day_start/day_start_overlay.dart';
 import '../../features/day_start/day_start_provider.dart';
 import '../../features/dashboard/serenity_briefing_provider.dart';
 import '../../features/messaging/messaging_provider.dart';
+import '../../features/notifications/notifications_provider.dart';
 import '../../features/onboarding/guided_tour_overlay.dart';
 import '../../features/onboarding/guided_tour_provider.dart';
 import '../../features/onboarding/onboarding_targets.dart';
 import '../../features/serenity_feedback/serenity_moment_overlay.dart';
 import '../../features/serenity_feedback/serenity_moments_provider.dart';
-import '../../shared/data/mock_data.dart';
 import '../../shared/models/serenity_briefing_model.dart';
 import 'app_top_bar.dart';
 import 'confidia_logo.dart';
@@ -40,7 +40,7 @@ class _AppShellState extends ConsumerState<AppShell> {
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 900;
     final currentPath = GoRouterState.of(context).matchedLocation;
-    final unreadCount = MockData.notifications.where((n) => !n.read).length;
+    final unreadCount = ref.watch(notificationsUnreadCountProvider);
     final mailUnread = ref.watch(messagingUnreadCountProvider);
     final topBar = AppTopBar.fromRoute(context, showNotifications: true);
     final tourActive = ref.watch(guidedTourProvider.select((s) => s.active));
@@ -50,6 +50,12 @@ class _AppShellState extends ConsumerState<AppShell> {
     ref.listen(authStateProvider, (prev, next) {
       if (prev?.isAuthenticated == true && !next.isAuthenticated) {
         ref.read(guidedTourProvider.notifier).reset();
+      }
+    });
+
+    ref.listen(guidedTourProvider, (prev, next) {
+      if (prev?.active == true && !next.active) {
+        ref.read(authStateProvider.notifier).clearFirstLoginPending();
       }
     });
 

@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../animations/page_transitions.dart';
 import '../auth/auth_provider.dart';
 import '../../features/auth/login_screen.dart';
+import '../../features/auth/register_screen.dart';
 import '../../features/auth/welcome_splash_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/documents/documents_screen.dart';
@@ -38,17 +39,21 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final isLoggedIn = ref.read(authStateProvider).isAuthenticated;
       final loc = state.matchedLocation;
-      final isPublicRoute = loc == '/login' || loc == '/welcome';
+      final isPublicRoute = loc == '/login' || loc == '/welcome' || loc == '/register';
 
       if (!isLoggedIn && !isPublicRoute) return '/login';
       // Après connexion : passer par l'écran d'accueil animé, pas le dashboard directement.
-      if (isLoggedIn && loc == '/login') return '/welcome';
+      if (isLoggedIn && (loc == '/login' || loc == '/register')) return '/welcome';
       return null;
     },
     routes: [
       GoRoute(
         path: '/login',
         pageBuilder: (context, state) => fadeSlidePage(child: const LoginScreen()),
+      ),
+      GoRoute(
+        path: '/register',
+        pageBuilder: (context, state) => fadeSlidePage(child: const RegisterScreen()),
       ),
       GoRoute(
         path: '/welcome',
@@ -78,7 +83,7 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: ':id',
                 pageBuilder: (context, state) => fadeSlidePage(
-                  child: DocumentDetailScreen(documentId: int.parse(state.pathParameters['id']!)),
+                  child: DocumentDetailScreen(documentId: state.pathParameters['id']!),
                 ),
               ),
             ],

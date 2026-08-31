@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 
 
 class DocumentDTO(BaseModel):
-    id: int
+    id: str
     title: str
     content: str | None = None
     created: datetime
@@ -24,6 +24,14 @@ class DocumentCreateDTO(BaseModel):
     document_type: str | None = None
     tags: list[str] = Field(default_factory=list)
     category: str | None = None
+
+
+class DocumentUpdateDTO(BaseModel):
+    title: str | None = None
+    correspondent: str | None = None
+    document_type: str | None = None
+    category: str | None = None
+    is_important: bool | None = None
 
 
 class DocumentSearchDTO(BaseModel):

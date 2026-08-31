@@ -5,9 +5,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
-import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/widgets/confidia_chart_card.dart';
 import '../../shared/widgets/confidia_chart_tooltips.dart';
 import '../../shared/widgets/confidia_tappable.dart';
@@ -15,6 +15,9 @@ import '../../shared/widgets/premium_bar_rod.dart';
 import '../../shared/widgets/premium_chart_motion.dart';
 import '../../shared/widgets/premium_chart_stage.dart';
 import '../../shared/widgets/premium_donut_chart.dart';
+import '../../shared/widgets/workspace_empty_hint.dart';
+import '../documents/documents_provider.dart';
+import '../messaging/messaging_provider.dart';
 import '../payments/payments_provider.dart';
 import 'dashboard_chart_data.dart';
 
@@ -38,22 +41,39 @@ Widget _chartArea(
   );
 }
 
-class ExpensesTrendChartWidget extends StatefulWidget {
+class ExpensesTrendChartWidget extends ConsumerStatefulWidget {
   const ExpensesTrendChartWidget({super.key});
 
   @override
-  State<ExpensesTrendChartWidget> createState() => _ExpensesTrendChartWidgetState();
+  ConsumerState<ExpensesTrendChartWidget> createState() => _ExpensesTrendChartWidgetState();
 }
 
-class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
+class _ExpensesTrendChartWidgetState extends ConsumerState<ExpensesTrendChartWidget> {
   int? _touchedIndex;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final points = DashboardChartData.expenseTrend();
+    final demo = ref.watch(authStateProvider).isDemoSession;
+    final payments = ref.watch(paymentsProvider);
+    final points = DashboardChartData.expenseTrend(payments: payments, seedDemo: demo);
+    final maxValue = points.fold<double>(0, (m, p) => p.value > m ? p.value : m);
+    if (maxValue <= 0) {
+      return const ConfidiaChartCard(
+        title: 'Évolution des dépenses',
+        subtitle: 'Aucun paiement pour le moment',
+        linkRoute: '/payments',
+        demo: true,
+        chart: WorkspaceEmptyHint(
+          icon: Icons.show_chart_rounded,
+          title: 'Pas encore de dépenses',
+          subtitle: 'Les montants apparaîtront ici une fois des paiements enregistrés.',
+          expand: true,
+        ),
+      );
+    }
     final spots = List.generate(points.length, (i) => FlSpot(i.toDouble(), points[i].value));
-    final maxY = points.map((p) => p.value).reduce((a, b) => a > b ? a : b) * 1.15;
+    final maxY = maxValue * 1.15;
     final peak = points.reduce((a, b) => a.value > b.value ? a : b);
     final hasFocus = _touchedIndex != null;
 
@@ -200,22 +220,36 @@ class _ExpensesTrendChartWidgetState extends State<ExpensesTrendChartWidget> {
   }
 }
 
-class DocumentsCategoryChartWidget extends StatefulWidget {
+class DocumentsCategoryChartWidget extends ConsumerStatefulWidget {
   const DocumentsCategoryChartWidget({super.key});
 
   @override
-  State<DocumentsCategoryChartWidget> createState() => _DocumentsCategoryChartWidgetState();
+  ConsumerState<DocumentsCategoryChartWidget> createState() => _DocumentsCategoryChartWidgetState();
 }
 
-class _DocumentsCategoryChartWidgetState extends State<DocumentsCategoryChartWidget> {
+class _DocumentsCategoryChartWidgetState extends ConsumerState<DocumentsCategoryChartWidget> {
   int? _touchedIndex;
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final palette = context.palette;
-    final slices = DashboardChartData.documentsByCategory(MockEcosystem.documents, palette);
+    final docs = ref.watch(documentsProvider).items;
+    final slices = DashboardChartData.documentsByCategory(docs, palette);
     final total = slices.fold<double>(0, (sum, s) => sum + s.value);
+    if (slices.isEmpty) {
+      return const ConfidiaChartCard(
+        title: 'Répartition documentaire',
+        subtitle: 'Aucun document pour le moment',
+        linkRoute: '/documents',
+        chart: WorkspaceEmptyHint(
+          icon: Icons.folder_open_rounded,
+          title: 'Bibliothèque vide',
+          subtitle: 'Importez un fichier pour voir la répartition par catégorie.',
+          expand: true,
+        ),
+      );
+    }
 
     return ConfidiaChartCard(
       title: 'Répartition documentaire',
@@ -433,14 +467,14 @@ class _CategoryBreakdownList extends StatelessWidget {
   }
 }
 
-class HubActivityChartWidget extends StatefulWidget {
+class HubActivityChartWidget extends ConsumerStatefulWidget {
   const HubActivityChartWidget({super.key});
 
   @override
-  State<HubActivityChartWidget> createState() => _HubActivityChartWidgetState();
+  ConsumerState<HubActivityChartWidget> createState() => _HubActivityChartWidgetState();
 }
 
-class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
+class _HubActivityChartWidgetState extends ConsumerState<HubActivityChartWidget> {
   int? _touchedGroup;
   int? _touchedRod;
 
@@ -454,11 +488,31 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final series = _series(context);
-    final months = DashboardChartData.hubActivity();
+    final demo = ref.watch(authStateProvider).isDemoSession;
+    final months = DashboardChartData.hubActivity(
+      documents: ref.watch(documentsProvider).items,
+      emails: ref.watch(messagingProvider),
+      payments: ref.watch(paymentsProvider),
+      seedDemo: demo,
+    );
     final maxY = months
         .map((m) => [m.documents, m.emails, m.payments].reduce((a, b) => a > b ? a : b))
-        .reduce((a, b) => a > b ? a : b)
+        .fold<int>(0, (a, b) => a > b ? a : b)
         .toDouble();
+    if (maxY <= 0) {
+      return const ConfidiaChartCard(
+        title: 'Activité du hub',
+        subtitle: 'Documents, mails et paiements traités',
+        linkRoute: '/dashboard',
+        demo: true,
+        chart: WorkspaceEmptyHint(
+          icon: Icons.insights_rounded,
+          title: 'Pas encore d\'activité',
+          subtitle: 'L\'historique se remplira avec vos documents et vos prochaines actions.',
+          expand: true,
+        ),
+      );
+    }
     final hasFocus = _touchedGroup != null;
 
     return ConfidiaChartCard(
@@ -486,7 +540,7 @@ class _HubActivityChartWidgetState extends State<HubActivityChartWidget> {
                 child: BarChart(
                   duration: Duration.zero,
                   BarChartData(
-                    maxY: maxY + 2,
+                    maxY: maxY < 1 ? 1 : maxY + 2,
                     gridData: const FlGridData(show: false),
                     borderData: FlBorderData(show: false),
                     titlesData: FlTitlesData(
@@ -620,6 +674,19 @@ class _PaymentsOverviewChartWidgetState extends ConsumerState<PaymentsOverviewCh
     final payments = ref.watch(paymentsProvider);
     final palette = context.palette;
     final slices = DashboardChartData.paymentsByStatus(payments, palette);
+    if (slices.isEmpty) {
+      return const ConfidiaChartCard(
+        title: 'Vue des paiements',
+        subtitle: 'Aucun paiement pour le moment',
+        linkRoute: '/payments',
+        demo: true,
+        chart: WorkspaceEmptyHint(
+          icon: Icons.payments_outlined,
+          title: 'Pas encore de paiements',
+          expand: true,
+        ),
+      );
+    }
     final total = slices.fold<double>(0, (sum, s) => sum + s.value);
     final maxY = slices.isEmpty ? 1.0 : slices.map((s) => s.value).reduce((a, b) => a > b ? a : b) * 1.2;
     final hasFocus = _touchedIndex != null;

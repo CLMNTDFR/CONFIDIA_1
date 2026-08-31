@@ -14,6 +14,7 @@ import '../../shared/widgets/confidia_demo_badge.dart';
 import '../../shared/widgets/confidia_tooltip.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/serenity_score_ring.dart';
+import '../../shared/widgets/workspace_empty_hint.dart';
 import 'serenity_briefing_provider.dart';
 
 /// Carte score + courbe 14 j  -  briefing narratif dans « Commencer ma journée ».
@@ -58,7 +59,9 @@ class SerenityBriefingWidget extends ConsumerWidget {
                     const _ScoreLegend(),
                     const SizedBox(height: 6),
                     Text(
-                      'Évolution sur 14 jours',
+                      briefing.scoreHistory.length >= 2
+                          ? 'Évolution sur 14 jours'
+                          : 'Aujourd\'hui',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(color: muted),
                     ),
                   ],
@@ -78,6 +81,13 @@ class SerenityBriefingWidget extends ConsumerWidget {
           if (briefing.scoreHistory.length >= 2) ...[
             const SizedBox(height: 18),
             _ScoreHistoryChart(history: briefing.scoreHistory, palette: palette),
+          ] else ...[
+            const SizedBox(height: 12),
+            WorkspaceEmptyHint(
+              icon: Icons.show_chart_rounded,
+              title: 'Pas encore d\'historique',
+              subtitle: 'La courbe se construira jour après jour à partir d\'aujourd\'hui.',
+            ),
           ],
         ],
       ),

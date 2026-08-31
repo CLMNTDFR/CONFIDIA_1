@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
@@ -33,6 +34,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleLogin({bool demo = false, bool guidedTour = false}) async {
+    if (!demo && !guidedTour) {
+      if (!(_formKey.currentState?.validate() ?? false)) return;
+    }
     setState(() => _authenticating = true);
     try {
       if (guidedTour) {
@@ -41,10 +45,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } else if (demo) {
         await ref.read(authStateProvider.notifier).loginDemo();
       } else {
-        if (!_formKey.currentState!.validate()) return;
-        await ref.read(authStateProvider.notifier).login(_usernameController.text, _passwordController.text);
+        await ref.read(authStateProvider.notifier).login(
+              _usernameController.text,
+              _passwordController.text,
+            );
       }
-      // La redirection vers /welcome est gérée par le routeur (refreshListenable).
     } finally {
       if (mounted) setState(() => _authenticating = false);
     }
@@ -132,7 +137,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     return GlassCard(
       highlighted: true,
-      child: Form(
+      child: AutofillGroup(
+        child: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -146,7 +152,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               enabled: !busy,
               labelText: 'Identifiant',
               prefixIcon: Icons.person_outline_rounded,
-              validator: (v) => v?.isEmpty == true ? 'Requis' : null,
+              autofillHints: const [AutofillHints.username],
+              validator: (v) => v?.isEmpty == true ? 'L\'identifiant est requis' : null,
             ),
             const SizedBox(height: ConfidiaSpacing.md),
             ConfidiaTextFormField(
@@ -155,6 +162,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               obscureText: _obscurePassword,
               labelText: 'Mot de passe',
               prefixIcon: Icons.lock_outline_rounded,
+              autofillHints: const [AutofillHints.password],
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -174,6 +182,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               loading: busy,
               loadingLabel: 'Connexion…',
               onPressed: busy ? null : () => _handleLogin(),
+            ),
+            const SizedBox(height: ConfidiaSpacing.sm),
+            ConfidiaButton(
+              label: 'Pas encore de compte ? Créer un compte',
+              outlined: true,
+              onPressed: busy ? null : () => context.go('/register'),
             ),
             const SizedBox(height: ConfidiaSpacing.sm),
             ConfidiaButton(
@@ -204,6 +218,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               textAlign: TextAlign.center,
             ),
           ],
+        ),
         ),
       ),
     );

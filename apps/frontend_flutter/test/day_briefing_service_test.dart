@@ -116,4 +116,21 @@ void main() {
       );
     }
   });
+
+  test('empty workspace briefing has no fake priorities', () {
+    final briefing = DayBriefingService.build(
+      firstName: 'Ada',
+      emails: const [],
+      events: const [],
+      payments: const [],
+      notifications: const [],
+      documents: const [],
+    );
+
+    expect(briefing.priorities, isEmpty);
+    expect(briefing.currentScore, 100);
+    expect(briefing.narrative.toLowerCase(), contains('vide'));
+    expect(briefing.glance.appointmentsToday, 0);
+    expect(briefing.glance.paymentsDue, 0);
+  });
 }

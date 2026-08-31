@@ -1,66 +1,179 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
-import '../../shared/data/mock_data.dart';
 import '../../shared/models/ai_insight_model.dart';
 import '../../shared/models/document_model.dart';
 import '../../shared/services/mock_ai_service.dart';
 import '../../shared/widgets/cofid_ia_brand.dart';
 import '../../shared/widgets/ai_streaming_text.dart';
+import '../../shared/widgets/confidia_confirm_dialog.dart';
+import '../../shared/widgets/confidia_menu.dart';
+import '../../shared/widgets/confidia_snackbar.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/status_badge.dart';
+import 'document_edit_sheet.dart';
+import 'documents_provider.dart';
+import 'widgets/document_file_preview.dart';
 
-class DocumentDetailScreen extends StatefulWidget {
-  final int documentId;
+class DocumentDetailScreen extends ConsumerStatefulWidget {
+  final String documentId;
 
   const DocumentDetailScreen({super.key, required this.documentId});
 
   @override
-  State<DocumentDetailScreen> createState() => _DocumentDetailScreenState();
+  ConsumerState<DocumentDetailScreen> createState() => _DocumentDetailScreenState();
 }
 
-class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
+class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   bool _analysisComplete = false;
+  bool _loadingPreview = true;
+  Uint8List? _bytes;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPreview());
+  }
+
+  Future<void> _loadPreview() async {
+    final notifier = ref.read(documentsProvider.notifier);
+    if (ref.read(documentsProvider).byId(widget.documentId) == null) {
+      await notifier.refresh();
+    }
+    final bytes = await notifier.loadBytes(widget.documentId);
+    if (!mounted) return;
+    setState(() {
+      _bytes = bytes;
+      _loadingPreview = false;
+    });
+  }
+
+  Future<void> _download() async {
+    final message = await ref.read(documentsProvider.notifier).download(widget.documentId);
+    if (!mounted) return;
+    if (message != null) {
+      showConfidiaSnackBar(context, message, type: ConfidiaSnackType.warning);
+    } else {
+      showConfidiaSnackBar(context, 'Téléchargement lancé', type: ConfidiaSnackType.success);
+    }
+  }
+
+  Future<void> _edit(DocumentModel doc) async {
+    await showDocumentEditSheet(context, doc);
+  }
+
+  Future<void> _confirmDelete(DocumentModel doc) async {
+    final ok = await showConfidiaConfirmDialog(
+      context,
+      title: 'Supprimer le document ?',
+      message: '« ${doc.title} » sera définitivement retiré de votre espace.',
+      confirmLabel: 'Supprimer',
+      icon: Icons.delete_outline_rounded,
+      destructive: true,
+    );
+    if (ok != true || !mounted) return;
+    final error = await ref.read(documentsProvider.notifier).deleteDocument(doc.id);
+    if (!mounted) return;
+    if (error != null) {
+      showConfidiaSnackBar(context, error, type: ConfidiaSnackType.error);
+      return;
+    }
+    showConfidiaSnackBar(context, 'Document supprimé', type: ConfidiaSnackType.success);
+    if (!mounted) return;
+    context.go('/documents');
+  }
 
   @override
   Widget build(BuildContext context) {
-    final doc = MockData.documents.firstWhere(
-      (d) => d.id == widget.documentId,
-      orElse: () => MockData.documents.first,
-    );
+    ref.listen(documentsProvider, (previous, next) {
+      if (previous?.byId(widget.documentId) == null) return;
+      if (next.byId(widget.documentId) != null) return;
+      if (!context.mounted) return;
+      context.go('/documents');
+    });
+    final docsState = ref.watch(documentsProvider);
+    final doc = docsState.byId(widget.documentId);
+    if (doc == null) {
+      return Center(
+        child: docsState.loading
+            ? const CircularProgressIndicator()
+            : const Text('Document introuvable'),
+      );
+    }
+    final demo = ref.watch(authStateProvider).isDemoSession;
     final insight = const MockAiService().analyzeDocument(doc);
-    final analysisText = _analysisText(insight, doc);
+    final analysisText = demo ? _analysisText(insight, doc) : _liveAnalysisText(doc);
 
     return SingleChildScrollView(
       padding: ConfidiaInsets.page(context),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          ConfidiaPageReveal(index: 0, staggerCount: 4, child: _DocumentHeader(doc: doc)),
+          ConfidiaPageReveal(
+            index: 0,
+            staggerCount: 4,
+            child: _DocumentHeader(
+              doc: doc,
+              onDownload: _download,
+              onEdit: () => _edit(doc),
+              onDelete: () => _confirmDelete(doc),
+            ),
+          ),
           const SizedBox(height: ConfidiaSpacing.lg),
           ConfidiaPageReveal(
             index: 1,
             staggerCount: 4,
             child: _AiAnalysisSection(
-              insight: insight,
+              insight: demo
+                  ? insight
+                  : AiInsightModel(
+                      summary: analysisText,
+                      recommendedActions: const ['Télécharger', 'Classer plus tard'],
+                      priority: AiPriority.low,
+                      tags: doc.tags,
+                    ),
               analysisText: analysisText,
               analysisComplete: _analysisComplete,
               onAnalysisComplete: () => setState(() => _analysisComplete = true),
             ),
           ),
           const SizedBox(height: ConfidiaSpacing.lg),
-          ConfidiaPageReveal(index: 2, staggerCount: 4, child: _DocumentPreview()),
+          ConfidiaPageReveal(
+            index: 2,
+            staggerCount: 4,
+            child: DocumentFilePreview(
+              doc: doc,
+              bytes: _bytes,
+              loading: _loadingPreview,
+              onDownload: _download,
+            ),
+          ),
           const SizedBox(height: ConfidiaSpacing.lg),
           ConfidiaPageReveal(index: 3, staggerCount: 4, child: _DocumentMetadata(doc: doc)),
         ],
       ),
     );
+  }
+
+  String _liveAnalysisText(DocumentModel doc) {
+    final buffer = StringBuffer(
+      'Document enregistré dans votre espace. '
+      'L\'extraction automatique des montants et échéances arrivera dans une prochaine version. '
+      'En attendant, le fichier reste disponible en aperçu et en téléchargement.',
+    );
+    if (doc.category != null) {
+      buffer.write('\n\nClassé dans « ${doc.category} ».');
+    }
+    return buffer.toString();
   }
 
   String _analysisText(AiInsightModel insight, DocumentModel doc) {
@@ -83,8 +196,16 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
 class _DocumentHeader extends StatelessWidget {
   final DocumentModel doc;
+  final VoidCallback onDownload;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
 
-  const _DocumentHeader({required this.doc});
+  const _DocumentHeader({
+    required this.doc,
+    required this.onDownload,
+    required this.onEdit,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -93,6 +214,7 @@ class _DocumentHeader extends StatelessWidget {
       children: [
         IconButton(
           visualDensity: VisualDensity.compact,
+          tooltip: 'Retour',
           onPressed: () => context.go('/documents'),
           icon: const Icon(Icons.arrow_back_rounded),
         ),
@@ -108,9 +230,49 @@ class _DocumentHeader extends StatelessWidget {
             ],
           ),
         ),
-        IconButton(visualDensity: VisualDensity.compact, icon: const Icon(Icons.download_outlined), onPressed: () {}),
-        IconButton(visualDensity: VisualDensity.compact, icon: const Icon(Icons.share_outlined), onPressed: () {}),
-        IconButton(visualDensity: VisualDensity.compact, icon: const Icon(Icons.more_vert), onPressed: () {}),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: 'Télécharger',
+              icon: const Icon(Icons.download_outlined),
+              onPressed: onDownload,
+            ),
+            ConfidiaMenuButton<String>(
+              tooltip: 'Plus d\'actions',
+              items: const [
+                ConfidiaMenuEntry(
+                  value: 'edit',
+                  label: 'Modifier',
+                  icon: Icons.edit_outlined,
+                ),
+                ConfidiaMenuEntry(
+                  value: 'download',
+                  label: 'Télécharger',
+                  icon: Icons.download_outlined,
+                ),
+                ConfidiaMenuEntry(
+                  value: 'delete',
+                  label: 'Supprimer',
+                  icon: Icons.delete_outline_rounded,
+                  destructive: true,
+                ),
+              ],
+              onSelected: (value) {
+                switch (value) {
+                  case 'edit':
+                    onEdit();
+                  case 'download':
+                    onDownload();
+                  case 'delete':
+                    onDelete();
+                }
+              },
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -201,44 +363,6 @@ class _AiAnalysisSectionState extends State<_AiAnalysisSection> {
           ),
         ],
       ),
-    );
-  }
-}
-
-class _DocumentPreview extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Aperçu', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        Container(
-          height: 340,
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: isDark ? ConfidiaColors.darkSurfaceVariant : ConfidiaColors.lightSurfaceElevated,
-            borderRadius: BorderRadius.circular(ConfidiaSpacing.radiusMd),
-            border: Border.all(color: ConfidiaColors.border(isDark)),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.picture_as_pdf_rounded,
-                size: 52,
-                color: ConfidiaColors.textSecondary(isDark).withValues(alpha: 0.55),
-              ),
-              const SizedBox(height: 12),
-              Text('Aperçu du document', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 4),
-              Text('Intégration Paperless-ngx', style: Theme.of(context).textTheme.labelSmall),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
@@ -349,7 +473,7 @@ class _MetaTile extends StatelessWidget {
                         fontSize: 10,
                         letterSpacing: 0.4,
                         color: ConfidiaColors.textSecondary(isDark),
-                        fontWeight: FontWeight.w500,
+                        fontWeight: FontWeight.w600,
                       ),
                 ),
                 const SizedBox(height: 4),

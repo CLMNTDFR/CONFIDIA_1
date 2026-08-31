@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 class DocumentModel extends Equatable {
-  final int id;
+  final String id;
   final String title;
   final String? content;
   final DateTime created;
@@ -31,7 +31,7 @@ class DocumentModel extends Equatable {
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
     return DocumentModel(
-      id: json['id'] as int,
+      id: json['id'].toString(),
       title: json['title'] as String,
       content: json['content'] as String?,
       created: DateTime.parse(json['created'] as String),
@@ -51,6 +51,59 @@ class DocumentModel extends Equatable {
     if (fileSize! < 1024) return '$fileSize B';
     if (fileSize! < 1048576) return '${(fileSize! / 1024).toStringAsFixed(1)} KB';
     return '${(fileSize! / 1048576).toStringAsFixed(1)} MB';
+  }
+
+  bool get isImagePreviewable {
+    final mime = mimeType?.toLowerCase() ?? '';
+    return mime.startsWith('image/');
+  }
+
+  bool get isPdfPreviewable {
+    final mime = mimeType?.toLowerCase() ?? '';
+    if (mime.contains('pdf')) return true;
+    return title.toLowerCase().endsWith('.pdf');
+  }
+
+  DocumentModel copyWith({
+    String? title,
+    DateTime? modified,
+    String? correspondent,
+    String? documentType,
+    List<String>? tags,
+    String? category,
+    bool? isImportant,
+    bool clearCorrespondent = false,
+    bool clearDocumentType = false,
+    bool clearCategory = false,
+  }) {
+    return DocumentModel(
+      id: id,
+      title: title ?? this.title,
+      content: content,
+      created: created,
+      modified: modified ?? this.modified,
+      correspondent: clearCorrespondent ? null : (correspondent ?? this.correspondent),
+      documentType: clearDocumentType ? null : (documentType ?? this.documentType),
+      tags: tags ?? this.tags,
+      category: clearCategory ? null : (category ?? this.category),
+      mimeType: mimeType,
+      fileSize: fileSize,
+      isImportant: isImportant ?? this.isImportant,
+    );
+  }
+
+  String get suggestedFilename {
+    final base = title.replaceAll(RegExp(r'[/\\]'), '_');
+    final ext = switch (mimeType?.toLowerCase()) {
+      'application/pdf' => '.pdf',
+      'image/png' => '.png',
+      'image/jpeg' => '.jpg',
+      'image/webp' => '.webp',
+      'image/gif' => '.gif',
+      _ => '',
+    };
+    if (ext.isNotEmpty && !base.toLowerCase().endsWith(ext)) return '$base$ext';
+    return base;
   }
 
   @override

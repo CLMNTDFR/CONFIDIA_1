@@ -40,7 +40,15 @@ class UserModel extends Equatable {
     return 'Membre';
   }
 
-  String get localeLabel => switch (locale) {
+  static String normalizeLocale(String raw) {
+    final compact = raw.replaceAll('-', '_');
+    final lower = compact.toLowerCase();
+    if (lower.startsWith('fr')) return 'fr_FR';
+    if (lower.startsWith('en')) return 'en_US';
+    return compact;
+  }
+
+  String get localeLabel => switch (normalizeLocale(locale)) {
         'en_US' => 'English (US)',
         'fr_FR' => 'Français',
         _ => locale,
@@ -86,7 +94,7 @@ class UserModel extends Equatable {
         avatarUrl: json['avatar_url'] as String?,
         phone: json['phone'] as String?,
         organization: json['organization'] as String?,
-        locale: json['locale'] as String? ?? 'fr_FR',
+        locale: normalizeLocale(json['locale'] as String? ?? 'fr_FR'),
         timezone: json['timezone'] as String? ?? 'Europe/Paris',
       );
 
@@ -99,7 +107,7 @@ class UserModel extends Equatable {
         if (avatarUrl != null) 'avatar_url': avatarUrl,
         if (phone != null) 'phone': phone,
         if (organization != null) 'organization': organization,
-        'locale': locale,
+        'locale': locale.replaceAll('_', '-'),
         'timezone': timezone,
       };
 

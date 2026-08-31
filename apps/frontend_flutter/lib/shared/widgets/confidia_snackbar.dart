@@ -58,12 +58,10 @@ void showConfidiaSnackBar(
       ),
       width: isMobileShell ? null : 380,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      // Le Scaffold place déjà le snackbar au-dessus de la barre. Une marge FAB
+      // reculerait le toast au milieu du contenu.
       margin: isMobileShell
-          ? EdgeInsets.only(
-              left: ConfidiaSpacing.md,
-              right: ConfidiaSpacing.md,
-              bottom: ConfidiaMobileShell.fabBottom(context),
-            )
+          ? const EdgeInsets.fromLTRB(ConfidiaSpacing.md, 0, ConfidiaSpacing.md, ConfidiaSpacing.sm)
           : null,
       content: Row(
         children: [

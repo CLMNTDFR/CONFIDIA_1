@@ -1,12 +1,20 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/auth/auth_provider.dart';
+import '../../core/auth/workspace_session.dart';
 import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/payment_model.dart';
 import '../../shared/services/mock_ai_service.dart';
 
 class PaymentsNotifier extends StateNotifier<List<PaymentModel>> {
-  PaymentsNotifier() : super(List.from(MockEcosystem.payments));
+  PaymentsNotifier(this._ref) : super(demoSeedOrEmpty(_ref.read(authStateProvider), MockEcosystem.payments)) {
+    _ref.listen<AuthState>(authStateProvider, (prev, next) {
+      if (!workspaceSessionChanged(prev, next)) return;
+      state = demoSeedOrEmpty(next, MockEcosystem.payments);
+    });
+  }
 
+  final Ref _ref;
   final _ai = const MockAiService();
 
   List<PaymentModel> get pending =>
@@ -45,5 +53,5 @@ class PaymentsNotifier extends StateNotifier<List<PaymentModel>> {
 }
 
 final paymentsProvider = StateNotifierProvider<PaymentsNotifier, List<PaymentModel>>((ref) {
-  return PaymentsNotifier();
+  return PaymentsNotifier(ref);
 });

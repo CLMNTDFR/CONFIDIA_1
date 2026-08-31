@@ -1,5 +1,5 @@
-import '../../shared/data/mock_ecosystem.dart';
 import '../../shared/models/document_model.dart';
+import '../../shared/models/email_model.dart';
 import '../../shared/models/payment_model.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/palette.dart';
@@ -38,11 +38,16 @@ class HubActivityMonth {
 /// Données agrégées pour les graphiques du tableau de bord.
 abstract final class DashboardChartData {
   /// Dépenses mensuelles sur 6 mois (factures + paiements du hub).
-  static List<MonthlyPoint> expenseTrend() {
+  static List<MonthlyPoint> expenseTrend({
+    List<PaymentModel> payments = const [],
+    bool seedDemo = false,
+  }) {
     final now = DateTime.now();
-    final base = <double>[312, 428, 385, 496, 452, 0];
+    final base = seedDemo
+        ? <double>[312, 428, 385, 496, 452, 0]
+        : List<double>.filled(6, 0);
 
-    for (final payment in MockEcosystem.payments) {
+    for (final payment in payments) {
       final monthIndex = _monthsAgo(now, payment.dueDate);
       if (monthIndex >= 0 && monthIndex < 6) {
         base[monthIndex] += payment.amount;
@@ -79,25 +84,26 @@ abstract final class DashboardChartData {
   }
 
   /// Activité mensuelle du hub (documents, mails, paiements).
-  static List<HubActivityMonth> hubActivity() {
+  static List<HubActivityMonth> hubActivity({
+    List<DocumentModel> documents = const [],
+    List<EmailModel> emails = const [],
+    List<PaymentModel> payments = const [],
+    bool seedDemo = false,
+  }) {
     final now = DateTime.now();
-    final docs = MockEcosystem.documents;
-    final emails = MockEcosystem.emails;
-    final payments = MockEcosystem.payments;
 
     return List.generate(6, (i) {
       final month = DateTime(now.year, now.month - (5 - i), 1);
       final nextMonth = DateTime(month.year, month.month + 1, 1);
 
-      int docCount = docs.where((d) => !d.created.isBefore(month) && d.created.isBefore(nextMonth)).length;
+      int docCount = documents.where((d) => !d.created.isBefore(month) && d.created.isBefore(nextMonth)).length;
       int mailCount = emails.where((e) => !e.receivedAt.isBefore(month) && e.receivedAt.isBefore(nextMonth)).length;
       int payCount = payments.where((p) {
         final ref = p.paidAt ?? p.dueDate;
         return !ref.isBefore(month) && ref.isBefore(nextMonth);
       }).length;
 
-      // Légère base pour éviter des mois vides sur la démo.
-      if (i < 5) {
+      if (seedDemo && i < 5) {
         docCount += [1, 0, 2, 1, 1][i];
         mailCount += [2, 1, 3, 2, 2][i];
         payCount += [1, 2, 1, 2, 1][i];

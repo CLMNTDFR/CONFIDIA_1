@@ -273,6 +273,10 @@ class GuidedTourNotifier extends StateNotifier<GuidedTourState> {
     state = state.copyWith(armed: false, active: true, stepIndex: 0);
   }
 
+  void startNow() {
+    state = const GuidedTourState(armed: false, active: true, stepIndex: 0);
+  }
+
   void next() {
     if (!state.active) return;
     if (!state.canProceedFromCurrentStep()) return;

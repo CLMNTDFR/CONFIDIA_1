@@ -1,10 +1,13 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
+import '../../shared/models/document_model.dart';
 import '../../shared/widgets/confidia_dropdown_field.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_page_reveal.dart';
@@ -12,25 +15,28 @@ import '../../shared/widgets/confidia_snackbar.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import 'document_categories.dart';
+import 'documents_provider.dart';
 import 'widgets/document_ingest_widgets.dart';
+import 'widgets/document_type_field.dart';
 
 /// Écran unique d'ajout : photo caméra ou fichiers appareil.
 /// [mode] : `camera` | `files` (défaut si null / inconnu).
-class DocumentIngestScreen extends StatefulWidget {
+class DocumentIngestScreen extends ConsumerStatefulWidget {
   final String? mode;
 
   const DocumentIngestScreen({super.key, this.mode});
 
   @override
-  State<DocumentIngestScreen> createState() => _DocumentIngestScreenState();
+  ConsumerState<DocumentIngestScreen> createState() => _DocumentIngestScreenState();
 }
 
-class _DocumentIngestScreenState extends State<DocumentIngestScreen> {
+class _DocumentIngestScreenState extends ConsumerState<DocumentIngestScreen> {
   final _picker = ImagePicker();
   Uint8List? _imageBytes;
   String? _imageName;
   final List<PlatformFile> _files = [];
   String _category = DocumentCategories.values.first;
+  String? _documentType;
   bool _busy = false;
 
   bool get _isCamera => widget.mode == 'camera';
@@ -81,6 +87,7 @@ class _DocumentIngestScreenState extends State<DocumentIngestScreen> {
   Future<void> _pickFiles({bool append = false}) async {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
+      withData: true,
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx', 'xlsx'],
     );
@@ -104,13 +111,45 @@ class _DocumentIngestScreenState extends State<DocumentIngestScreen> {
   Future<void> _submit() async {
     if (!_hasContent || _busy) return;
     setState(() => _busy = true);
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-    setState(() {
-      _busy = false;
-      _resetContent();
-    });
-    context.showConfidiaSnack('Document ajouté avec succès', type: ConfidiaSnackType.success);
+    try {
+      final notifier = ref.read(documentsProvider.notifier);
+      DocumentModel? last;
+      if (_imageBytes != null) {
+        last = await notifier.upload(
+          filename: _imageName ?? 'scan.jpg',
+          bytes: _imageBytes!,
+          title: _imageName,
+          category: _category,
+          documentType: _documentType,
+        );
+      } else {
+        for (final file in _files) {
+          final bytes = file.bytes;
+          if (bytes == null || bytes.isEmpty) continue;
+          last = await notifier.upload(
+            filename: file.name,
+            bytes: bytes,
+            title: file.name,
+            category: _category,
+            documentType: _documentType,
+          );
+        }
+      }
+      if (!mounted) return;
+      if (last == null) {
+        final err = ref.read(documentsProvider).error;
+        context.showConfidiaSnack(
+          err ?? "Impossible d'envoyer le document",
+          type: ConfidiaSnackType.error,
+        );
+        return;
+      }
+      setState(_resetContent);
+      context.showConfidiaSnack('Document enregistré', type: ConfidiaSnackType.success);
+      context.go('/documents/${last.id}');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
@@ -178,6 +217,10 @@ class _DocumentIngestScreenState extends State<DocumentIngestScreen> {
                       onChanged: (v) {
                         if (v != null) setState(() => _category = v);
                       },
+                    ),
+                    const SizedBox(height: ConfidiaSpacing.md),
+                    DocumentTypeField(
+                      onChanged: (value) => _documentType = value,
                     ),
                     const SizedBox(height: ConfidiaSpacing.lg),
                     Wrap(

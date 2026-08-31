@@ -15,7 +15,7 @@ abstract final class MockEcosystem {
   // ── Documents ──────────────────────────────────────────────────────────
   static final documents = [
     DocumentModel(
-      id: 1,
+      id: '1',
       title: 'Facture EDF - Mars 2026',
       content: 'Facture électricité · 96,00 € · échéance 15 mars',
       created: DateTime(2026, 3, 1),
@@ -29,7 +29,7 @@ abstract final class MockEcosystem {
       isImportant: true,
     ),
     DocumentModel(
-      id: 2,
+      id: '2',
       title: 'Facture Orange - Mars 2026',
       content: 'Internet fibre · 42,00 €',
       created: DateTime(2026, 3, 2),
@@ -43,7 +43,7 @@ abstract final class MockEcosystem {
       isImportant: true,
     ),
     DocumentModel(
-      id: 3,
+      id: '3',
       title: 'Avis d\'imposition 2025',
       content: 'Solde à payer · 320,00 €',
       created: DateTime(2026, 2, 15),
@@ -57,7 +57,7 @@ abstract final class MockEcosystem {
       isImportant: true,
     ),
     DocumentModel(
-      id: 4,
+      id: '4',
       title: 'Contrat assurance MAIF',
       content: 'Renouvellement annuel · 58,00 €/mois',
       created: DateTime(2026, 1, 10),
@@ -71,7 +71,7 @@ abstract final class MockEcosystem {
       isImportant: true,
     ),
     DocumentModel(
-      id: 5,
+      id: '5',
       title: 'Facture Free Mobile',
       content: 'Forfait mobile · 19,99 €',
       created: DateTime(2026, 3, 5),
@@ -84,7 +84,7 @@ abstract final class MockEcosystem {
       fileSize: 128000,
     ),
     DocumentModel(
-      id: 6,
+      id: '6',
       title: 'Projet d\'acte de vente',
       content: 'Étude Notaire Durand · signature prévue avril',
       created: DateTime(2026, 2, 20),
@@ -98,7 +98,7 @@ abstract final class MockEcosystem {
       isImportant: true,
     ),
     DocumentModel(
-      id: 7,
+      id: '7',
       title: 'Passeport - Scan',
       created: DateTime(2024, 6, 15),
       modified: DateTime(2024, 6, 15),

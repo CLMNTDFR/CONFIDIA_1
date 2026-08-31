@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_provider.dart';
-import '../../shared/data/mock_ecosystem.dart';
+import '../../core/auth/workspace_session.dart';
 import '../calendar/calendar_provider.dart';
+import '../documents/documents_provider.dart';
 import '../messaging/messaging_provider.dart';
+import '../notifications/notifications_provider.dart';
 import '../payments/payments_provider.dart';
 import 'day_briefing_model.dart';
 import 'day_briefing_service.dart';
@@ -51,14 +53,13 @@ class DayStartNotifier extends StateNotifier<DayStartSession> {
   final Ref _ref;
 
   DayBriefing _buildBriefing() {
-    final user = _ref.read(authStateProvider).user;
     return DayBriefingService.build(
-      firstName: user?.firstName ?? 'Amandine',
+      firstName: sessionFirstName(_ref.read(authStateProvider)),
       emails: _ref.read(messagingProvider),
       events: _ref.read(calendarProvider),
       payments: _ref.read(paymentsProvider),
-      notifications: MockEcosystem.notifications,
-      documents: MockEcosystem.documents,
+      notifications: _ref.read(notificationsProvider),
+      documents: _ref.read(documentsProvider).items,
     );
   }
 

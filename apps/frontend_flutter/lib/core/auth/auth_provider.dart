@@ -1,9 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 import '../api/api_client.dart';
+import '../api/api_error_message.dart';
 import '../../shared/models/user_model.dart';
 import '../../shared/services/profile_api_service.dart';
 
@@ -44,16 +46,25 @@ class AuthState extends Equatable {
     );
   }
 
+  bool get isDemoSession =>
+      user?.id == 'demo' || user?.id == 'demo-first-visit';
+
   @override
   List<Object?> get props => [isAuthenticated, isLoading, user, error];
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  final ApiClient _apiClient;
-  final _storage = const FlutterSecureStorage();
+  static const _firstLoginKey = 'first_login_pending';
 
-  AuthNotifier(this._apiClient) : super(const AuthState()) {
-    _checkAuth();
+  final ApiClient _apiClient;
+  final FlutterSecureStorage _storage;
+
+  AuthNotifier(this._apiClient, {bool restoreSession = true, FlutterSecureStorage? storage})
+      : _storage = storage ?? const FlutterSecureStorage(),
+        super(const AuthState()) {
+    if (restoreSession) {
+      _checkAuth();
+    }
   }
 
   Future<void> _checkAuth() async {
@@ -72,41 +83,83 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'username': username,
         'password': password,
       });
-
-      await _storage.write(
-        key: 'access_token',
-        value: response.data['access_token'] as String,
-      );
-      await _storage.write(
-        key: 'refresh_token',
-        value: response.data['refresh_token'] as String,
-      );
-
+      await _storeTokens(response.data as Map<String, dynamic>);
       state = state.copyWith(isAuthenticated: true, isLoading: false);
       await _loadUser();
     } on DioException catch (e) {
-      final connectionFailed = e.type == DioExceptionType.connectionError ||
-          e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.sendTimeout ||
-          e.type == DioExceptionType.receiveTimeout;
       state = state.copyWith(
         isLoading: false,
-        error: connectionFailed
-            ? 'Impossible de joindre le serveur. Vérifiez que le backend est démarré et accessible.'
-            : e.response?.data?['detail']?.toString() ?? 'Échec de connexion',
+        error: apiErrorMessage(e, fallback: 'Échec de connexion'),
       );
     }
+  }
+
+  Future<void> register({
+    required String email,
+    required String emailConfirm,
+    required String username,
+    required String firstName,
+    required String lastName,
+    required String password,
+    required String passwordConfirm,
+  }) async {
+    state = state.copyWith(isLoading: true, error: null);
+    try {
+      await _apiClient.ensureConfigured();
+      final response = await _apiClient.dio.post('/auth/register', data: {
+        'email': email.trim(),
+        'email_confirm': emailConfirm.trim(),
+        'username': username.trim(),
+        'first_name': firstName.trim(),
+        'last_name': lastName.trim(),
+        'password': password,
+        'password_confirm': passwordConfirm,
+      });
+      await _storeTokens(response.data as Map<String, dynamic>);
+      await _storage.write(key: _firstLoginKey, value: '1');
+      state = state.copyWith(isAuthenticated: true, isLoading: false);
+      await _loadUser();
+    } on DioException catch (e) {
+      state = state.copyWith(
+        isLoading: false,
+        error: apiErrorMessage(e, fallback: 'Impossible de créer le compte'),
+      );
+    }
+  }
+
+  Future<void> _storeTokens(Map<String, dynamic> data) async {
+    await _storage.write(key: 'access_token', value: data['access_token'] as String);
+    await _storage.write(key: 'refresh_token', value: data['refresh_token'] as String);
   }
 
   Future<void> _loadUser() async {
     try {
       await _apiClient.ensureConfigured();
-      final response = await _apiClient.dio.get('/auth/me');
-      final data = response.data as Map<String, dynamic>;
-      state = state.copyWith(user: UserModel.fromJson(data));
+      try {
+        final response = await _apiClient.dio.get('/users/me');
+        state = state.copyWith(user: UserModel.fromJson(response.data as Map<String, dynamic>));
+        return;
+      } catch (_) {
+        final response = await _apiClient.dio.get('/auth/me');
+        final data = response.data as Map<String, dynamic>;
+        state = state.copyWith(user: UserModel.fromJson(data));
+      }
     } catch (_) {
-      state = state.copyWith(user: ProfileApiService.mockDemoUser);
+      // Session already authenticated; profile stays empty until the next fetch.
     }
+  }
+
+  Future<bool> isFirstLoginPending() async {
+    return await _storage.read(key: _firstLoginKey) == '1';
+  }
+
+  Future<void> clearFirstLoginPending() async {
+    await _storage.delete(key: _firstLoginKey);
+  }
+
+  @visibleForTesting
+  void debugSetSession(AuthState value) {
+    state = value;
   }
 
   Future<void> loginDemo() async {

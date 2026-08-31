@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     keycloak_realm: str = "confidia"
     keycloak_client_id: str = "confidia-backend"
     keycloak_client_secret: str = "confidia-backend-secret"
+    keycloak_admin_user: str = "admin"
+    keycloak_admin_password: str = "admin"
+    documents_storage_dir: str = "var/documents"
 
     paperless_url: str = "http://localhost:8001"
     paperless_token: str = ""
@@ -38,6 +41,10 @@ class Settings(BaseSettings):
             f"{self.keycloak_url}/realms/{self.keycloak_realm}"
             "/protocol/openid-connect/token"
         )
+
+    @property
+    def keycloak_admin_token_url(self) -> str:
+        return f"{self.keycloak_url}/realms/master/protocol/openid-connect/token"
 
     @property
     def keycloak_certs_url(self) -> str:

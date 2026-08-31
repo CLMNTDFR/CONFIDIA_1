@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/auth/auth_provider.dart';
+import '../../core/auth/workspace_session.dart';
 import '../../core/theme/palette.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../shared/data/mock_ecosystem.dart';
@@ -24,7 +26,12 @@ const calendarGroups = [
 ];
 
 class CalendarNotifier extends StateNotifier<List<CalendarEventModel>> {
-  CalendarNotifier(this._ref) : super(List.from(MockEcosystem.allCalendarEvents));
+  CalendarNotifier(this._ref) : super(demoSeedOrEmpty(_ref.read(authStateProvider), MockEcosystem.allCalendarEvents)) {
+    _ref.listen<AuthState>(authStateProvider, (prev, next) {
+      if (!workspaceSessionChanged(prev, next)) return;
+      state = demoSeedOrEmpty(next, MockEcosystem.allCalendarEvents);
+    });
+  }
 
   final Ref _ref;
 
@@ -170,6 +177,15 @@ class CalendarPlanningNotifier extends StateNotifier<CalendarPlanningState> {
       CalendarView.week => 'cette semaine',
       CalendarView.month => 'ce mois',
     };
+
+    if (events.isEmpty) {
+      return PlanningProposal(
+        conflicts: const [],
+        proposal:
+            'Aucun événement sur $periodLabel. Ajoutez un rendez-vous ou une échéance pour que Confid•IA propose un planning.',
+        alternatives: const ['Créer un événement', 'Importer un document lié'],
+      );
+    }
 
     if (multi) {
       final variants = [

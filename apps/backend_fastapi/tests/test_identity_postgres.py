@@ -102,3 +102,34 @@ async def test_postgres_two_users_get_separate_famille_orgs(db_session: AsyncSes
         {"sub": b_id, "email": f"{b_id}@confidia.test", "given_name": "B"}
     )
     assert user_a.organization_id != user_b.organization_id
+
+
+async def test_postgres_document_upload_list_detail(db_session: AsyncSession, tmp_path):
+    from application.dto.document_dto import DocumentCreateDTO
+    from application.services.workspace_document_service import WorkspaceDocumentService
+    from infrastructure.db.postgres_document_repository import PostgresDocumentRepository
+
+    identity = IdentityService(PostgresIdentityRepository(db_session))
+    user_id = f"pytest-{uuid4()}"
+    stored = await identity.ensure_from_token_claims(
+        {"sub": user_id, "email": f"{user_id}@confidia.test", "given_name": "Docs"}
+    )
+    assert stored.organization_id is not None
+    service = WorkspaceDocumentService(PostgresDocumentRepository(db_session, tmp_path))
+    created = await service.upload_document(
+        organization_id=stored.organization_id,
+        owner_id=stored.id,
+        filename="facture.pdf",
+        payload=b"%PDF-test",
+        mime_type="application/pdf",
+        metadata=DocumentCreateDTO(title="Facture test", category="Énergie"),
+    )
+    listed = await service.list_documents(stored.organization_id)
+    assert listed.total == 1
+    from uuid import UUID
+
+    fetched = await service.get_document(stored.organization_id, UUID(created.id))
+    assert fetched is not None
+    assert fetched.title == "Facture test"
+    stored_file = tmp_path / str(stored.organization_id) / f"{created.id}.pdf"
+    assert stored_file.read_bytes() == b"%PDF-test"

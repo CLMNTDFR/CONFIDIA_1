@@ -13,9 +13,9 @@ import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
 import '../../features/dashboard/serenity_briefing_provider.dart';
 import '../../features/day_start/day_start_provider.dart';
+import '../../features/notifications/notifications_provider.dart';
 import '../../features/onboarding/onboarding_targets.dart';
 import '../../features/profile/profile_avatar_provider.dart';
-import '../../shared/data/mock_data.dart';
 import '../../shared/utils/serenity_palette.dart';
 import 'confidia_button.dart';
 import 'confidia_chrome_material.dart';
@@ -72,7 +72,7 @@ class AppTopBar extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final auth = ref.watch(authStateProvider);
     final avatarBase64 = ref.watch(profileAvatarProvider);
-    final unread = MockData.notifications.where((n) => !n.read).length;
+    final unread = ref.watch(notificationsUnreadCountProvider);
     final path = GoRouterState.of(context).matchedLocation;
     final backRoute = confidiaParentRoute(path);
 

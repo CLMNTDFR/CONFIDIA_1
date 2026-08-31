@@ -1,24 +1,25 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_provider.dart';
-import '../../shared/data/mock_ecosystem.dart';
+import '../../core/auth/workspace_session.dart';
 import '../../shared/models/serenity_briefing_model.dart';
 import '../../shared/services/serenity_service.dart';
-import '../messaging/messaging_provider.dart';
-import '../payments/payments_provider.dart';
 import '../calendar/calendar_provider.dart';
+import '../documents/documents_provider.dart';
+import '../messaging/messaging_provider.dart';
+import '../notifications/notifications_provider.dart';
+import '../payments/payments_provider.dart';
 
-/// Briefing calculé depuis les providers locaux (source UI principale).
+/// Briefing calculé depuis les providers du compte courant (démo ou live).
 final serenityBriefingProvider = Provider<SerenityBriefing>((ref) {
-  final user = ref.watch(authStateProvider).user;
-  final firstName = user?.firstName ?? 'Amandine';
-
+  final auth = ref.watch(authStateProvider);
   return SerenityService.build(
-    firstName: firstName,
+    firstName: sessionFirstName(auth),
     emails: ref.watch(messagingProvider),
     events: ref.watch(calendarProvider),
     payments: ref.watch(paymentsProvider),
-    notifications: MockEcosystem.notifications,
-    documents: MockEcosystem.documents,
+    notifications: ref.watch(notificationsProvider),
+    documents: ref.watch(documentsProvider).items,
+    seedHistory: auth.isDemoSession,
   );
 });
