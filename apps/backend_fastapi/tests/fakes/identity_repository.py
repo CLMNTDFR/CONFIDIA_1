@@ -43,11 +43,13 @@ class InMemoryIdentityRepository(IdentityRepository):
             )
             self.rows[user_id] = _Row(stored=stored, org_id=None)
             return stored
+        keep_first = (existing.stored.first_name or "").strip()
+        keep_last = (existing.stored.last_name or "").strip()
         stored = replace(
             existing.stored,
             email=email,
-            first_name=first_name or existing.stored.first_name,
-            last_name=last_name or existing.stored.last_name,
+            first_name=existing.stored.first_name if keep_first else first_name,
+            last_name=existing.stored.last_name if keep_last else last_name,
         )
         self.rows[user_id] = _Row(stored=stored, org_id=existing.org_id)
         return stored
@@ -66,30 +68,25 @@ class InMemoryIdentityRepository(IdentityRepository):
         self.rows[user_id] = _Row(stored=stored, org_id=org_id)
         return stored
 
-    async def update_profile(
-        self,
-        user_id: str,
-        *,
-        first_name: str | None = None,
-        last_name: str | None = None,
-        phone: str | None = None,
-        locale: str | None = None,
-        timezone: str | None = None,
-        organization_name: str | None = None,
-    ) -> StoredUser:
+    async def update_profile(self, user_id: str, **fields: str | None) -> StoredUser:
         row = self.rows[user_id]
         stored = row.stored
-        stored = replace(
-            stored,
-            first_name=stored.first_name if first_name is None else first_name,
-            last_name=stored.last_name if last_name is None else last_name,
-            phone=stored.phone if phone is None else phone,
-            locale=stored.locale if locale is None else locale,
-            timezone=stored.timezone if timezone is None else timezone,
-            organization_name=(
-                stored.organization_name if organization_name is None else organization_name
-            ),
-        )
+        updates: dict = {}
+        if "first_name" in fields and fields["first_name"]:
+            updates["first_name"] = fields["first_name"]
+        if "last_name" in fields and fields["last_name"]:
+            updates["last_name"] = fields["last_name"]
+        if "phone" in fields:
+            updates["phone"] = fields["phone"] or None
+        if "locale" in fields and fields["locale"]:
+            updates["locale"] = fields["locale"]
+        if "timezone" in fields and fields["timezone"]:
+            updates["timezone"] = fields["timezone"]
+        if "avatar_url" in fields:
+            updates["avatar_url"] = fields["avatar_url"] or None
+        if "organization_name" in fields and fields["organization_name"]:
+            updates["organization_name"] = fields["organization_name"]
+        stored = replace(stored, **updates)
         self.rows[user_id] = _Row(stored=stored, org_id=row.org_id)
         return stored
 

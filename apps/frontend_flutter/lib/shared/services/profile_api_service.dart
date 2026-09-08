@@ -1,15 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart';
 
 import '../models/user_model.dart';
-import '../data/mock_access_control.dart';
 
-/// API profil - HTTP quand le backend est là, mock fiable en fallback.
+/// Profil CONFIDIA : HTTP live, sans succès fantôme.
 class ProfileApiService {
   final Dio _dio;
 
   ProfileApiService(this._dio);
 
-  /// Mock de référence (demo Jean Dupont).
   static const UserModel mockDemoUser = UserModel(
     id: 'demo',
     email: 'demo@confidia.local',
@@ -34,55 +34,45 @@ class ProfileApiService {
   );
 
   Future<UserModel> updateProfile(UserModel user) async {
-    try {
-      final response = await _dio.patch('/auth/me', data: user.toJson());
-      return UserModel.fromJson(response.data as Map<String, dynamic>);
-    } catch (_) {
-      // Mock : renvoie la charge utile comme si le serveur avait persisté.
-      return user;
-    }
+    final response = await _dio.put('/users/me', data: user.toProfileUpdateJson());
+    return UserModel.fromJson(response.data as Map<String, dynamic>);
   }
 
-  Future<bool> changePassword({
+  Future<void> changePassword({
     required String currentPassword,
     required String newPassword,
   }) async {
+    await _dio.post('/auth/change-password', data: {
+      'current_password': currentPassword,
+      'new_password': newPassword,
+    });
+  }
+
+  Future<Uint8List?> fetchAvatar() async {
     try {
-      await _dio.post('/auth/change-password', data: {
-        'current_password': currentPassword,
-        'new_password': newPassword,
-      });
-      return true;
-    } catch (_) {
-      // Mock : accepte tout mot de passe actuel non vide.
-      return currentPassword.isNotEmpty && newPassword.length >= 8;
+      final response = await _dio.get<List<int>>(
+        '/users/me/avatar',
+        options: Options(responseType: ResponseType.bytes),
+      );
+      final data = response.data;
+      if (data == null || data.isEmpty) return null;
+      return Uint8List.fromList(data);
+    } on DioException catch (error) {
+      if (error.response?.statusCode == 404) return null;
+      rethrow;
     }
   }
 
-  /// Structures auxquelles l'utilisateur appartient (mock gouvernance).
-  Future<List<ProfileMembership>> fetchMemberships() async {
-    try {
-      final response = await _dio.get('/auth/me/memberships');
-      final list = response.data as List<dynamic>;
-      return list.map((e) => ProfileMembership.fromJson(e as Map<String, dynamic>)).toList();
-    } catch (_) {
-      return mockMemberships();
-    }
+  Future<UserModel> uploadAvatar(Uint8List bytes, String filename) async {
+    final form = FormData.fromMap({
+      'file': MultipartFile.fromBytes(bytes, filename: filename),
+    });
+    final response = await _dio.post('/users/me/avatar', data: form);
+    return UserModel.fromJson(response.data as Map<String, dynamic>);
   }
 
-  static List<ProfileMembership> mockMemberships() {
-    return [
-      for (final p in MockAccessControl.builtInProfiles)
-        ProfileMembership(
-          structureId: p.id,
-          label: p.label,
-          roleLabel: p.id == 'family' ? 'Administrateur' : 'Membre',
-          iconName: switch (p.id) {
-            'family' => 'family_restroom',
-            'club' => 'sports_soccer',
-            _ => 'groups',
-          },
-        ),
-    ];
+  Future<UserModel> deleteAvatar() async {
+    final response = await _dio.delete('/users/me/avatar');
+    return UserModel.fromJson(response.data as Map<String, dynamic>);
   }
 }

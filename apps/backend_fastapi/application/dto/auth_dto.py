@@ -72,6 +72,26 @@ class RegisterRequest(BaseModel):
         return self
 
 
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+    @field_validator("current_password")
+    @classmethod
+    def current_required(cls, value: str) -> str:
+        if not value:
+            raise ValueError("Le mot de passe actuel est requis")
+        return value
+
+    @field_validator("new_password")
+    @classmethod
+    def new_password_policy(cls, value: str) -> str:
+        error = password_error(value)
+        if error:
+            raise ValueError(error)
+        return value
+
+
 class UserInfoResponse(BaseModel):
     sub: str
     email: str

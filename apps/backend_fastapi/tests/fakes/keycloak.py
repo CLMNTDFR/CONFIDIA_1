@@ -102,3 +102,13 @@ class FakeKeycloakAsyncClient:
             return FakeResponse(204, {})
 
         return FakeResponse(404, {})
+
+    async def put(self, url, json=None, headers=None, **kwargs):
+        if "/reset-password" in url:
+            user_id = url.rstrip("/").rsplit("/", 2)[-2]
+            for user in self.users.values():
+                if user["id"] == user_id:
+                    user["password"] = (json or {}).get("value", user["password"])
+                    return FakeResponse(204, {})
+            return FakeResponse(404, {})
+        return FakeResponse(404, {})

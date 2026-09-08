@@ -70,8 +70,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> _checkAuth() async {
     final token = await _storage.read(key: 'access_token');
     if (token != null) {
-      state = state.copyWith(isAuthenticated: true);
+      state = state.copyWith(isAuthenticated: true, isLoading: true);
       await _loadUser();
+      state = state.copyWith(isLoading: false);
     }
   }
 
@@ -84,8 +85,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'password': password,
       });
       await _storeTokens(response.data as Map<String, dynamic>);
-      state = state.copyWith(isAuthenticated: true, isLoading: false);
+      state = state.copyWith(isAuthenticated: true);
       await _loadUser();
+      state = state.copyWith(isLoading: false);
     } on DioException catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -117,8 +119,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
       });
       await _storeTokens(response.data as Map<String, dynamic>);
       await _storage.write(key: _firstLoginKey, value: '1');
-      state = state.copyWith(isAuthenticated: true, isLoading: false);
+      state = state.copyWith(isAuthenticated: true);
       await _loadUser();
+      state = state.copyWith(isLoading: false);
     } on DioException catch (e) {
       state = state.copyWith(
         isLoading: false,
@@ -135,18 +138,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> _loadUser() async {
     try {
       await _apiClient.ensureConfigured();
-      try {
-        final response = await _apiClient.dio.get('/users/me');
-        state = state.copyWith(user: UserModel.fromJson(response.data as Map<String, dynamic>));
-        return;
-      } catch (_) {
-        final response = await _apiClient.dio.get('/auth/me');
-        final data = response.data as Map<String, dynamic>;
-        state = state.copyWith(user: UserModel.fromJson(data));
-      }
+      final response = await _apiClient.dio.get('/users/me');
+      state = state.copyWith(user: UserModel.fromJson(response.data as Map<String, dynamic>));
     } catch (_) {
-      // Session already authenticated; profile stays empty until the next fetch.
+      // L'écran Profil propose un nouvel essai.
     }
+  }
+
+  Future<void> reloadUser() async {
+    state = state.copyWith(isLoading: true, error: null);
+    await _loadUser();
+    state = state.copyWith(isLoading: false);
   }
 
   Future<bool> isFirstLoginPending() async {
@@ -177,7 +179,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  /// Met à jour l'utilisateur local (après PATCH /auth/me ou mock).
+  /// Met à jour l'utilisateur en mémoire après un PUT profil réussi.
   void updateLocalUser(UserModel user) {
     state = state.copyWith(user: user);
   }

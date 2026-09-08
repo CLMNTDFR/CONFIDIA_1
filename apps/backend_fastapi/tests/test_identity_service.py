@@ -34,14 +34,15 @@ async def test_ensure_from_token_creates_user_and_famille_org():
 
 
 @pytest.mark.asyncio
-async def test_ensure_updates_names_from_keycloak():
+async def test_ensure_keeps_confidia_names_after_first_login():
     repo = InMemoryIdentityRepository()
     service = IdentityService(repo)
     await service.ensure_from_token_claims(CLAIMS)
+    await service.update_profile("kc-user-1", first_name="Camille")
 
-    updated = await service.ensure_from_token_claims({**CLAIMS, "given_name": "Jeanne"})
-    assert updated.first_name == "Jeanne"
-    assert updated.organization_name == "Famille"
+    again = await service.ensure_from_token_claims({**CLAIMS, "given_name": "Jeanne"})
+    assert again.first_name == "Camille"
+    assert again.organization_name == "Famille"
 
 
 def test_names_and_email_fallbacks():

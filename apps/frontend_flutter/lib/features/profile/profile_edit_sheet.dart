@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../core/auth/auth_provider.dart';
+import '../../core/api/api_error_message.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
@@ -26,7 +27,7 @@ const _timezoneOptions = <String>[
 String _titleFor(ProfileEditField? focusField) => switch (focusField) {
       null => 'Modifier le profil',
       ProfileEditField.phone => 'Téléphone',
-      ProfileEditField.organization => 'Organisation',
+      ProfileEditField.organization => 'Espace',
       ProfileEditField.locale => 'Langue',
       ProfileEditField.timezone => 'Fuseau horaire',
     };
@@ -70,7 +71,9 @@ class _ProfileAvatarOptions extends ConsumerWidget {
           mouseCursor: SystemMouseCursors.click,
           onTap: () async {
             Navigator.pop(context);
-            await ref.read(profileAvatarProvider.notifier).pickAndSave(ImageSource.gallery);
+            final error = await ref.read(profileAvatarProvider.notifier).pickAndSave(ImageSource.gallery);
+            if (!context.mounted || error == null) return;
+            showConfidiaSnackBar(context, error, type: ConfidiaSnackType.error);
           },
         ),
         ListTile(
@@ -80,7 +83,9 @@ class _ProfileAvatarOptions extends ConsumerWidget {
           mouseCursor: SystemMouseCursors.click,
           onTap: () async {
             Navigator.pop(context);
-            await ref.read(profileAvatarProvider.notifier).pickAndSave(ImageSource.camera);
+            final error = await ref.read(profileAvatarProvider.notifier).pickAndSave(ImageSource.camera);
+            if (!context.mounted || error == null) return;
+            showConfidiaSnackBar(context, error, type: ConfidiaSnackType.error);
           },
         ),
         if (hasPhoto)
@@ -91,7 +96,9 @@ class _ProfileAvatarOptions extends ConsumerWidget {
             mouseCursor: SystemMouseCursors.click,
             onTap: () async {
               Navigator.pop(context);
-              await ref.read(profileAvatarProvider.notifier).remove();
+              final error = await ref.read(profileAvatarProvider.notifier).remove();
+              if (!context.mounted || error == null) return;
+              showConfidiaSnackBar(context, error, type: ConfidiaSnackType.error);
             },
           ),
       ],
@@ -155,21 +162,17 @@ class _ProfileEditContentState extends ConsumerState<_ProfileEditContent> {
           phone: phone.isEmpty ? null : phone,
           clearPhone: phone.isEmpty,
         ),
-      ProfileEditField.organization => widget.user.copyWith(
-          organization: org.isEmpty ? null : org,
-          clearOrganization: org.isEmpty,
-        ),
+      ProfileEditField.organization => widget.user.copyWith(organization: org),
       ProfileEditField.locale => widget.user.copyWith(locale: _locale),
       ProfileEditField.timezone => widget.user.copyWith(timezone: _timezone),
       null => widget.user.copyWith(
           firstName: _firstNameCtrl.text.trim(),
           lastName: _lastNameCtrl.text.trim(),
           phone: phone.isEmpty ? null : phone,
-          organization: org.isEmpty ? null : org,
+          organization: org,
           locale: _locale,
           timezone: _timezone,
           clearPhone: phone.isEmpty,
-          clearOrganization: org.isEmpty,
         ),
     };
   }
@@ -179,18 +182,26 @@ class _ProfileEditContentState extends ConsumerState<_ProfileEditContent> {
 
     setState(() => _saving = true);
     final updated = _buildUpdatedUser();
+    final demo = ref.read(authStateProvider).isDemoSession;
+    final auth = ref.read(authStateProvider.notifier);
 
     try {
-      final api = ref.read(profileApiServiceProvider);
-      final auth = ref.read(authStateProvider.notifier);
-      final saved = await api.updateProfile(updated);
-      auth.updateLocalUser(saved);
+      if (demo) {
+        auth.updateLocalUser(updated);
+      } else {
+        final saved = await ref.read(profileApiServiceProvider).updateProfile(updated);
+        auth.updateLocalUser(saved);
+      }
       if (!mounted) return;
       showConfidiaSnackBar(context, 'Profil mis à jour', type: ConfidiaSnackType.success);
       Navigator.pop(context);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
-      showConfidiaSnackBar(context, 'Impossible d\'enregistrer le profil', type: ConfidiaSnackType.error);
+      showConfidiaSnackBar(
+        context,
+        apiErrorMessage(error, fallback: 'Impossible d\'enregistrer le profil'),
+        type: ConfidiaSnackType.error,
+      );
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -273,10 +284,13 @@ class _ProfileEditContentState extends ConsumerState<_ProfileEditContent> {
     return ConfidiaTextFormField(
       controller: _orgCtrl,
       autofocus: autofocus,
-      labelText: 'Organisation',
+      labelText: 'Espace',
+      hintText: 'Famille, club, personnel',
       prefixIcon: Icons.business_outlined,
       textInputAction: TextInputAction.done,
       onFieldSubmitted: (_) => _save(),
+      validator: (value) =>
+          (value == null || value.trim().isEmpty) ? 'Le nom de l\'espace est requis' : null,
     );
   }
 

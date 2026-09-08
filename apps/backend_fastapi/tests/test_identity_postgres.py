@@ -57,7 +57,7 @@ async def test_postgres_login_creates_user_org_calendar_once(db_session: AsyncSe
     assert first.organization_name == "Famille"
     assert first.membership_role == "owner"
     assert second.organization_id == first.organization_id
-    assert second.first_name == "Testa-2"
+    assert second.first_name == "Testa"
 
     calendars = await db_session.scalars(
         select(Calendar).where(Calendar.organization_id == first.organization_id)

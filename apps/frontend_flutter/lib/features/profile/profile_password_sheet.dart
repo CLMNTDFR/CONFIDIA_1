@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/auth/auth_provider.dart';
+import '../../core/api/api_error_message.dart';
 import '../../core/theme/spacing.dart';
+import '../../features/auth/register_validators.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_modal_sheet.dart';
 import '../../shared/widgets/confidia_snackbar.dart';
@@ -42,29 +44,33 @@ class _ProfilePasswordContentState extends ConsumerState<_ProfilePasswordContent
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate() || _saving) return;
+    if (_saving) return;
+    if (ref.read(authStateProvider).isDemoSession) {
+      showConfidiaSnackBar(
+        context,
+        'Changement de mot de passe indisponible en mode démo',
+        type: ConfidiaSnackType.warning,
+      );
+      return;
+    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _saving = true);
     try {
-      final api = ref.read(profileApiServiceProvider);
-      final ok = await api.changePassword(
-        currentPassword: _currentCtrl.text,
-        newPassword: _newCtrl.text,
+      await ref.read(profileApiServiceProvider).changePassword(
+            currentPassword: _currentCtrl.text,
+            newPassword: _newCtrl.text,
+          );
+      if (!mounted) return;
+      showConfidiaSnackBar(context, 'Mot de passe mis à jour', type: ConfidiaSnackType.success);
+      Navigator.pop(context);
+    } catch (error) {
+      if (!mounted) return;
+      showConfidiaSnackBar(
+        context,
+        apiErrorMessage(error, fallback: 'Impossible de changer le mot de passe'),
+        type: ConfidiaSnackType.error,
       );
-      if (!mounted) return;
-      if (ok) {
-        showConfidiaSnackBar(context, 'Mot de passe mis à jour', type: ConfidiaSnackType.success);
-        Navigator.pop(context);
-      } else {
-        showConfidiaSnackBar(
-          context,
-          'Mot de passe actuel incorrect ou nouveau trop court',
-          type: ConfidiaSnackType.error,
-        );
-      }
-    } catch (_) {
-      if (!mounted) return;
-      showConfidiaSnackBar(context, 'Impossible de changer le mot de passe', type: ConfidiaSnackType.error);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -101,11 +107,7 @@ class _ProfilePasswordContentState extends ConsumerState<_ProfilePasswordContent
               icon: Icon(_obscureNew ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 18),
               onPressed: () => setState(() => _obscureNew = !_obscureNew),
             ),
-            validator: (v) {
-              if (v == null || v.isEmpty) return 'Requis';
-              if (v.length < 8) return 'Au moins 8 caractères';
-              return null;
-            },
+            validator: RegisterValidators.password,
           ),
           const SizedBox(height: ConfidiaSpacing.sm),
           ConfidiaTextFormField(
@@ -119,11 +121,7 @@ class _ProfilePasswordContentState extends ConsumerState<_ProfilePasswordContent
               icon: Icon(_obscureConfirm ? Icons.visibility_outlined : Icons.visibility_off_outlined, size: 18),
               onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
             ),
-            validator: (v) {
-              if (v == null || v.isEmpty) return 'Requis';
-              if (v != _newCtrl.text) return 'Les mots de passe ne correspondent pas';
-              return null;
-            },
+            validator: (v) => RegisterValidators.passwordConfirm(v, _newCtrl.text),
           ),
           const SizedBox(height: ConfidiaSpacing.lg),
           Center(

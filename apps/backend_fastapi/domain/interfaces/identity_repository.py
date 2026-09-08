@@ -39,17 +39,7 @@ class IdentityRepository(ABC):
         ...
 
     @abstractmethod
-    async def update_profile(
-        self,
-        user_id: str,
-        *,
-        first_name: str | None = None,
-        last_name: str | None = None,
-        phone: str | None = None,
-        locale: str | None = None,
-        timezone: str | None = None,
-        organization_name: str | None = None,
-    ) -> StoredUser:
+    async def update_profile(self, user_id: str, **fields: str | None) -> StoredUser:
         ...
 
     @abstractmethod

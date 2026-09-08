@@ -83,9 +83,9 @@ class PostgresIdentityRepository(IdentityRepository):
             self._session.add(user)
         else:
             user.email = email
-            if first_name:
+            if not (user.first_name or "").strip() and first_name:
                 user.first_name = first_name
-            if last_name:
+            if not (user.last_name or "").strip() and last_name:
                 user.last_name = last_name
         await self._session.flush()
         loaded = await self._reload_user(user_id)
@@ -126,30 +126,26 @@ class PostgresIdentityRepository(IdentityRepository):
     async def update_profile(
         self,
         user_id: str,
-        *,
-        first_name: str | None = None,
-        last_name: str | None = None,
-        phone: str | None = None,
-        locale: str | None = None,
-        timezone: str | None = None,
-        organization_name: str | None = None,
+        **fields: str | None,
     ) -> StoredUser:
         user = await self._load_user(user_id)
         if user is None:
             raise ValueError(f"User {user_id} not found")
-        if first_name is not None:
-            user.first_name = first_name
-        if last_name is not None:
-            user.last_name = last_name
-        if phone is not None:
-            user.phone = phone
-        if locale is not None:
-            user.locale = locale
-        if timezone is not None:
-            user.timezone = timezone
+        if "first_name" in fields and fields["first_name"]:
+            user.first_name = fields["first_name"]
+        if "last_name" in fields and fields["last_name"]:
+            user.last_name = fields["last_name"]
+        if "phone" in fields:
+            user.phone = fields["phone"] or None
+        if "locale" in fields and fields["locale"]:
+            user.locale = fields["locale"]
+        if "timezone" in fields and fields["timezone"]:
+            user.timezone = fields["timezone"]
+        if "avatar_url" in fields:
+            user.avatar_url = fields["avatar_url"] or None
         membership = self._default_membership(user)
-        if organization_name is not None and membership is not None:
-            membership.organization.name = organization_name
+        if "organization_name" in fields and fields["organization_name"] and membership is not None:
+            membership.organization.name = fields["organization_name"]
         await self._session.flush()
         user = await self._reload_user(user_id)
         return _to_stored(user, self._default_membership(user))

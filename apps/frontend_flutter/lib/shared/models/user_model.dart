@@ -111,6 +111,16 @@ class UserModel extends Equatable {
         'timezone': timezone,
       };
 
+  /// Body de PUT /users/me. `phone: null` vide le téléphone.
+  Map<String, dynamic> toProfileUpdateJson() => {
+        'first_name': firstName,
+        'last_name': lastName,
+        'phone': phone,
+        'organization': organization,
+        'locale': locale.replaceAll('_', '-'),
+        'timezone': timezone,
+      };
+
   @override
   List<Object?> get props => [
         id,
@@ -124,36 +134,4 @@ class UserModel extends Equatable {
         locale,
         timezone,
       ];
-}
-
-/// Appartenance à une structure (profil ↔ gouvernance).
-class ProfileMembership extends Equatable {
-  final String structureId;
-  final String label;
-  final String roleLabel;
-  final String iconName;
-
-  const ProfileMembership({
-    required this.structureId,
-    required this.label,
-    required this.roleLabel,
-    this.iconName = 'groups',
-  });
-
-  factory ProfileMembership.fromJson(Map<String, dynamic> json) => ProfileMembership(
-        structureId: json['structure_id'] as String,
-        label: json['label'] as String,
-        roleLabel: json['role_label'] as String? ?? 'Membre',
-        iconName: json['icon'] as String? ?? 'groups',
-      );
-
-  Map<String, dynamic> toJson() => {
-        'structure_id': structureId,
-        'label': label,
-        'role_label': roleLabel,
-        'icon': iconName,
-      };
-
-  @override
-  List<Object?> get props => [structureId, label, roleLabel, iconName];
 }

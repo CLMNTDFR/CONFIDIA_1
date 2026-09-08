@@ -23,9 +23,35 @@ class ProfileScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authStateProvider).user;
+    final auth = ref.watch(authStateProvider);
+    final user = auth.user;
     final avatarBase64 = ref.watch(profileAvatarProvider);
-    if (user == null) return const Center(child: CircularProgressIndicator());
+    if (user == null) {
+      if (!auth.isAuthenticated || auth.isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      return Center(
+        child: Padding(
+          padding: ConfidiaInsets.page(context),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Impossible de charger le profil. Vérifiez que l\'API est démarrée.',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+              const SizedBox(height: ConfidiaSpacing.md),
+              ConfidiaGlowButton(
+                label: 'Réessayer',
+                icon: Icons.refresh_rounded,
+                onPressed: () => ref.read(authStateProvider.notifier).reloadUser(),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -58,7 +84,7 @@ class ProfileScreen extends ConsumerWidget {
               Divider(height: 1, color: ConfidiaColors.border(isDark)),
               _InfoTile(
                 icon: Icons.business_rounded,
-                title: 'Organisation',
+                title: 'Espace',
                 subtitle: user.organization?.isNotEmpty == true ? user.organization! : 'Non renseigné',
                 onTap: () => showProfileEditSheet(
                   context,

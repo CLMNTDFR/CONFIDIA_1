@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends
 
 from api.deps import get_identity_service
 from application.dto.auth_dto import (
+    ChangePasswordRequest,
     RefreshTokenRequest,
     RegisterRequest,
     TokenRequest,
@@ -53,6 +54,17 @@ async def get_current_user(
     await identity.ensure_from_token_claims(token.raw)
     service = AuthService(get_settings())
     return service.get_user_info(token.raw)
+
+
+@router.post("/change-password")
+async def change_password(
+    request: ChangePasswordRequest,
+    token: TokenPayload = Depends(decode_token),
+    settings: Settings = Depends(get_settings),
+):
+    service = AuthService(settings)
+    await service.change_password(token, request)
+    return {"message": "Mot de passe mis à jour"}
 
 
 @router.post("/logout")

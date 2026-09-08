@@ -2,9 +2,16 @@ import httpx
 from fastapi import HTTPException, status
 from jose import jwt
 
-from application.dto.auth_dto import RegisterRequest, TokenRequest, TokenResponse, UserInfoResponse
+from application.dto.auth_dto import (
+    ChangePasswordRequest,
+    RegisterRequest,
+    TokenRequest,
+    TokenResponse,
+    UserInfoResponse,
+)
 from application.services.identity_service import IdentityService
 from core.config import Settings
+from core.security import TokenPayload
 from infrastructure.keycloak.admin_client import (
     KeycloakAdminClient,
     KeycloakAdminError,
@@ -105,3 +112,32 @@ class AuthService:
             return
         claims = jwt.get_unverified_claims(access_token)
         await self._identity.ensure_from_token_claims(claims)
+
+    async def change_password(self, token: TokenPayload, request: ChangePasswordRequest) -> None:
+        username = str(token.raw.get("preferred_username") or token.email or "").strip()
+        if not username:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Compte incomplet pour changer le mot de passe",
+            )
+        async with httpx.AsyncClient() as client:
+            verify = await client.post(
+                self._settings.keycloak_token_url,
+                data={
+                    "grant_type": "password",
+                    "client_id": self._settings.keycloak_client_id,
+                    "client_secret": self._settings.keycloak_client_secret,
+                    "username": username,
+                    "password": request.current_password,
+                },
+            )
+        if verify.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Mot de passe actuel incorrect",
+            )
+        try:
+            admin = KeycloakAdminClient(self._settings)
+            await admin.reset_password(token.sub, request.new_password)
+        except KeycloakAdminError as exc:
+            raise HTTPException(status_code=exc.status_code, detail=exc.message) from exc

@@ -75,6 +75,18 @@ class KeycloakAdminClient:
             await self._assign_realm_role(client, headers, user_id, "USER")
             return user_id
 
+    async def reset_password(self, user_id: str, password: str) -> None:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+            admin_token = await self._admin_token(client)
+            response = await client.put(
+                f"{self._settings.keycloak_url}/admin/realms/{self._settings.keycloak_realm}"
+                f"/users/{user_id}/reset-password",
+                headers={"Authorization": f"Bearer {admin_token}"},
+                json={"type": "password", "value": password, "temporary": False},
+            )
+            if response.status_code not in (200, 204):
+                raise KeycloakAdminError("Impossible de changer le mot de passe pour le moment")
+
     async def _admin_token(self, client: httpx.AsyncClient) -> str:
         response = await client.post(
             self._settings.keycloak_admin_token_url,

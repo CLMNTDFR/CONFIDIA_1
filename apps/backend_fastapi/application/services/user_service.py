@@ -80,15 +80,10 @@ class UserService:
             profile = await self.get_profile(token)
             return profile.model_copy(update=data.model_dump(exclude_unset=True))
         await self._identity.ensure_from_token_claims(token.raw)
-        stored = await self._identity.update_profile(
-            token.sub,
-            first_name=data.first_name,
-            last_name=data.last_name,
-            phone=data.phone,
-            locale=data.locale,
-            timezone=data.timezone,
-            organization_name=data.organization,
-        )
+        payload = data.model_dump(exclude_unset=True)
+        if "organization" in payload:
+            payload["organization_name"] = payload.pop("organization")
+        stored = await self._identity.update_profile(token.sub, **payload)
         return self._to_dto(stored, token)
 
     async def list_users(self) -> UserListResponse:

@@ -113,6 +113,12 @@ void main() {
     expect(out['organization'], 'Particulier');
     expect(out['locale'], 'fr-FR');
     expect(out['timezone'], 'Europe/Paris');
+
+    final update = parsed.copyWith(clearPhone: true).toProfileUpdateJson();
+    expect(update.containsKey('id'), isFalse);
+    expect(update['phone'], isNull);
+    expect(update['first_name'], 'Jean');
+    expect(update['locale'], 'fr-FR');
   });
 
   test('fromJson defaults locale and timezone', () {
@@ -124,18 +130,5 @@ void main() {
     });
     expect(parsed.locale, 'fr_FR');
     expect(parsed.timezone, 'Europe/Paris');
-  });
-
-  test('ProfileMembership fromJson', () {
-    final m = ProfileMembership.fromJson({
-      'structure_id': 'family',
-      'label': 'Famille',
-      'role_label': 'Administrateur',
-      'icon': 'family_restroom',
-    });
-    expect(m.structureId, 'family');
-    expect(m.label, 'Famille');
-    expect(m.roleLabel, 'Administrateur');
-    expect(m.iconName, 'family_restroom');
   });
 }

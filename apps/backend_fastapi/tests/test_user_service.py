@@ -52,6 +52,18 @@ async def test_update_profile_persists_phone_and_org_name():
     assert again.organization == "Maison"
 
 
+async def test_update_profile_can_clear_phone():
+    service = UserService(IdentityService(InMemoryIdentityRepository()))
+    token = _token()
+    await service.get_profile(token)
+    await service.update_profile(token, UserProfileUpdateDTO(phone="+33 6 11 22 33 44"))
+    cleared = await service.update_profile(
+        token, UserProfileUpdateDTO.model_validate({"phone": None})
+    )
+    assert cleared.phone is None
+    assert (await service.get_profile(token)).phone is None
+
+
 async def test_list_users_reads_identity_repo():
     service = UserService(IdentityService(InMemoryIdentityRepository()))
     await service.get_profile(_token())
