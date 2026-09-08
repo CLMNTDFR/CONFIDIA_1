@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/api/api_error_message.dart';
 import '../../core/auth/auth_provider.dart';
 import '../../core/auth/workspace_session.dart';
 import '../../core/theme/palette.dart';
@@ -25,22 +26,88 @@ const calendarGroups = [
   CalendarGroupInfo(id: 'club', label: 'Club'),
 ];
 
-class CalendarNotifier extends StateNotifier<List<CalendarEventModel>> {
-  CalendarNotifier(this._ref) : super(demoSeedOrEmpty(_ref.read(authStateProvider), MockEcosystem.allCalendarEvents)) {
+class CalendarState {
+  final List<CalendarEventModel> items;
+  final bool loading;
+  final String? error;
+
+  const CalendarState({
+    this.items = const [],
+    this.loading = false,
+    this.error,
+  });
+
+  CalendarState copyWith({
+    List<CalendarEventModel>? items,
+    bool? loading,
+    String? error,
+  }) {
+    return CalendarState(
+      items: items ?? this.items,
+      loading: loading ?? this.loading,
+      error: error,
+    );
+  }
+}
+
+class CalendarNotifier extends StateNotifier<CalendarState> {
+  CalendarNotifier(this._ref) : super(const CalendarState()) {
+    _bind(_ref.read(authStateProvider));
     _ref.listen<AuthState>(authStateProvider, (prev, next) {
       if (!workspaceSessionChanged(prev, next)) return;
-      state = demoSeedOrEmpty(next, MockEcosystem.allCalendarEvents);
+      _bind(next);
     });
   }
 
   final Ref _ref;
+  int _loadGen = 0;
+
+  bool get _demo => _ref.read(authStateProvider).isDemoSession;
 
   /// Use [read] so palette changes do not rebuild the whole calendar event list.
   ConfidiaPalette get _palette => ConfidiaPalette.byId(_ref.read(colorPaletteProvider));
 
+  void _bind(AuthState auth) {
+    if (!auth.isAuthenticated) {
+      state = const CalendarState();
+      return;
+    }
+    if (auth.isDemoSession) {
+      state = CalendarState(items: List.of(MockEcosystem.allCalendarEvents));
+      return;
+    }
+    refresh();
+  }
+
+  Future<void> refresh() async {
+    if (_demo) {
+      state = CalendarState(items: List.of(MockEcosystem.allCalendarEvents));
+      return;
+    }
+    if (!_ref.read(authStateProvider).isAuthenticated) {
+      state = const CalendarState();
+      return;
+    }
+    final gen = ++_loadGen;
+    state = state.copyWith(loading: true, error: null);
+    try {
+      await _ref.read(apiClientProvider).ensureConfigured();
+      final items = await _ref.read(calendarApiServiceProvider).listEvents();
+      if (gen != _loadGen) return;
+      state = CalendarState(items: items);
+    } catch (e) {
+      if (gen != _loadGen) return;
+      state = state.copyWith(
+        loading: false,
+        error: apiErrorMessage(e, fallback: 'Impossible de charger le calendrier'),
+      );
+    }
+  }
+
   List<CalendarEventModel> eventsForDay(DateTime day, {Set<String>? groups}) {
-    return _filtered(groups: groups).where((e) =>
-        e.start.year == day.year && e.start.month == day.month && e.start.day == day.day).toList()
+    return _filtered(groups: groups)
+        .where((e) => e.start.year == day.year && e.start.month == day.month && e.start.day == day.day)
+        .toList()
       ..sort((a, b) => a.start.compareTo(b.start));
   }
 
@@ -51,17 +118,74 @@ class CalendarNotifier extends StateNotifier<List<CalendarEventModel>> {
   }
 
   List<CalendarEventModel> _filtered({Set<String>? groups}) {
-    if (groups == null || groups.isEmpty) return List.from(state);
-    return state.where((e) => groups.contains(e.calendarGroup)).toList();
+    if (groups == null || groups.isEmpty) return List.from(state.items);
+    return state.items.where((e) => groups.contains(e.calendarGroup)).toList();
   }
 
-  void add(CalendarEventModel event) => state = [...state, event];
-
-  void update(CalendarEventModel event) {
-    state = [for (final e in state) if (e.id == event.id) event else e];
+  Future<void> add(CalendarEventModel event) async {
+    if (_demo) {
+      state = CalendarState(items: [...state.items, event]);
+      return;
+    }
+    _loadGen++;
+    try {
+      await _ref.read(apiClientProvider).ensureConfigured();
+      final saved = await _ref.read(calendarApiServiceProvider).create(event);
+      _revealFamilyAgenda();
+      state = CalendarState(items: [...state.items, saved]);
+    } catch (e) {
+      state = state.copyWith(
+        error: apiErrorMessage(e, fallback: 'Impossible de créer l\'événement'),
+      );
+      rethrow;
+    }
   }
 
-  void delete(String id) => state = state.where((e) => e.id != id).toList();
+  Future<void> update(CalendarEventModel event) async {
+    if (_demo) {
+      state = CalendarState(
+        items: [for (final e in state.items) if (e.id == event.id) event else e],
+      );
+      return;
+    }
+    _loadGen++;
+    try {
+      await _ref.read(apiClientProvider).ensureConfigured();
+      final saved = await _ref.read(calendarApiServiceProvider).update(event);
+      state = CalendarState(
+        items: [for (final e in state.items) if (e.id == saved.id) saved else e],
+      );
+    } catch (e) {
+      state = state.copyWith(
+        error: apiErrorMessage(e, fallback: 'Impossible d\'enregistrer l\'événement'),
+      );
+      rethrow;
+    }
+  }
+
+  Future<void> delete(String id) async {
+    if (_demo) {
+      state = CalendarState(items: state.items.where((e) => e.id != id).toList());
+      return;
+    }
+    _loadGen++;
+    try {
+      await _ref.read(apiClientProvider).ensureConfigured();
+      await _ref.read(calendarApiServiceProvider).delete(id);
+      state = CalendarState(items: state.items.where((e) => e.id != id).toList());
+    } catch (e) {
+      state = state.copyWith(
+        error: apiErrorMessage(e, fallback: 'Impossible de supprimer l\'événement'),
+      );
+      rethrow;
+    }
+  }
+
+  void _revealFamilyAgenda() {
+    final active = _ref.read(activeCalendarGroupsProvider);
+    if (active.contains('family')) return;
+    _ref.read(activeCalendarGroupsProvider.notifier).state = {...active, 'family'};
+  }
 
   String nextId() => 'evt-${DateTime.now().millisecondsSinceEpoch}';
 
@@ -93,7 +217,7 @@ class CalendarNotifier extends StateNotifier<List<CalendarEventModel>> {
   }
 }
 
-final calendarProvider = StateNotifierProvider<CalendarNotifier, List<CalendarEventModel>>((ref) {
+final calendarProvider = StateNotifierProvider<CalendarNotifier, CalendarState>((ref) {
   return CalendarNotifier(ref);
 });
 

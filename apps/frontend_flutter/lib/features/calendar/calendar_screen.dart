@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
-import '../../core/auth/auth_provider.dart';
+import '../../core/api/api_error_message.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
@@ -67,6 +67,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Widget build(BuildContext context) {
     final isWide = MediaQuery.of(context).size.width >= 900;
     final filter = ref.watch(calendarFilterProvider);
+    final calendar = ref.watch(calendarProvider);
     final events = _visibleEvents(ref);
     final selectedEvents = _eventsForDay(_selectedDay ?? DateTime.now(), events);
     final planning = ref.watch(calendarPlanningProvider);
@@ -139,6 +140,20 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         )
                       : const SizedBox.shrink(),
                 ),
+                  if (calendar.loading)
+                    const Padding(
+                      padding: EdgeInsets.only(top: ConfidiaSpacing.sm),
+                      child: LinearProgressIndicator(minHeight: 2),
+                    ),
+                  if (calendar.error != null) ...[
+                    const SizedBox(height: ConfidiaSpacing.sm),
+                    Text(
+                      calendar.error!,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: ConfidiaColors.error,
+                          ),
+                    ),
+                  ],
                   const SizedBox(height: ConfidiaSpacing.md),
                   if (isWide)
                     Row(
@@ -168,7 +183,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       const SizedBox(height: ConfidiaSpacing.md),
                       _EventList(
                         events: selectedEvents,
-                        title: _view == CalendarView.week ? 'Événements de la semaine' : 'Événements',
+                        title: 'Événements du jour',
                         onEdit: (e) => showEventDetailSheet(context, event: e),
                         onDelete: (e) => _confirmDelete(e),
                       ),
@@ -224,7 +239,18 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       icon: Icons.delete_outline_rounded,
       destructive: true,
     );
-    if (ok == true) ref.read(calendarProvider.notifier).delete(event.id);
+    if (ok == true) {
+      try {
+        await ref.read(calendarProvider.notifier).delete(event.id);
+      } catch (error) {
+        if (!mounted) return;
+        showConfidiaSnackBar(
+          context,
+          apiErrorMessage(error, fallback: 'Impossible de supprimer l\'événement'),
+          type: ConfidiaSnackType.error,
+        );
+      }
+    }
   }
 
   Widget _buildCalendarWidget() {
@@ -702,7 +728,9 @@ class _AgendaSelector extends ConsumerWidget {
                             ]
                           : null,
                     ),
-                    child: Row(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
@@ -722,7 +750,12 @@ class _AgendaSelector extends ConsumerWidget {
                                     : AppColors.textSecondary(isDark),
                               ),
                         ),
+                        if (g.id == 'club') ...[
+                          const SizedBox(width: 6),
+                          const ConfidiaDemoBadge(compact: true),
+                        ],
                       ],
+                    ),
                     ),
                   ),
                 ),
@@ -735,13 +768,12 @@ class _AgendaSelector extends ConsumerWidget {
   }
 }
 
-class _ConnectedSourcesRow extends ConsumerWidget {
+class _ConnectedSourcesRow extends StatelessWidget {
   const _ConnectedSourcesRow();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final demo = ref.watch(authStateProvider).isDemoSession;
-    final sources = demo ? MockEcosystem.connectedCalendars : const <(CalendarSource, bool, int)>[];
+  Widget build(BuildContext context) {
+    final sources = MockEcosystem.connectedCalendars;
 
     if (sources.isEmpty) {
       return Text(
@@ -803,21 +835,27 @@ class _ConnectedSourceTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: AppRadius.smAll,
-              color: color.withValues(alpha: isDark ? 0.16 : 0.1),
-            ),
-            child: BrandIcon(
-              assetPath: source.logoAsset,
-              fallbackIcon: Icons.calendar_month_rounded,
-              fallbackColor: color,
-              size: 14,
-              borderRadius: 4,
-            ),
+          Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  borderRadius: AppRadius.smAll,
+                  color: color.withValues(alpha: isDark ? 0.16 : 0.1),
+                ),
+                child: BrandIcon(
+                  assetPath: source.logoAsset,
+                  fallbackIcon: Icons.calendar_month_rounded,
+                  fallbackColor: color,
+                  size: 14,
+                  borderRadius: 4,
+                ),
+              ),
+              const Spacer(),
+              const ConfidiaDemoBadge(compact: true),
+            ],
           ),
           const SizedBox(height: 10),
           Text(

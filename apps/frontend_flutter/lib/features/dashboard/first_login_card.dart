@@ -5,6 +5,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/confidia_button.dart';
 import '../../shared/widgets/glass_card.dart';
+import '../documents/document_add_sheet.dart';
 import '../onboarding/guided_tour_provider.dart';
 
 final firstLoginBannerDismissedProvider = StateProvider<bool>((ref) => false);
@@ -39,17 +40,30 @@ class FirstLoginWelcomeCard extends ConsumerWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Aucun document ni rendez-vous pour l\'instant. Lancez la visite guidée, comme en mode découverte.',
+            'Aucun document ni rendez-vous pour l\'instant. Importez une pièce, ou lancez la visite guidée comme en mode découverte.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: ConfidiaColors.textSecondary(isDark),
                   height: 1.45,
                 ),
           ),
           const SizedBox(height: ConfidiaSpacing.md),
-          ConfidiaButton(
-            label: 'Lancer la visite guidée',
-            compact: true,
-            onPressed: () => ref.read(guidedTourProvider.notifier).startNow(),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              ConfidiaButton(
+                label: 'Importer un document',
+                compact: true,
+                icon: Icons.upload_file_rounded,
+                onPressed: () => showDocumentAddSheet(context),
+              ),
+              ConfidiaButton(
+                label: 'Lancer la visite guidée',
+                compact: true,
+                outlined: true,
+                onPressed: () => ref.read(guidedTourProvider.notifier).startNow(),
+              ),
+            ],
           ),
         ],
       ),

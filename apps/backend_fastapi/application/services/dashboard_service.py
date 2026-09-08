@@ -1,20 +1,11 @@
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 
-from application.dto.calendar_dto import CalendarEventDTO, EventType
+from application.dto.calendar_dto import CalendarEventDTO, EventType, WeekCalendarScope
 from application.dto.dashboard_dto import (
-    WeekCalendarScope,
     WeekDayOverviewDTO,
     WeekOverviewResponse,
     WorkloadLevel,
 )
-from application.services.calendar_service import CalendarService
-
-
-_SCOPE_LABELS = {
-    WeekCalendarScope.PERSONAL: "Personnel",
-    WeekCalendarScope.FAMILY: "Familial",
-    WeekCalendarScope.PROFESSIONAL: "Professionnel",
-}
 
 _DAY_LABELS = ["LUNDI", "MARDI", "MERCREDI", "JEUDI", "VENDREDI", "SAMEDI", "DIMANCHE"]
 _MONTH_LABELS = [
@@ -34,13 +25,11 @@ _MONTH_LABELS = [
 
 
 class DashboardService:
-    """Tableau de bord  -  synthèse hebdomadaire calculée depuis le calendrier."""
-
-    def __init__(self, calendar_service: CalendarService | None = None):
-        self._calendar = calendar_service or CalendarService()
+    """Synthèse hebdomadaire calculée depuis les événements de l'espace."""
 
     async def get_week_overview(
         self,
+        events: list[CalendarEventDTO],
         scopes: list[WeekCalendarScope] | None = None,
         reference: date | None = None,
     ) -> WeekOverviewResponse:
@@ -48,20 +37,16 @@ class DashboardService:
         today = reference or date.today()
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
-
-        events = self._calendar._events  # mock interne  -  prêt pour agrégation CalDAV
         week_events = [
-            e
-            for e in events
-            if week_start <= e.start.date() <= week_end and self._event_matches_scope(e, active_scopes)
+            event
+            for event in events
+            if week_start <= event.start.date() <= week_end
+            and self._matches_scope(event, active_scopes)
         ]
-
-        days: list[WeekDayOverviewDTO] = []
-        for offset in range(7):
-            day = week_start + timedelta(days=offset)
-            day_events = [e for e in week_events if e.start.date() == day]
-            days.append(self._build_day(day, day_events))
-
+        days = [
+            self._build_day(week_start + timedelta(days=offset), week_events)
+            for offset in range(7)
+        ]
         return WeekOverviewResponse(
             week_start=week_start,
             week_end=week_end,
@@ -69,21 +54,25 @@ class DashboardService:
             active_scopes=active_scopes,
         )
 
-    def _event_matches_scope(self, event: CalendarEventDTO, scopes: list[WeekCalendarScope]) -> bool:
+    def _matches_scope(
+        self, event: CalendarEventDTO, scopes: list[WeekCalendarScope]
+    ) -> bool:
         return event.calendar_scope in scopes
 
-    def _build_day(self, day: date, events: list[CalendarEventDTO]) -> WeekDayOverviewDTO:
-        meetings = sum(1 for e in events if e.event_type == EventType.MEETING)
-        deadlines = sum(1 for e in events if e.event_type == EventType.DEADLINE)
+    def _build_day(
+        self, day: date, week_events: list[CalendarEventDTO]
+    ) -> WeekDayOverviewDTO:
+        day_events = [e for e in week_events if e.start.date() == day]
+        meetings = sum(1 for e in day_events if e.event_type == EventType.MEETING)
+        deadlines = sum(1 for e in day_events if e.event_type == EventType.DEADLINE)
         tasks = sum(
             1
-            for e in events
+            for e in day_events
             if e.event_type in (EventType.REMINDER, EventType.APPOINTMENT)
         )
-        total = len(events)
+        total = len(day_events)
         score = meetings * 2 + deadlines * 2 + tasks
         level, load_score = self._resolve_workload(score, total)
-
         return WeekDayOverviewDTO(
             date=day,
             day_label=_DAY_LABELS[day.weekday()],

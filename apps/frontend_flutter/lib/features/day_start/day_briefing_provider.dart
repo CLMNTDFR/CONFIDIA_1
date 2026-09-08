@@ -15,7 +15,7 @@ final dayBriefingProvider = Provider<DayBriefing>((ref) {
   return DayBriefingService.build(
     firstName: sessionFirstName(ref.watch(authStateProvider)),
     emails: ref.watch(messagingProvider),
-    events: ref.watch(calendarProvider),
+    events: ref.watch(calendarProvider).items,
     payments: ref.watch(paymentsProvider),
     notifications: ref.watch(notificationsProvider),
     documents: ref.watch(documentsProvider).items,

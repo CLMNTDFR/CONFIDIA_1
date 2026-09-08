@@ -2,15 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/api/api_error_message.dart';
 import '../../core/theme/colors.dart';
-import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
+import '../../core/theme/theme_context.dart';
 import '../../shared/models/calendar_event_model.dart';
 import '../../shared/widgets/confidia_confirm_dialog.dart';
 import '../../shared/widgets/confidia_datetime_picker.dart';
 import '../../shared/widgets/confidia_glow_button.dart';
 import '../../shared/widgets/confidia_glow_chip.dart';
 import '../../shared/widgets/confidia_modal_sheet.dart';
+import '../../shared/widgets/confidia_snackbar.dart';
 import '../../shared/widgets/confidia_switch.dart';
 import '../../shared/widgets/confidia_text_field.dart';
 import 'calendar_provider.dart';
@@ -140,6 +142,7 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
   late DateTime _start;
   late DateTime _end;
   late bool _allDay;
+  bool _saving = false;
 
   bool get _isEdit => widget.event != null;
 
@@ -192,9 +195,12 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
     });
   }
 
-  void _save() {
-    if (!_formKey.currentState!.validate()) return;
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate() || _saving) return;
     final notifier = ref.read(calendarProvider.notifier);
+    final groups = ref.read(activeCalendarGroupsProvider);
+    final group = widget.event?.calendarGroup ??
+        (groups.contains('family') ? 'family' : (groups.isEmpty ? 'family' : groups.first));
     final model = notifier.buildEvent(
       id: widget.event?.id,
       title: _titleCtrl.text.trim(),
@@ -204,14 +210,27 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
       end: _end,
       allDay: _allDay,
       eventType: _type,
+      calendarGroup: group,
     );
 
-    if (_isEdit) {
-      notifier.update(model);
-    } else {
-      notifier.add(model);
+    setState(() => _saving = true);
+    try {
+      if (_isEdit) {
+        await notifier.update(model);
+      } else {
+        await notifier.add(model);
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (error) {
+      if (!mounted) return;
+      showConfidiaSnackBar(
+        context,
+        apiErrorMessage(error, fallback: 'Impossible d\'enregistrer l\'événement'),
+        type: ConfidiaSnackType.error,
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
-    Navigator.pop(context);
   }
 
   Future<void> _confirmDelete() async {
@@ -223,9 +242,20 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
       icon: Icons.delete_outline_rounded,
       destructive: true,
     );
-    if (ok == true && mounted) {
-      ref.read(calendarProvider.notifier).delete(widget.event!.id);
-      Navigator.pop(context);
+    if (ok != true || !mounted) return;
+    setState(() => _saving = true);
+    try {
+      await ref.read(calendarProvider.notifier).delete(widget.event!.id);
+      if (mounted) Navigator.pop(context);
+    } catch (error) {
+      if (!mounted) return;
+      showConfidiaSnackBar(
+        context,
+        apiErrorMessage(error, fallback: 'Impossible de supprimer l\'événement'),
+        type: ConfidiaSnackType.error,
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -304,9 +334,11 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
           const SizedBox(height: ConfidiaSpacing.lg),
           Center(
             child: ConfidiaGlowButton(
-              label: _isEdit ? 'Enregistrer' : 'Créer l\'événement',
+              label: _saving
+                  ? 'Enregistrement...'
+                  : (_isEdit ? 'Enregistrer' : 'Créer l\'événement'),
               icon: Icons.check_rounded,
-              onPressed: _save,
+              onPressed: _saving ? null : _save,
             ),
           ),
           if (_isEdit) ...[
@@ -316,7 +348,7 @@ class _EventFormContentState extends ConsumerState<_EventFormContent> {
                 label: 'Supprimer',
                 icon: Icons.delete_outline_rounded,
                 primary: false,
-                onPressed: _confirmDelete,
+                onPressed: _saving ? null : _confirmDelete,
               ),
             ),
           ],

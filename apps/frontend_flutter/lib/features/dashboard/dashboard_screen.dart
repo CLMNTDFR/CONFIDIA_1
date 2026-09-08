@@ -183,7 +183,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     if (!auth.isAuthenticated || auth.isDemoSession) return false;
     if (ref.watch(guidedTourProvider.select((s) => s.active))) return false;
     if (ref.watch(firstLoginBannerDismissedProvider)) return false;
-    return true;
+    final docs = ref.watch(documentsProvider);
+    final events = ref.watch(calendarProvider);
+    if (docs.loading || events.loading) return false;
+    return docs.items.isEmpty && events.items.isEmpty;
   }
 
   Widget _buildWidget(
@@ -1070,7 +1073,7 @@ class _DeadlinesWidget extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final events = ref.watch(calendarProvider);
+    final events = ref.watch(calendarProvider).items;
     final sorted = List.from(events)..sort((a, b) => a.start.compareTo(b.start));
 
     return GlassCard(

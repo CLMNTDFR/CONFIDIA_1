@@ -14,7 +14,7 @@ final weekOverviewProvider = Provider<WeekOverview>((ref) {
   final scopes = ref.watch(weekOverviewScopesProvider);
   final demo = ref.watch(authStateProvider).isDemoSession;
   return WeekOverviewService.compute(
-    events: demo ? MockWeekOverviewEvents.events : ref.watch(calendarProvider),
+    events: demo ? MockWeekOverviewEvents.events : ref.watch(calendarProvider).items,
     scopes: scopes,
   );
 });

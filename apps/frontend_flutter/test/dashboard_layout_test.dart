@@ -58,6 +58,24 @@ void main() {
     expect(notifier.state.visible.first, DashboardWidgetType.serenityBriefing);
   });
 
+  test('out-of-MVP widgets stay visible with demo flag', () {
+    expect(
+      notifier.state.visible,
+      containsAll([
+        DashboardWidgetType.expensesTrend,
+        DashboardWidgetType.paymentsOverview,
+        DashboardWidgetType.hubActivity,
+        DashboardWidgetType.pendingPayments,
+        DashboardWidgetType.connectedAccounts,
+      ]),
+    );
+    expect(DashboardWidgetType.expensesTrend.isDemo, isTrue);
+    expect(DashboardWidgetType.paymentsOverview.isDemo, isTrue);
+    expect(DashboardWidgetType.hubActivity.isDemo, isTrue);
+    expect(DashboardWidgetType.pendingPayments.isDemo, isTrue);
+    expect(DashboardWidgetType.connectedAccounts.isDemo, isTrue);
+  });
+
   test('serenityBriefing label is Indice de sérénité', () {
     expect(DashboardWidgetType.serenityBriefing.label, 'Indice de sérénité');
   });

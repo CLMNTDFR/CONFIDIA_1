@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 
 class EventType(str, Enum):
@@ -27,8 +27,9 @@ class CalendarEventDTO(BaseModel):
     location: str | None = None
     all_day: bool = False
     color: str | None = None
-    document_id: int | None = None
-    calendar_scope: WeekCalendarScope = WeekCalendarScope.PERSONAL
+    document_id: str | None = None
+    calendar_scope: WeekCalendarScope = WeekCalendarScope.FAMILY
+    source: str = "confidia"
 
 
 class CalendarEventCreateDTO(BaseModel):
@@ -39,7 +40,9 @@ class CalendarEventCreateDTO(BaseModel):
     event_type: EventType = EventType.REMINDER
     location: str | None = None
     all_day: bool = False
-    document_id: int | None = None
+    color: str | None = None
+    document_id: str | None = None
+    calendar_scope: WeekCalendarScope = WeekCalendarScope.FAMILY
 
 
 class CalendarEventUpdateDTO(BaseModel):
@@ -50,7 +53,9 @@ class CalendarEventUpdateDTO(BaseModel):
     event_type: EventType | None = None
     location: str | None = None
     all_day: bool | None = None
-    document_id: int | None = None
+    color: str | None = None
+    document_id: str | None = None
+    calendar_scope: WeekCalendarScope | None = None
 
 
 class CalendarEventListResponse(BaseModel):

@@ -62,20 +62,27 @@ class CalendarEventModel extends Equatable {
   });
 
   factory CalendarEventModel.fromJson(Map<String, dynamic> json) {
+    final scopeName = json['calendar_scope'] as String?;
+    final weekScope = scopeName == null
+        ? null
+        : WeekCalendarScope.values.firstWhere(
+            (s) => s.name == scopeName,
+            orElse: () => WeekCalendarScope.family,
+          );
     return CalendarEventModel(
       id: json['id'] as String,
       title: json['title'] as String,
       description: json['description'] as String?,
-      start: DateTime.parse(json['start'] as String),
-      end: DateTime.parse(json['end'] as String),
+      start: DateTime.parse(json['start'] as String).toLocal(),
+      end: DateTime.parse(json['end'] as String).toLocal(),
       eventType: EventType.values.firstWhere(
         (e) => e.name == json['event_type'],
         orElse: () => EventType.reminder,
       ),
       location: json['location'] as String?,
       allDay: json['all_day'] as bool? ?? false,
-      color: json['color'] != null ? Color(int.parse(json['color'].toString().replaceFirst('#', '0xFF'))) : null,
-      documentId: json['document_id'] as int?,
+      color: _parseColor(json['color']),
+      documentId: _parseDocumentId(json['document_id']),
       source: CalendarSource.values.firstWhere(
         (s) => s.name == json['source'],
         orElse: () => CalendarSource.confidia,
@@ -83,9 +90,7 @@ class CalendarEventModel extends Equatable {
       paymentId: json['payment_id'] as String?,
       emailId: json['email_id'] as String?,
       calendarGroup: json['calendar_group'] as String? ?? 'family',
-      weekScope: json['calendar_scope'] != null
-          ? WeekCalendarScope.values.firstWhere((s) => s.name == json['calendar_scope'])
-          : null,
+      weekScope: weekScope,
     );
   }
 
@@ -145,4 +150,21 @@ class CalendarEventModel extends Equatable {
 
   @override
   List<Object?> get props => [id, title, start, end, eventType, calendarGroup];
+}
+
+int? _parseDocumentId(dynamic raw) {
+  if (raw is int) return raw;
+  if (raw is String) return int.tryParse(raw);
+  return null;
+}
+
+Color? _parseColor(dynamic raw) {
+  if (raw is! String || raw.isEmpty) return null;
+  final hex = raw.replaceFirst('#', '');
+  final padded = hex.length == 6 ? 'FF$hex' : hex;
+  try {
+    return Color(int.parse(padded, radix: 16));
+  } catch (_) {
+    return null;
+  }
 }

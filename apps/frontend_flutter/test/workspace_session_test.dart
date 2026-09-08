@@ -14,18 +14,18 @@ void main() {
     final container = sessionContainer(demoAuthNotifier());
     addTearDown(container.dispose);
 
-    expect(container.read(calendarProvider), isNotEmpty);
+    expect(container.read(calendarProvider).items, isNotEmpty);
     expect(container.read(paymentsProvider), isNotEmpty);
     expect(container.read(messagingProvider), isNotEmpty);
     expect(container.read(notificationsProvider), isNotEmpty);
-    expect(container.read(calendarProvider).length, MockEcosystem.allCalendarEvents.length);
+    expect(container.read(calendarProvider).items.length, MockEcosystem.allCalendarEvents.length);
   });
 
   test('live session starts with an empty workspace', () {
     final container = sessionContainer(liveAuthNotifier());
     addTearDown(container.dispose);
 
-    expect(container.read(calendarProvider), isEmpty);
+    expect(container.read(calendarProvider).items, isEmpty);
     expect(container.read(paymentsProvider), isEmpty);
     expect(container.read(messagingProvider), isEmpty);
     expect(container.read(notificationsProvider), isEmpty);

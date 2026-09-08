@@ -16,7 +16,7 @@ final serenityBriefingProvider = Provider<SerenityBriefing>((ref) {
   return SerenityService.build(
     firstName: sessionFirstName(auth),
     emails: ref.watch(messagingProvider),
-    events: ref.watch(calendarProvider),
+    events: ref.watch(calendarProvider).items,
     payments: ref.watch(paymentsProvider),
     notifications: ref.watch(notificationsProvider),
     documents: ref.watch(documentsProvider).items,

@@ -7,12 +7,17 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../api/api_client.dart';
 import '../api/api_error_message.dart';
 import '../../shared/models/user_model.dart';
+import '../../shared/services/calendar_api_service.dart';
 import '../../shared/services/profile_api_service.dart';
 
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
 
 final profileApiServiceProvider = Provider<ProfileApiService>((ref) {
   return ProfileApiService(ref.read(apiClientProvider).dio);
+});
+
+final calendarApiServiceProvider = Provider<CalendarApiService>((ref) {
+  return CalendarApiService(ref.read(apiClientProvider).dio);
 });
 
 final authStateProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {

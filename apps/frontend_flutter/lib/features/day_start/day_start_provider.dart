@@ -56,7 +56,7 @@ class DayStartNotifier extends StateNotifier<DayStartSession> {
     return DayBriefingService.build(
       firstName: sessionFirstName(_ref.read(authStateProvider)),
       emails: _ref.read(messagingProvider),
-      events: _ref.read(calendarProvider),
+      events: _ref.read(calendarProvider).items,
       payments: _ref.read(paymentsProvider),
       notifications: _ref.read(notificationsProvider),
       documents: _ref.read(documentsProvider).items,
