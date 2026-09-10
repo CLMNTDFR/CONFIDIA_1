@@ -1,4 +1,5 @@
 import 'package:confidia/features/calendar/calendar_provider.dart';
+import 'package:confidia/features/documents/documents_provider.dart';
 import 'package:confidia/features/messaging/messaging_provider.dart';
 import 'package:confidia/features/notifications/notifications_provider.dart';
 import 'package:confidia/features/payments/payments_provider.dart';
@@ -10,11 +11,15 @@ import 'helpers/session_containers.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('demo session keeps mock calendar, payments, mail and alerts', () {
+  test('demo session keeps mock calendar, documents, payments, mail and alerts', () {
     final container = sessionContainer(demoAuthNotifier());
     addTearDown(container.dispose);
 
     expect(container.read(calendarProvider).items, isNotEmpty);
+    expect(
+      container.read(documentsProvider).items.length,
+      MockEcosystem.documents.length,
+    );
     expect(container.read(paymentsProvider), isNotEmpty);
     expect(container.read(messagingProvider), isNotEmpty);
     expect(container.read(notificationsProvider), isNotEmpty);
@@ -26,6 +31,7 @@ void main() {
     addTearDown(container.dispose);
 
     expect(container.read(calendarProvider).items, isEmpty);
+    expect(container.read(documentsProvider).items, isEmpty);
     expect(container.read(paymentsProvider), isEmpty);
     expect(container.read(messagingProvider), isEmpty);
     expect(container.read(notificationsProvider), isEmpty);

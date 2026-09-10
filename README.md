@@ -221,10 +221,10 @@ cd ~/CONFIDIA_1
 ./scripts/test.sh
 ```
 
-Cela enchaîne :
+Cela enchaîne, depuis la racine du repo :
 
-1. **pytest** (API) : schéma SQL MVP, login Keycloak mocké + écriture identité, profil, et tests Postgres si la base tourne
-2. **flutter test** : y compris le périmètre « Démo » / hors-MVP
+1. **pytest** dans `apps/backend_fastapi` : health, register/login, profil, documents (upload / liste / détail / fichier), dashboard, calendrier, isolation entre foyers, JWT, et le parcours de démo Holberton (`tests/test_demo_path.py`). Les tests marqués `integration` s’exécutent si PostgreSQL répond (sinon ils sont skippés).
+2. **flutter test** dans `apps/frontend_flutter` : login live mocké, session démo vs live, validateurs d'inscription, périmètre Démo.
 
 À la main :
 
@@ -232,12 +232,24 @@ Cela enchaîne :
 cd ~/CONFIDIA_1/apps/backend_fastapi
 source .venv/bin/activate
 pytest -q
+```
 
+Frontend (pas besoin de Postgres) :
+
+```bash
 cd ~/CONFIDIA_1/apps/frontend_flutter
 flutter test
 ```
 
-Sur GitHub, la CI fait la même chose et applique les migrations Alembic sur un Postgres de test.
+Avec Postgres déjà lancé (`./scripts/dev-mvp.sh`) :
+
+```bash
+cd ~/CONFIDIA_1/apps/backend_fastapi
+source .venv/bin/activate
+pytest -m integration -q
+```
+
+Sur GitHub, [`.github/workflows/ci.yml`](.github/workflows/ci.yml) installe un Postgres de CI, applique Alembic, lance pytest (y compris l’intégration), puis `flutter analyze` et `flutter test`.
 
 ## Fonctionnalités MVP
 
