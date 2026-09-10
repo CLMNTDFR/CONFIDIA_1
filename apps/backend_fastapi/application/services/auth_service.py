@@ -1,6 +1,5 @@
 import httpx
 from fastapi import HTTPException, status
-from jose import jwt
 
 from application.dto.auth_dto import (
     ChangePasswordRequest,
@@ -11,12 +10,14 @@ from application.dto.auth_dto import (
 )
 from application.services.identity_service import IdentityService
 from core.config import Settings
-from core.security import TokenPayload
+from core.security import TokenPayload, verified_claims
 from infrastructure.keycloak.admin_client import (
     KeycloakAdminClient,
     KeycloakAdminError,
     KeycloakUserExistsError,
 )
+
+_TIMEOUT = httpx.Timeout(10.0)
 
 
 class AuthService:
@@ -43,7 +44,7 @@ class AuthService:
         )
 
     async def login(self, request: TokenRequest) -> TokenResponse:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             response = await client.post(
                 self._settings.keycloak_token_url,
                 data={
@@ -71,7 +72,7 @@ class AuthService:
         return tokens
 
     async def refresh_token(self, refresh_token: str) -> TokenResponse:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             response = await client.post(
                 self._settings.keycloak_token_url,
                 data={
@@ -110,8 +111,25 @@ class AuthService:
     async def _persist_identity(self, access_token: str) -> None:
         if self._identity is None:
             return
-        claims = jwt.get_unverified_claims(access_token)
+        claims = await verified_claims(access_token, self._settings)
         await self._identity.ensure_from_token_claims(claims)
+
+    async def logout(self, refresh_token: str | None) -> None:
+        if not refresh_token:
+            return
+        try:
+            async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
+                await client.post(
+                    self._settings.keycloak_revoke_url,
+                    data={
+                        "client_id": self._settings.keycloak_client_id,
+                        "client_secret": self._settings.keycloak_client_secret,
+                        "token": refresh_token,
+                        "token_type_hint": "refresh_token",
+                    },
+                )
+        except httpx.HTTPError:
+            return
 
     async def change_password(self, token: TokenPayload, request: ChangePasswordRequest) -> None:
         username = str(token.raw.get("preferred_username") or token.email or "").strip()
@@ -120,7 +138,7 @@ class AuthService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Compte incomplet pour changer le mot de passe",
             )
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=_TIMEOUT) as client:
             verify = await client.post(
                 self._settings.keycloak_token_url,
                 data={

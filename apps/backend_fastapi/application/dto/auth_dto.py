@@ -20,6 +20,10 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
+class LogoutRequest(BaseModel):
+    refresh_token: str | None = None
+
+
 class RegisterRequest(BaseModel):
     email: str
     email_confirm: str

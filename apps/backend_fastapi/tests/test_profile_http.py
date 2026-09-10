@@ -24,7 +24,7 @@ CLAIMS = {
     "realm_access": {"roles": ["USER"]},
 }
 
-ACCESS_TOKEN = jwt.encode(CLAIMS, key="test-secret", algorithm="HS256")
+ACCESS_TOKEN = jwt.encode(CLAIMS, key="test", algorithm="HS256")
 
 REGISTER = {
     "email": "camille@confidia.local",
@@ -187,4 +187,20 @@ def test_avatar_upload_get_delete(
     assert deleted.json()["avatar_url"] is None
     missing = client.get("/api/v1/users/me/avatar", headers=headers)
     assert missing.status_code == 404
+    get_settings.cache_clear()
+
+
+def test_avatar_rejects_html(identity_harness, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    monkeypatch.setenv("DOCUMENTS_STORAGE_DIR", str(tmp_path))
+    get_settings.cache_clear()
+    client, _repo = identity_harness
+    headers = {"Authorization": f"Bearer {ACCESS_TOKEN}"}
+    client.get("/api/v1/users/me", headers=headers)
+    html = b"<html><body>nope</body></html>"
+    uploaded = client.post(
+        "/api/v1/users/me/avatar",
+        headers=headers,
+        files={"file": ("me.png", html, "image/png")},
+    )
+    assert uploaded.status_code == 415
     get_settings.cache_clear()

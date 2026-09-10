@@ -74,11 +74,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _checkAuth() async {
     final token = await _storage.read(key: 'access_token');
-    if (token != null) {
-      state = state.copyWith(isAuthenticated: true, isLoading: true);
-      await _loadUser();
-      state = state.copyWith(isLoading: false);
+    if (token == null || state.isDemoSession) {
+      return;
     }
+    state = state.copyWith(isAuthenticated: true, isLoading: true);
+    await _loadUser();
+    state = state.copyWith(isLoading: false);
   }
 
   Future<void> login(String username, String password) async {
@@ -141,9 +142,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> _loadUser() async {
+    if (state.isDemoSession) {
+      return;
+    }
     try {
       await _apiClient.ensureConfigured();
       final response = await _apiClient.dio.get('/users/me');
+      if (state.isDemoSession) {
+        return;
+      }
       state = state.copyWith(user: UserModel.fromJson(response.data as Map<String, dynamic>));
     } catch (_) {
       // L'écran Profil propose un nouvel essai.
@@ -170,6 +177,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> loginDemo() async {
+    await _storage.delete(key: 'refresh_token');
+    await _storage.delete(key: 'access_token');
     state = state.copyWith(
       isAuthenticated: true,
       user: ProfileApiService.mockDemoUser,
@@ -178,6 +187,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Mode démo « Visite guidée » : simule une première connexion utilisateur.
   Future<void> loginDemoGuidedTour() async {
+    await _storage.delete(key: 'refresh_token');
+    await _storage.delete(key: 'access_token');
     state = state.copyWith(
       isAuthenticated: true,
       user: ProfileApiService.mockGuidedTourUser,
@@ -190,6 +201,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> logout() async {
+    if (!state.isDemoSession) {
+      final refresh = await _storage.read(key: 'refresh_token');
+      try {
+        await _apiClient.ensureConfigured();
+        await _apiClient.dio.post('/auth/logout', data: {
+          if (refresh != null) 'refresh_token': refresh,
+        });
+      } catch (_) {
+        // Le stockage local est vidé même si la révocation distante échoue.
+      }
+    }
     await _storage.deleteAll();
     state = const AuthState();
   }

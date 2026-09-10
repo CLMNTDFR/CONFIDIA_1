@@ -1,8 +1,8 @@
 from pathlib import Path
 
 from core.config import get_settings
+from core.uploads import inspect_avatar
 
-MAX_AVATAR_BYTES = 2 * 1024 * 1024
 AVATAR_API_PATH = "/api/v1/users/me/avatar"
 _TYPES = {
     "image/jpeg": ".jpg",
@@ -35,21 +35,9 @@ def read_avatar(user_id: str) -> tuple[bytes, str] | None:
     return path.read_bytes(), mime
 
 
-def save_avatar(user_id: str, payload: bytes, content_type: str, filename: str = "") -> str:
-    mime = (content_type or "").split(";")[0].strip().lower()
-    suffix = _TYPES.get(mime)
-    if suffix is None:
-        lower = filename.lower()
-        if lower.endswith(".png"):
-            suffix = ".png"
-        elif lower.endswith(".webp"):
-            suffix = ".webp"
-        elif lower.endswith(".jpg") or lower.endswith(".jpeg"):
-            suffix = ".jpg"
-    if suffix is None:
-        raise ValueError("Format d'image non pris en charge (jpeg, png ou webp)")
-    if len(payload) > MAX_AVATAR_BYTES:
-        raise ValueError("L'image est trop lourde (maximum 2 Mo)")
+def save_avatar(user_id: str, payload: bytes) -> str:
+    mime = inspect_avatar(payload)
+    suffix = _TYPES[mime]
     for old in existing_paths(user_id):
         old.unlink(missing_ok=True)
     dest = _root() / f"{_safe_user_id(user_id)}{suffix}"

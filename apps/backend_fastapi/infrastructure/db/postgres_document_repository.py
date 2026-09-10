@@ -8,10 +8,9 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from application.dto.document_dto import DocumentCreateDTO, DocumentDTO, DocumentUpdateDTO
+from core.uploads import suffix_for_mime
 from domain.interfaces.workspace_document_repository import WorkspaceDocumentRepository
 from infrastructure.db.models import Document
-
-MAX_UPLOAD_BYTES = 15 * 1024 * 1024
 
 
 def _to_dto(row: Document) -> DocumentDTO:
@@ -89,10 +88,8 @@ class PostgresDocumentRepository(WorkspaceDocumentRepository):
         mime_type: str | None,
         metadata: DocumentCreateDTO,
     ) -> DocumentDTO:
-        if len(payload) > MAX_UPLOAD_BYTES:
-            raise ValueError("Fichier trop volumineux (15 Mo maximum)")
         document_id = uuid4()
-        suffix = Path(filename).suffix.lower()[:12]
+        suffix = suffix_for_mime(mime_type or "", filename)
         relative = Path(str(organization_id)) / f"{document_id}{suffix}"
         dest = self._storage_dir / relative
         dest.parent.mkdir(parents=True, exist_ok=True)

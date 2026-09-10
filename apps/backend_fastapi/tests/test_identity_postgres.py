@@ -121,7 +121,6 @@ async def test_postgres_document_upload_list_detail(db_session: AsyncSession, tm
         owner_id=stored.id,
         filename="facture.pdf",
         payload=b"%PDF-test",
-        mime_type="application/pdf",
         metadata=DocumentCreateDTO(title="Facture test", category="Énergie"),
     )
     listed = await service.list_documents(stored.organization_id)

@@ -1,6 +1,12 @@
 from uuid import UUID
 
-from application.dto.document_dto import DocumentCreateDTO, DocumentDTO, DocumentListResponse, DocumentUpdateDTO
+from application.dto.document_dto import (
+    DocumentCreateDTO,
+    DocumentDTO,
+    DocumentListResponse,
+    DocumentUpdateDTO,
+)
+from core.uploads import inspect_document
 from domain.interfaces.workspace_document_repository import WorkspaceDocumentRepository
 
 
@@ -30,9 +36,9 @@ class WorkspaceDocumentService:
         owner_id: str,
         filename: str,
         payload: bytes,
-        mime_type: str | None,
         metadata: DocumentCreateDTO,
     ) -> DocumentDTO:
+        mime_type = inspect_document(filename, payload)
         return await self._repository.create(
             organization_id=organization_id,
             owner_id=owner_id,

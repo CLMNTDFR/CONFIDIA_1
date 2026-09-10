@@ -4,13 +4,16 @@ from uuid import UUID, uuid4
 
 from application.dto.document_dto import DocumentCreateDTO, DocumentDTO, DocumentUpdateDTO
 from domain.interfaces.workspace_document_repository import WorkspaceDocumentRepository
-from infrastructure.db.postgres_document_repository import MAX_UPLOAD_BYTES
 
 
 class InMemoryDocumentRepository(WorkspaceDocumentRepository):
     def __init__(self) -> None:
         self.rows: list[DocumentDTO] = []
         self.payloads: dict[str, bytes] = {}
+        self.org_of: dict[str, UUID] = {}
+
+    def _in_org(self, document_id: str, organization_id: UUID) -> bool:
+        return self.org_of.get(document_id) == organization_id
 
     async def list_for_org(
         self,
@@ -19,7 +22,7 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
         page_size: int,
         query: str | None,
     ) -> tuple[list[DocumentDTO], int]:
-        items = list(self.rows)
+        items = [row for row in self.rows if self._in_org(row.id, organization_id)]
         if query:
             q = query.lower()
             items = [
@@ -32,8 +35,11 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
         return items[start : start + page_size], total
 
     async def get_for_org(self, organization_id: UUID, document_id: UUID) -> DocumentDTO | None:
+        key = str(document_id)
+        if not self._in_org(key, organization_id):
+            return None
         for row in self.rows:
-            if row.id == str(document_id):
+            if row.id == key:
                 return row
         return None
 
@@ -47,8 +53,6 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
         mime_type: str | None,
         metadata: DocumentCreateDTO,
     ) -> DocumentDTO:
-        if len(payload) > MAX_UPLOAD_BYTES:
-            raise ValueError("Fichier trop volumineux (15 Mo maximum)")
         from datetime import UTC, datetime
 
         doc_id = str(uuid4())
@@ -65,6 +69,7 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
         )
         self.rows.append(dto)
         self.payloads[doc_id] = payload
+        self.org_of[doc_id] = organization_id
         return dto
 
     async def read_file(
@@ -91,6 +96,8 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
     ) -> DocumentDTO | None:
         from datetime import UTC, datetime
 
+        if not self._in_org(str(document_id), organization_id):
+            return None
         for index, row in enumerate(self.rows):
             if row.id != str(document_id):
                 continue
@@ -121,7 +128,11 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
         return None
 
     async def delete_for_org(self, organization_id: UUID, document_id: UUID) -> bool:
+        key = str(document_id)
+        if not self._in_org(key, organization_id):
+            return False
         before = len(self.rows)
-        self.rows = [row for row in self.rows if row.id != str(document_id)]
-        self.payloads.pop(str(document_id), None)
+        self.rows = [row for row in self.rows if row.id != key]
+        self.payloads.pop(key, None)
+        self.org_of.pop(key, None)
         return len(self.rows) < before

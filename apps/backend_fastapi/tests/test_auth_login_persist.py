@@ -20,7 +20,7 @@ CLAIMS = {
     "realm_access": {"roles": ["USER"]},
 }
 
-ACCESS_TOKEN = jwt.encode(CLAIMS, key="test-secret", algorithm="HS256")
+ACCESS_TOKEN = jwt.encode(CLAIMS, key="test", algorithm="HS256")
 
 
 class _FakeResponse:
@@ -42,7 +42,7 @@ class _FakeKeycloakClient:
     async def __aexit__(self, exc_type, exc, tb):
         return None
 
-    async def post(self, url, data=None):
+    async def post(self, url, data=None, **kwargs):
         if (data or {}).get("password") == "wrong":
             return _FakeResponse(401, {"error": "invalid_grant"})
         return _FakeResponse(

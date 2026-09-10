@@ -71,7 +71,7 @@ def test_upload_list_and_detail_persist_in_workspace(docs_harness):
     again = client.post(
         "/api/v1/documents/upload",
         headers=HEADERS,
-        files={"file": ("autre.pdf", BytesIO(b"abc"), "application/pdf")},
+        files={"file": ("autre.pdf", BytesIO(b"%PDF-abc"), "application/pdf")},
     )
     assert again.status_code == 201
     assert client.get("/api/v1/documents/", headers=HEADERS).json()["total"] == 2
@@ -93,6 +93,7 @@ def test_uploaded_file_can_be_downloaded(docs_harness):
     assert file_res.status_code == 200
     assert file_res.content == payload
     assert "pdf" in file_res.headers["content-type"]
+    assert file_res.headers["content-disposition"].startswith("inline;")
 
 
 def test_document_file_unknown_is_404(docs_harness):
@@ -149,3 +150,33 @@ def test_update_and_delete_document(docs_harness):
 def test_documents_require_auth():
     with TestClient(app) as client:
         assert client.get("/api/v1/documents/").status_code == 401
+
+
+def test_documents_are_isolated_between_workspaces(docs_harness):
+    client, _identity, _docs = docs_harness
+    upload = client.post(
+        "/api/v1/documents/upload",
+        headers=HEADERS,
+        files={"file": ("secret.pdf", BytesIO(b"%PDF-secret"), "application/pdf")},
+        data={"title": "Secret"},
+    )
+    assert upload.status_code == 201
+    doc_id = upload.json()["id"]
+
+    other_claims = {
+        "sub": "kc-docs-2",
+        "email": "other-docs@confidia.local",
+        "given_name": "Other",
+        "family_name": "User",
+        "realm_access": {"roles": ["USER"]},
+    }
+    other_headers = {
+        "Authorization": f"Bearer {jwt.encode(other_claims, key='test', algorithm='HS256')}"
+    }
+    listed = client.get("/api/v1/documents/", headers=other_headers)
+    assert listed.status_code == 200
+    assert listed.json()["total"] == 0
+    stolen = client.get(f"/api/v1/documents/{doc_id}", headers=other_headers)
+    assert stolen.status_code == 404
+    stolen_file = client.get(f"/api/v1/documents/{doc_id}/file", headers=other_headers)
+    assert stolen_file.status_code == 404

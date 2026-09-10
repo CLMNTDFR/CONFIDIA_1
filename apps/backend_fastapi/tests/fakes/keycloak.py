@@ -45,7 +45,7 @@ class FakeKeycloakAsyncClient:
                 "preferred_username": user["username"],
                 "realm_access": {"roles": ["USER"]},
             },
-            key="test-secret",
+            key="test",
             algorithm="HS256",
         )
 
@@ -55,6 +55,8 @@ class FakeKeycloakAsyncClient:
         return FakeResponse(404, {})
 
     async def post(self, url, data=None, json=None, headers=None, **kwargs):
+        if "/protocol/openid-connect/revoke" in url:
+            return FakeResponse(200, {})
         if "/protocol/openid-connect/token" in url:
             payload = data or {}
             if payload.get("client_id") == "admin-cli":

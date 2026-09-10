@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     nextcloud_password: str = "admin"
 
     cors_origins: str = "http://localhost:3000,http://localhost:8082"
+    jwt_test_secret: str = "test"
 
     @property
     def cors_origins_list(self) -> list[str]:
@@ -51,6 +52,13 @@ class Settings(BaseSettings):
         return (
             f"{self.keycloak_url}/realms/{self.keycloak_realm}"
             "/protocol/openid-connect/certs"
+        )
+
+    @property
+    def keycloak_revoke_url(self) -> str:
+        return (
+            f"{self.keycloak_url}/realms/{self.keycloak_realm}"
+            "/protocol/openid-connect/revoke"
         )
 
 

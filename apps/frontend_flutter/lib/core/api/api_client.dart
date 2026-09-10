@@ -18,10 +18,7 @@ class ApiClient {
         )) {
     _dio.interceptors.add(_AuthInterceptor(_storage, _dio));
     if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        requestBody: true,
-        responseBody: true,
-      ));
+      _dio.interceptors.add(_SafeLogInterceptor());
     }
   }
 
@@ -35,6 +32,14 @@ class ApiClient {
   Future<void> configureBaseUrl(String baseUrl) async {
     _dio.options.baseUrl = baseUrl;
     _configured = true;
+  }
+}
+
+class _SafeLogInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    debugPrint('API ${options.method} ${options.path}');
+    handler.next(options);
   }
 }
 

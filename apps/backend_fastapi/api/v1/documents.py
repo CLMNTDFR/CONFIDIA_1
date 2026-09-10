@@ -1,5 +1,5 @@
-from uuid import UUID
 from urllib.parse import quote
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from fastapi.responses import Response
@@ -15,6 +15,13 @@ from application.dto.document_dto import (
 from application.services.identity_service import IdentityService
 from application.services.workspace_document_service import WorkspaceDocumentService
 from core.security import TokenPayload, decode_token
+from core.uploads import (
+    DOCUMENT_TOO_LARGE,
+    MAX_DOCUMENT_BYTES,
+    download_disposition,
+    read_limited,
+    upload_error_status,
+)
 
 router = APIRouter()
 
@@ -72,11 +79,12 @@ async def download_document_file(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Fichier introuvable")
     payload, mime_type, filename = stored
     encoded = quote(filename)
+    disposition = download_disposition(mime_type or "")
     return Response(
         content=payload,
         media_type=mime_type or "application/octet-stream",
         headers={
-            "Content-Disposition": f"inline; filename*=UTF-8''{encoded}",
+            "Content-Disposition": f"{disposition}; filename*=UTF-8''{encoded}",
         },
     )
 
@@ -93,7 +101,10 @@ async def update_document(
     try:
         doc = await documents.update_document(organization_id, document_id, payload)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_CONTENT, detail=str(exc)) from exc
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail=str(exc),
+        ) from exc
     if not doc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document introuvable")
     return doc
@@ -124,7 +135,13 @@ async def upload_document(
     documents: WorkspaceDocumentService = Depends(get_workspace_document_service),
 ):
     organization_id, owner_id = await _workspace(token, identity)
-    payload = await file.read()
+    try:
+        payload = await read_limited(file, MAX_DOCUMENT_BYTES, too_large=DOCUMENT_TOO_LARGE)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail=str(exc),
+        ) from exc
     metadata = DocumentCreateDTO(
         title=title,
         category=category,
@@ -137,13 +154,13 @@ async def upload_document(
             owner_id=owner_id,
             filename=file.filename or "document",
             payload=payload,
-            mime_type=file.content_type,
             metadata=metadata,
         )
     except ValueError as exc:
+        detail = str(exc)
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail=str(exc),
+            status_code=upload_error_status(detail),
+            detail=detail,
         ) from exc
 
 

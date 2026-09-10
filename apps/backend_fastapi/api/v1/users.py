@@ -6,6 +6,7 @@ from application.dto.user_dto import UserListResponse, UserProfileDTO, UserProfi
 from application.services.identity_service import IdentityService
 from application.services.user_service import UserService
 from core.security import Role, TokenPayload, decode_token, require_roles
+from core.uploads import AVATAR_TOO_LARGE, MAX_AVATAR_BYTES, read_limited, upload_error_status
 from infrastructure.avatar_files import delete_avatar, read_avatar, save_avatar
 
 router = APIRouter()
@@ -48,11 +49,12 @@ async def upload_my_avatar(
     users: UserService = Depends(get_user_service),
     identity: IdentityService = Depends(get_identity_service),
 ):
-    payload = await file.read()
     try:
-        url = save_avatar(token.sub, payload, file.content_type or "", file.filename or "")
+        payload = await read_limited(file, MAX_AVATAR_BYTES, too_large=AVATAR_TOO_LARGE)
+        url = save_avatar(token.sub, payload)
     except ValueError as exc:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+        detail = str(exc)
+        raise HTTPException(status_code=upload_error_status(detail), detail=detail) from exc
     await identity.ensure_from_token_claims(token.raw)
     await identity.update_profile(token.sub, avatar_url=url)
     return await users.get_profile(token)

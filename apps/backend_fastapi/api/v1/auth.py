@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends
 from api.deps import get_identity_service
 from application.dto.auth_dto import (
     ChangePasswordRequest,
+    LogoutRequest,
     RefreshTokenRequest,
     RegisterRequest,
     TokenRequest,
@@ -68,5 +69,10 @@ async def change_password(
 
 
 @router.post("/logout")
-async def logout(token: TokenPayload = Depends(decode_token)):
+async def logout(
+    request: LogoutRequest | None = None,
+    settings: Settings = Depends(get_settings),
+):
+    service = AuthService(settings)
+    await service.logout(request.refresh_token if request else None)
     return {"message": "Logged out successfully"}
