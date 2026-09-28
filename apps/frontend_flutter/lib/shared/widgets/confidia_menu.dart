@@ -8,7 +8,7 @@ import '../../core/theme/tokens/tokens.dart';
 import 'confidia_chrome_material.dart';
 import 'confidia_tappable.dart';
 
-/// Entrée d'un menu CONFIDIA (actions ou liste déroulante).
+/// CONFIDIA menu entry (actions or dropdown list).
 class ConfidiaMenuEntry<T> {
   final T value;
   final String label;
@@ -27,8 +27,8 @@ class ConfidiaMenuEntry<T> {
   });
 }
 
-/// Menu flottant ancré sur le widget appelant.
-/// Même matière chrome que les modales, aéré, avec survol.
+/// Floating menu anchored to the calling widget.
+/// Same chrome material as modals, airy, with hover.
 Future<T?> showConfidiaMenu<T>({
   required BuildContext context,
   required List<ConfidiaMenuEntry<T>> items,
@@ -71,7 +71,7 @@ Future<T?> showConfidiaMenu<T>({
   );
 }
 
-/// Bouton icône qui ouvre [showConfidiaMenu], calé sur [IconButton] compact.
+/// Icon button that opens [showConfidiaMenu], sized like a compact [IconButton].
 class ConfidiaMenuButton<T> extends StatelessWidget {
   final List<ConfidiaMenuEntry<T>> items;
   final ValueChanged<T> onSelected;

@@ -4,7 +4,7 @@ import '../../core/theme/colors.dart';
 import 'confidia_ai_robot.dart';
 import 'confidia_demo_badge.dart';
 
-/// Nom de marque « Confid•IA » en monochrome (textPrimary + textSecondary).
+/// Brand name « Confid•IA » in monochrome (textPrimary + textSecondary).
 class CofidIaBrand extends StatelessWidget {
   final double? fontSize;
   final FontWeight fontWeight;
@@ -58,7 +58,7 @@ class CofidIaBrand extends StatelessWidget {
   }
 }
 
-/// En-tête sobre pour les modules IA : logo + marque + sous-titre optionnel.
+/// Understated header for AI modules: logo + brand + optional subtitle.
 class CofidIaPanelHeader extends StatelessWidget {
   final bool speaking;
   final String? subtitle;

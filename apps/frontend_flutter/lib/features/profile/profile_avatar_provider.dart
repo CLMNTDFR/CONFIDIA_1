@@ -42,7 +42,7 @@ class ProfileAvatarNotifier extends StateNotifier<String?> {
       final bytes = await _ref.read(profileApiServiceProvider).fetchAvatar();
       state = bytes == null ? null : base64Encode(bytes);
     } catch (_) {
-      // On garde la photo déjà affichée si le serveur ne répond pas.
+      // Keep the photo already shown if the server does not respond.
     }
   }
 

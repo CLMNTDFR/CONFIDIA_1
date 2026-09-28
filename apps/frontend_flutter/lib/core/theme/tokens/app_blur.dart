@@ -1,11 +1,11 @@
 import 'dart:ui';
 
-/// Flous du Design System. Chrome discret ; contenu sans flou.
+/// Design System blurs. Subtle chrome; content has no blur.
 abstract final class AppBlur {
-  /// Chrome flottant (nav, app bar, sheets, dialogs, popup IA).
+  /// Floating chrome (nav, app bar, sheets, dialogs, AI popup).
   static const double chrome = 6;
 
-  /// Voile d'auth uniquement.
+  /// Auth veil only.
   static const double veil = 20;
 
   static ImageFilter filter(double sigma) => ImageFilter.blur(sigmaX: sigma, sigmaY: sigma);

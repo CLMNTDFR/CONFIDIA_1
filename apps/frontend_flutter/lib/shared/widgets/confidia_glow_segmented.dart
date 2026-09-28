@@ -14,7 +14,7 @@ class ConfidiaGlowSegment<T> {
   });
 }
 
-/// Sélecteur segmenté  -  indicateur glissant animé, sélection discrète.
+/// Segmented selector: animated sliding indicator, discreet selection.
 class ConfidiaGlowSegmentedControl<T> extends StatelessWidget {
   final T value;
   final List<ConfidiaGlowSegment<T>> segments;

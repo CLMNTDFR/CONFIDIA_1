@@ -10,7 +10,7 @@ import '../payments/payments_provider.dart';
 import 'day_briefing_model.dart';
 import 'day_briefing_service.dart';
 
-/// Briefing du jour recalculé depuis les providers du compte courant.
+/// Daily briefing recomputed from the current account providers.
 final dayBriefingProvider = Provider<DayBriefing>((ref) {
   return DayBriefingService.build(
     firstName: sessionFirstName(ref.watch(authStateProvider)),

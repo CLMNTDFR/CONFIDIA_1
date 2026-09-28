@@ -6,7 +6,7 @@ import '../../shared/models/payment_model.dart';
 import '../../shared/models/serenity_briefing_model.dart';
 import '../utils/serenity_palette.dart';
 
-/// Calcule le briefing de sérénité depuis les données locales (mock / providers).
+/// Builds the serenity briefing from local data (mock / providers).
 abstract final class SerenityService {
   static SerenityBriefing build({
     required String firstName,
@@ -226,10 +226,10 @@ abstract final class SerenityService {
     );
   }
 
-  /// Score projeté si certaines dettes actionnables étaient déjà traitées.
-  /// Réutilise [build] (un seul moteur de score). Défaut: courriers + échéances proches (8 j).
+  /// Projected score if some actionable debts were already handled.
+  /// Reuses [build] (single scoring engine). Default: mail plus nearby deadlines (8 d).
   ///
-  /// Exemple: 67 → 82 pour le bandeau "Indice : 67 → 82 si vous traitez les échéances".
+  /// Example: 67 → 82 for the banner "Indice : 67 → 82 si vous traitez les échéances".
   static int projectAfterResolving({
     required String firstName,
     required List<EmailModel> emails,
@@ -291,11 +291,11 @@ abstract final class SerenityService {
     ).score;
   }
 
-  /// Heuristique locale des pénalités évitées en réglant [payment] à temps.
-  /// Sert la copy du type "Vous évitez X € de pénalités".
+  /// Local heuristic for penalties avoided by paying [payment] on time.
+  /// Feeds copy such as "Vous évitez X € de pénalités".
   ///
-  /// Règle mock: 5 % du montant + 1 € par jour de retard déjà écoulé,
-  /// plancher 2 €, plafond 100 €.
+  /// Mock rule: 5% of the amount + €1 per day of delay already elapsed,
+  /// floor €2, ceiling €100.
   static double estimatePenaltyAvoided(PaymentModel payment, {DateTime? now}) {
     final reference = now ?? DateTime.now();
     final overdueDays = reference.isAfter(payment.dueDate)
@@ -305,7 +305,7 @@ abstract final class SerenityService {
     return double.parse(estimate.clamp(2.0, 100.0).toStringAsFixed(2));
   }
 
-  /// Historique : en démo, courbe fictive 14 j. En session live, uniquement le point du jour.
+  /// History: in demo, a fictional 14-day curve. In a live session, only today's point.
   static List<SerenityScorePoint> _buildScoreHistory(
     int currentScore,
     DateTime now, {

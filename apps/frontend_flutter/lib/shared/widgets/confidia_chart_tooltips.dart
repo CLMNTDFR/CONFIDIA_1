@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 
-/// Styles d'info-bulles partagés pour les graphiques fl_chart.
+/// Shared tooltip styles for fl_chart charts.
 abstract final class ConfidiaChartTooltips {
   static Color background(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;

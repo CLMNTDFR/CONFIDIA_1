@@ -23,7 +23,7 @@ import '../../features/access_control/access_control_screen.dart';
 import '../../features/admin/admin_screen.dart';
 import '../../shared/widgets/app_shell.dart';
 
-/// Notifie GoRouter sans recréer l'instance (évite de couper l'animation d'accueil).
+/// Notifies GoRouter without recreating the instance (avoids cutting the welcome animation).
 class _RouterRefresh extends ChangeNotifier {
   void notifyRouter() => notifyListeners();
 }
@@ -42,7 +42,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isPublicRoute = loc == '/login' || loc == '/welcome' || loc == '/register';
 
       if (!isLoggedIn && !isPublicRoute) return '/login';
-      // Après connexion : passer par l'écran d'accueil animé, pas le dashboard directement.
+      // After login: go through the animated welcome screen, not the dashboard directly.
       if (isLoggedIn && (loc == '/login' || loc == '/register')) return '/welcome';
       return null;
     },

@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../shared/widgets/confidia_modal_sheet.dart';
 import 'document_source_actions.dart';
 
-/// Choix d'ajout document depuis le dashboard : Scanner ou Importer.
+/// Document-add choice from the dashboard: Scanner or Importer.
 Future<void> showDocumentAddSheet(BuildContext context) {
   return showConfidiaSheet<void>(
     context: context,

@@ -3,7 +3,7 @@ import 'package:dio/dio.dart';
 import '../../core/api/api_client.dart';
 import '../models/access_control_models.dart';
 
-/// Client API gouvernance  -  prêt pour brancher le provider (mock en fallback).
+/// Governance API client, ready to wire the provider (mock as fallback).
 class AccessControlApiService {
   final Dio _dio;
 

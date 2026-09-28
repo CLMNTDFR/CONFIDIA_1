@@ -82,16 +82,16 @@ In the tables, tick the matching status column when you move a card.
 | Merged calendar (MVP) | Single in-app calendar view (no third-party sync) | [ ] | | |
 | Basic security hardening | Tighten auth checks, secrets handling, obvious gaps | [ ] | | |
 | Tests | Cover critical API paths with useful automated tests | [ ] | | |
-| Docker Compose (third-party usable) | One-command stack that another person can start | [ ] | | |
-| Demo checklist | Written path for the live demo, started this week | [ ] | | |
+| Docker Compose (third-party usable) | One-command stack that another person can start | | | [x] |
+| Demo checklist | Written path for the live demo, started this week | | | [x] |
 
 ```
 [ ] Minimal dashboard — demo home entry points
 [ ] Merged calendar (MVP) — in-app only, no external sync
 [ ] Basic security hardening — auth / secrets / gaps
 [ ] Tests — critical API paths
-[ ] Docker Compose — usable by someone else
-[ ] Demo checklist — live demo path written
+[x] Docker Compose - usable by someone else
+[x] Demo checklist - live demo path written
 ```
 
 ---
@@ -120,7 +120,7 @@ In the tables, tick the matching status column when you move a card.
 
 ## Demo checklist (must work)
 
-From the pitch — keep this list green before pitching day:
+Script to follow: [DEMO_CHECKLIST.md](DEMO_CHECKLIST.md). Tick these boxes only after a dry run.
 
 | Step | Description | Done |
 |------|-------------|:----:|

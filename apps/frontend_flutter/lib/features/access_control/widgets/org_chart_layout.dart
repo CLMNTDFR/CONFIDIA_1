@@ -46,7 +46,7 @@ class OrgChartLayoutResult {
   });
 }
 
-/// Mise en page par niveaux horizontaux  -  chaque profondeur = une rangée centrée.
+/// Layout by horizontal levels - each depth is a centered row.
 abstract final class OrgChartLayout {
   static const nodeWidth = 128.0;
   static const nodeHeight = 118.0;
@@ -201,7 +201,7 @@ abstract final class OrgChartLayout {
   }
 }
 
-/// Règles métier pour le repositionnement par niveau.
+/// Business rules for level-based repositioning.
 abstract final class OrgChartHierarchy {
   static const _rolePriority = ['admin', 'ceo', 'director', 'parent', 'manager', 'coach'];
 
@@ -251,7 +251,7 @@ abstract final class OrgChartHierarchy {
     return candidates.first.id;
   }
 
-  /// [targetDepth] = profondeur cible (0 = niveau 1 affiché).
+  /// [targetDepth] = target depth (0 = displayed level 1).
   static String? parentIdForLevel(List<OrgNode> nodes, String nodeId, int targetDepth) {
     if (targetDepth <= 0) return null;
     return pickParentAtDepth(nodes, targetDepth - 1, excludeId: nodeId);

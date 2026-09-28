@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/tokens/tokens.dart';
 
-/// Statistique compacte · une ligne d'info dense.
+/// Compact statistic: one dense info row.
 class CompactStat extends StatelessWidget {
   final String label;
   final String value;

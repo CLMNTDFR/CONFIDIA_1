@@ -7,7 +7,7 @@ import 'mobile_shell_insets.dart';
 
 enum ConfidiaSnackType { success, error, warning, info }
 
-/// Toast flottant compact, centré sur desktop, adapté mobile.
+/// Compact floating toast, centered on desktop, adapted for mobile.
 void showConfidiaSnackBar(
   BuildContext context,
   String message, {
@@ -45,7 +45,7 @@ void showConfidiaSnackBar(
   messenger.clearSnackBars();
   messenger.hideCurrentSnackBar();
 
-  // Flutter interdit width + margin simultanément : width sur desktop (centrage auto), margin sur mobile.
+  // Flutter forbids width + margin together: width on desktop (auto-centering), margin on mobile.
   messenger.showSnackBar(
     SnackBar(
       behavior: SnackBarBehavior.floating,
@@ -58,8 +58,8 @@ void showConfidiaSnackBar(
       ),
       width: isMobileShell ? null : 380,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      // Le Scaffold place déjà le snackbar au-dessus de la barre. Une marge FAB
-      // reculerait le toast au milieu du contenu.
+      // Scaffold already places the snackbar above the bar. A FAB margin
+      // would push the toast into the middle of the content.
       margin: isMobileShell
           ? const EdgeInsets.fromLTRB(ConfidiaSpacing.md, 0, ConfidiaSpacing.md, ConfidiaSpacing.sm)
           : null,

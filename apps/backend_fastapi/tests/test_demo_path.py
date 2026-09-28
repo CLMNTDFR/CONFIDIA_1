@@ -1,4 +1,4 @@
-"""Holberton demo path: health, register, dashboard, upload, detail, file, logout."""
+"""Holberton demo path: health, register, login, dashboard, upload, detail, file, logout."""
 
 from __future__ import annotations
 
@@ -57,7 +57,13 @@ def test_holberton_demo_path(demo_path_client: TestClient):
 
     created = client.post("/api/v1/auth/register", json=REGISTER)
     assert created.status_code == 201, created.text
-    token = created.json()["access_token"]
+
+    logged = client.post(
+        "/api/v1/auth/login",
+        json={"username": REGISTER["username"], "password": REGISTER["password"]},
+    )
+    assert logged.status_code == 200, logged.text
+    token = logged.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}
 
     dashboard = client.get("/api/v1/dashboard/week-overview", headers=headers)
@@ -89,7 +95,7 @@ def test_holberton_demo_path(demo_path_client: TestClient):
 
     logout = client.post(
         "/api/v1/auth/logout",
-        json={"refresh_token": created.json()["refresh_token"]},
+        json={"refresh_token": logged.json()["refresh_token"]},
     )
     assert logout.status_code == 200
     still_there = client.get(f"/api/v1/documents/{doc_id}", headers=headers)

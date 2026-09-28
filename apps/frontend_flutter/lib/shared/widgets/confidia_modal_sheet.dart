@@ -8,16 +8,16 @@ import '../../core/theme/tokens/tokens.dart';
 import 'confidia_chrome_material.dart';
 import 'mobile_shell_insets.dart';
 
-/// Affiche une modale au style CONFIDIA (matière chrome discrète).
-/// Toujours centrée dans la zone utile :
-/// - mobile : entre top bar et bottom bar
-/// - desktop : entre top bar et bas d'écran
+/// Shows a CONFIDIA-styled modal (discreet chrome material).
+/// Always centered in the usable area:
+/// - mobile: between top bar and bottom bar
+/// - desktop: between top bar and bottom of the screen
 ///
-/// Animation : blur/voile en fondu fixe ; sheet en slide bas → haut.
-/// Racine navigator + barrière bloquante.
+/// Animation: blur/scrim in a fixed fade; sheet slides bottom → top.
+/// Root navigator + blocking barrier.
 ///
-/// [maxWidth] / [maxHeightFactor] : pour les sur-modales plus compactes
-/// (ex. sélecteur date), afin de garder un effet de superposition.
+/// [maxWidth] / [maxHeightFactor]: for more compact nested modals
+/// (e.g. date picker), to keep a stacked overlay effect.
 Future<T?> showConfidiaSheet<T>({
   required BuildContext context,
   required String title,
@@ -48,7 +48,7 @@ Future<T?> showConfidiaSheet<T>({
   );
 }
 
-/// Blur en fondu (fixe) + modale en slide depuis le bas + ombre douce.
+/// Fade blur (fixed) + modal sliding up from the bottom + soft shadow.
 class _ConfidiaSheetTransition extends StatefulWidget {
   final Animation<double> animation;
   final String title;
@@ -104,8 +104,8 @@ class _ConfidiaSheetTransitionState extends State<_ConfidiaSheetTransition> {
     final sheetMaxH = availableH * widget.maxHeightFactor;
     final sheetMaxW = widget.maxWidth;
 
-    // Un seul ticker : sigma/alpha du blur et translation de la sheet
-    // (FadeTransition + BackdropFilter décale le blur perçu, surtout sur web).
+    // Single ticker: blur sigma/alpha and sheet translation
+    // (FadeTransition + BackdropFilter shifts perceived blur, especially on web).
     return AnimatedBuilder(
       animation: _motion,
       builder: (context, _) {
@@ -245,7 +245,7 @@ class ConfidiaSheet extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Divider(height: 1, color: AppBorders.subtle(isDark).color),
-              // shrinkWrap : hauteur = contenu, plafonnée par maxBody (scroll si besoin).
+              // shrinkWrap: height = content, capped by maxBody (scroll if needed).
               ConstrainedBox(
                 constraints: BoxConstraints(maxHeight: maxBody),
                 child: ListView(

@@ -1,4 +1,4 @@
-"""Calendrier HTTP : CRUD persisté dans l'espace, sans événements inventés."""
+"""HTTP calendar: workspace-persisted CRUD, no invented events."""
 
 from __future__ import annotations
 

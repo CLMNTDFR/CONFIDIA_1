@@ -4,7 +4,7 @@ import '../../core/mvp/confidia_mvp_scope.dart';
 import '../../core/theme/tokens/tokens.dart';
 import 'confidia_tooltip.dart';
 
-/// Pastille « Démo » pour pages et fonctions hors MVP Holberton.
+/// « Démo » badge for pages and features outside the Holberton MVP.
 class ConfidiaDemoBadge extends StatelessWidget {
   final bool compact;
   final bool onAccent;

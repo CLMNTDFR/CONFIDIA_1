@@ -1,4 +1,4 @@
-/// Catégories documentaires partagées (écran d'ajout).
+/// Shared document categories (add screen).
 abstract final class DocumentCategories {
   static const values = [
     'Administratif',

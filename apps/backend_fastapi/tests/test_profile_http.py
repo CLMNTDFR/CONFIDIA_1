@@ -1,4 +1,4 @@
-"""Profil HTTP : PUT /users/me, noms stables, mot de passe, avatar."""
+"""HTTP profile: PUT /users/me, stable names, password, avatar."""
 
 from __future__ import annotations
 

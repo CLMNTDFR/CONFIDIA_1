@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Rayons autorisés uniquement : 8 · 12 · 16 · 20 · 24 · 28 · 32.
+/// Allowed radii only: 8 · 12 · 16 · 20 · 24 · 28 · 32.
 abstract final class AppRadius {
   static const double sm = 8;
   static const double md = 12;
@@ -10,15 +10,15 @@ abstract final class AppRadius {
   static const double xxxl = 28;
   static const double huge = 32;
 
-  /// Champs / boutons / chips (= [md]).
+  /// Fields / buttons / chips (= [md]).
   static const double control = md;
   static const double button = md;
   static const double chip = md;
 
-  /// Cartes (= [lg]).
+  /// Cards (= [lg]).
   static const double card = lg;
 
-  /// Ancien « pill » : plus grand rayon autorisé (pas de 999).
+  /// Former « pill »: largest allowed radius (no 999).
   static const double pill = huge;
 
   static BorderRadius get smAll => BorderRadius.circular(sm);

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/tokens/tokens.dart';
 
-/// Zone cliquable unifiée : curseur main + hover discret + press scale.
+/// Unified tappable area: pointer cursor + discreet hover + press scale.
 ///
-/// À utiliser pour tout contrôle custom basé sur [GestureDetector]
-/// (les boutons Material gèrent déjà le curseur).
+/// Use for any custom control based on [GestureDetector]
+/// (Material buttons already handle the cursor).
 class ConfidiaTappable extends StatefulWidget {
   final VoidCallback? onTap;
   final Widget child;

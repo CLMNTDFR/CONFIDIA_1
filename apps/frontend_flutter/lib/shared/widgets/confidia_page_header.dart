@@ -5,7 +5,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/tokens/tokens.dart';
 import '../navigation/confidia_parent_route.dart';
 
-/// Bouton retour (chevron) vers la route parente.
+/// Back button (chevron) to the parent route.
 class ConfidiaBackButton extends StatelessWidget {
   final String parentRoute;
 
@@ -42,7 +42,7 @@ class ConfidiaBackButton extends StatelessWidget {
   }
 }
 
-/// En-tête de page avec retour arrière à gauche du titre.
+/// Page header with a back control to the left of the title.
 class ConfidiaPageHeader extends StatelessWidget {
   final String title;
   final String? subtitle;

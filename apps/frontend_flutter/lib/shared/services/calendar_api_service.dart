@@ -2,7 +2,7 @@ import 'package:dio/dio.dart';
 
 import '../models/calendar_event_model.dart';
 
-/// Calendrier CONFIDIA : HTTP live, sans événements inventés.
+/// CONFIDIA calendar: live HTTP, no invented events.
 class CalendarApiService {
   final Dio _dio;
 

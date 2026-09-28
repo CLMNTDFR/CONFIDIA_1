@@ -53,7 +53,7 @@ class UserAvatar extends StatelessWidget {
   }
 }
 
-/// Variante avec bordure pour la page profil.
+/// Bordered variant for the profile page.
 class UserAvatarLarge extends StatelessWidget {
   final UserModel user;
   final double radius;

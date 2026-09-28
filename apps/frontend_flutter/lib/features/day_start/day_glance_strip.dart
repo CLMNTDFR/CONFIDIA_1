@@ -10,7 +10,7 @@ import 'day_briefing_model.dart';
 
 enum DayGlanceKind { documents, appointments, deadlines, payments, serenity }
 
-/// Disposition du bandeau : grille (briefing) ou rangée (accueil).
+/// Banner layout: grid (briefing) or row (home).
 enum DayGlanceLayout { grid, row }
 
 class _GlanceItem {
@@ -33,7 +33,7 @@ class _GlanceItem {
   });
 }
 
-/// Bandeau « En un coup d'œil ».
+/// « En un coup d'œil » banner.
 class DayGlanceStrip extends StatelessWidget {
   final DayGlanceMetrics metrics;
   final VoidCallback? beforeNavigate;

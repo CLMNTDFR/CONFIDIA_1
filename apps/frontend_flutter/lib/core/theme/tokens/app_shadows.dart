@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'app_opacity.dart';
 
-/// Ombres sobres. Chrome : très diffuses ; contenu : discrètes.
+/// Restrained shadows. Chrome: very diffuse; content: subtle.
 abstract final class AppShadows {
-  /// Ombre chrome (nav, sheets, dialogs, menus). Extrêmement diffuse.
+  /// Chrome shadow (nav, sheets, dialogs, menus). Extremely diffuse.
   static List<BoxShadow> chrome({required bool isDark}) => [
         BoxShadow(
           color: Colors.black.withValues(

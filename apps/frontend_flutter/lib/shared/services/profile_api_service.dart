@@ -4,7 +4,7 @@ import 'package:dio/dio.dart';
 
 import '../models/user_model.dart';
 
-/// Profil CONFIDIA : HTTP live, sans succès fantôme.
+/// CONFIDIA profile: live HTTP, no phantom success.
 class ProfileApiService {
   final Dio _dio;
 

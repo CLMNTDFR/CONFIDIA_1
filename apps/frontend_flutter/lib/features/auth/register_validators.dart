@@ -1,4 +1,4 @@
-/// Règles d'inscription alignées sur l'API FastAPI, avec messages précis.
+/// Registration rules aligned with FastAPI, with precise messages.
 abstract final class RegisterValidators {
   static final emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
   static final uppercase = RegExp(r'[A-Z]');

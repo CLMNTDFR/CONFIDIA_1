@@ -9,7 +9,7 @@ import 'org_chart_layout.dart';
 
 typedef OrgNodePicker = String? Function(List<OrgNode> nodes, {String? excludeId});
 
-/// Modales partagées pour l'organigramme (style CONFIDIA + safe area mobile).
+/// Shared modals for the org chart (CONFIDIA style + mobile safe area).
 abstract final class OrgChartSheets {
   static void showNodeDetail({
     required BuildContext context,

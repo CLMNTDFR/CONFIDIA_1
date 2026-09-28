@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/theme_context.dart';
 import 'confidia_logo.dart';
 
-/// Logo avec anneau rotatif  -  réservé à l'écran de chargement post-login.
+/// Logo with rotating ring: reserved for the post-login loading screen.
 class ConfidiaAnimatedLogo extends StatefulWidget {
   final double size;
   final bool showText;

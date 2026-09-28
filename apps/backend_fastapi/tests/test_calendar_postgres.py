@@ -1,4 +1,4 @@
-"""CRUD calendrier Postgres. Ignoré si la base ou le schéma MVP est absent."""
+"""Postgres calendar CRUD. Skipped when the database or MVP schema is missing."""
 
 from __future__ import annotations
 

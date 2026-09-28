@@ -13,7 +13,7 @@ class DayPriority extends Equatable {
   final DayPriorityKind kind;
   final String route;
   final String? tag;
-  /// Points de sérénité estimés si l'action est réalisée.
+  /// Estimated serenity points if the action is completed.
   final int serenityGain;
 
   const DayPriority({
@@ -30,7 +30,7 @@ class DayPriority extends Equatable {
   List<Object?> get props => [id, title, kind, route, serenityGain];
 }
 
-/// Compteurs du bandeau « En un coup d'œil ».
+/// Counters for the « En un coup d'œil » banner.
 class DayGlanceMetrics extends Equatable {
   final int newDocuments;
   final int appointmentsToday;

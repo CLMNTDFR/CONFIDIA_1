@@ -1,4 +1,4 @@
-"""Limites et sniffing des fichiers utilisateur."""
+"""Size limits and MIME sniffing for user uploads."""
 
 from pathlib import Path
 

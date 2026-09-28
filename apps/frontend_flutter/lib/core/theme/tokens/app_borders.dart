@@ -4,7 +4,7 @@ import 'app_colors.dart';
 import 'app_opacity.dart';
 import 'app_radius.dart';
 
-/// Bordures standardisées. Traits quasi invisibles ; le focus reste lisible.
+/// Standardized borders. Near-invisible strokes; focus stays readable.
 abstract final class AppBorders {
   static const double hairline = 1;
   static const double focus = 1.4;

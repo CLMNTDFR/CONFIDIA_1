@@ -1,4 +1,4 @@
-/// Opacités réutilisables. Style Cursor / Arc / macOS.
+/// Reusable opacities. Cursor / Arc / macOS style.
 abstract final class AppOpacity {
   static const double invisible = 0;
   static const double faint = 0.04;
@@ -11,15 +11,15 @@ abstract final class AppOpacity {
   static const double solid = 0.75;
   static const double opaque = 1;
 
-  // Contenu (cartes) : presque opaque
+  // Content (cards): almost opaque
   static const double contentDark = 0.96;
   static const double contentLight = 0.98;
 
-  // Chrome matière : très légère transparence (pas de vitre)
+  // Material chrome: very light transparency (not glass)
   static const double chromeDark = 0.92;
   static const double chromeLight = 0.94;
 
-  // Lumière interne discrète (haut de panneau)
+  // Subtle inner light (top of panel)
   static const double innerLight = 0.04;
 
   static const double veilDark = 0.38;
@@ -34,7 +34,7 @@ abstract final class AppOpacity {
   static const double borderStrong = 0.1;
   static const double borderFocus = 0.32;
 
-  // Hover discret (boutons / zones cliquables)
+  // Subtle hover (buttons / clickable areas)
   static const double hoverInkDark = 0.08;
   static const double hoverInkLight = 0.05;
 
@@ -50,7 +50,7 @@ abstract final class AppOpacity {
   static const double chromeShadowDark = 0.12;
   static const double chromeShadowLight = 0.05;
 
-  // Compat contenu
+  // Content compat
   static const double glassDark = contentDark;
   static const double glassLight = contentLight;
 }

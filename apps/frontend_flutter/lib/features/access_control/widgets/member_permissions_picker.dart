@@ -7,7 +7,7 @@ import '../../../shared/widgets/confidia_glow_chip.dart';
 
 const _categoryOrder = ['Calendrier', 'Documents', 'Paiements', 'Organisation'];
 
-/// Droits groupés par catégorie avec sections pliables animées.
+/// Rights grouped by category with animated collapsible sections.
 class MemberPermissionsPicker extends StatefulWidget {
   final List<AccessPermission> permissions;
   final List<String> selectedIds;

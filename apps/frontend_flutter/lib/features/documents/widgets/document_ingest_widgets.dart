@@ -3,8 +3,21 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/colors.dart';
 import '../../../core/theme/spacing.dart';
 import '../../../shared/widgets/confidia_button.dart';
+import '../../../shared/widgets/confidia_text_field.dart';
 
-/// En-tête centré pour l'écran d'ajout document.
+/// Display title suggested from a filename, without a known extension.
+String documentTitleFromFilename(String filename) {
+  final base = filename.trim();
+  final dot = base.lastIndexOf('.');
+  if (dot <= 0) return base;
+  final ext = base.substring(dot + 1).toLowerCase();
+  const known = {'pdf', 'png', 'jpg', 'jpeg', 'doc', 'docx', 'xlsx'};
+  if (!known.contains(ext)) return base;
+  final stem = base.substring(0, dot).trim();
+  return stem.isEmpty ? base : stem;
+}
+
+/// Centered header for the document-add screen.
 class DocumentIngestHeader extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -50,7 +63,7 @@ class DocumentIngestHeader extends StatelessWidget {
   }
 }
 
-/// Zone de prévisualisation ; pulse uniquement à vide.
+/// Preview area; pulse only when empty.
 class DocumentIngestPreviewZone extends StatefulWidget {
   final double height;
   final Widget? child;
@@ -181,7 +194,7 @@ class _DocumentIngestPreviewZoneState extends State<DocumentIngestPreviewZone>
   }
 }
 
-/// Ligne fichier compacte pour l'écran d'ajout.
+/// Compact file row for the add screen.
 class DocumentFileRow extends StatelessWidget {
   final String name;
   final String sizeLabel;
@@ -234,6 +247,41 @@ class DocumentFileRow extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Title fields shown once a file is selected, before the document is saved.
+class DocumentIngestTitleFields extends StatelessWidget {
+  final List<TextEditingController> controllers;
+  final List<String> filenames;
+  final bool enabled;
+
+  const DocumentIngestTitleFields({
+    super.key,
+    required this.controllers,
+    required this.filenames,
+    required this.enabled,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (var i = 0; i < controllers.length; i++) ...[
+          if (i > 0) const SizedBox(height: ConfidiaSpacing.md),
+          ConfidiaTextFormField(
+            controller: controllers[i],
+            enabled: enabled,
+            labelText: 'Titre',
+            hintText: controllers.length > 1 && i < filenames.length ? filenames[i] : null,
+            prefixIcon: Icons.title_rounded,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.next,
+            validator: (value) => (value == null || value.trim().isEmpty) ? 'Le titre est requis' : null,
+          ),
+        ],
+      ],
     );
   }
 }

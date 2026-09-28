@@ -30,7 +30,7 @@ enum GuidedTourDemoAction {
   demoStructures,
 }
 
-/// Les 4 combinaisons de thème présentées dans le tutoriel.
+/// The 4 theme combinations shown in the tutorial.
 const guidedTourThemeCombos = <(ConfidiaPaletteId, bool, String)>[
   (ConfidiaPaletteId.blue, true, 'Bleu · Sombre'),
   (ConfidiaPaletteId.blue, false, 'Bleu · Clair'),

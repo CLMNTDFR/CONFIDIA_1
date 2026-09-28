@@ -685,7 +685,7 @@ class _CustomizeFabState extends State<_CustomizeFab> {
     final supportsHover = MediaQuery.sizeOf(context).width >= 600;
     final expanded = !supportsHover || _hovered;
 
-    // Clé sur le bouton réel (pas le Align) pour un spotlight juste en desktop.
+    // Key on the real button (not the Align) for an accurate spotlight on desktop.
     return Align(
       alignment: Alignment.centerRight,
       child: MouseRegion(

@@ -32,10 +32,15 @@ class ConfidiaButton extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         if (!loading && icon != null) ...[Icon(icon, size: 18), const SizedBox(width: 8)],
-        AnimatedOpacity(
-          opacity: loading ? 0.75 : 1,
-          duration: AppDurations.quick,
-          child: Text(loading ? (loadingLabel ?? label) : label),
+        Flexible(
+          child: AnimatedOpacity(
+            opacity: loading ? 0.75 : 1,
+            duration: AppDurations.quick,
+            child: Text(
+              loading ? (loadingLabel ?? label) : label,
+              textAlign: TextAlign.center,
+            ),
+          ),
         ),
       ],
     );
@@ -81,7 +86,7 @@ class ConfidiaButton extends StatelessWidget {
   }
 }
 
-/// Bouton icône chrome (top bar, actions). [compact] = 36 px (modales).
+/// Chrome icon button (top bar, actions). [compact] = 36 px (modals).
 class ConfidiaIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback? onPressed;
@@ -146,7 +151,7 @@ class ConfidiaIconButton extends StatelessWidget {
   }
 }
 
-/// Fermeture de modale / overlay  -  même chrome que [ConfidiaIconButton] compact.
+/// Modal / overlay close button: same chrome as compact [ConfidiaIconButton].
 class ConfidiaCloseButton extends StatelessWidget {
   final VoidCallback? onPressed;
   final String tooltip;

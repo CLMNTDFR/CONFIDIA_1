@@ -5,7 +5,7 @@ import '../../core/theme/palette.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 
-/// Sélecteur de thème couleur (bleu / rose).
+/// Color theme picker (blue / pink).
 class ConfidiaPalettePicker extends StatelessWidget {
   final ConfidiaPaletteId value;
   final ValueChanged<ConfidiaPaletteId> onChanged;

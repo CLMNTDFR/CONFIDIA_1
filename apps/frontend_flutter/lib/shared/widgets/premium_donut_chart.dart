@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../features/dashboard/dashboard_chart_data.dart';
 
-/// Anneau fin premium  -  arcs arrondis (`StrokeCap.round`), surbrillance au survol.
+/// Thin premium ring: rounded arcs (`StrokeCap.round`), highlight on hover.
 class PremiumDonutChart extends StatelessWidget {
   final List<ChartSlice> slices;
   final double size;
@@ -31,7 +31,7 @@ class PremiumDonutChart extends StatelessWidget {
     this.onSectionTap,
   });
 
-  /// Angle médian d'une portion (repère `drawArc`, 0 = droite, sens horaire).
+  /// Mid-angle of a slice (`drawArc` reference, 0 = right, clockwise).
   static double sliceMidpointAngle(int index, List<ChartSlice> slices, double gapDegrees) {
     final total = slices.fold<double>(0, (s, e) => s + e.value);
     if (total == 0) return -math.pi / 2;
@@ -47,7 +47,7 @@ class PremiumDonutChart extends StatelessWidget {
     return start + gapRad / 2 + sweep / 2;
   }
 
-  /// Rotation pour amener la portion active vers la zone visible (3 h, face à la liste).
+  /// Rotation that brings the active slice into the visible zone (3 o'clock, facing the list).
   static double rotationForActiveSlice(int? index, List<ChartSlice> slices, double gapDegrees) {
     if (index == null) return 0;
     return -sliceMidpointAngle(index, slices, gapDegrees);

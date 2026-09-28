@@ -19,7 +19,7 @@ enum DashboardWidgetType {
   aiAnalyzed,
 }
 
-/// Widgets masqués par défaut (redondants avec la nav, le bandeau ou d'autres pages).
+/// Widgets hidden by default (redundant with the nav, the banner, or other pages).
 const Set<DashboardWidgetType> kDefaultHiddenDashboardWidgets = {
   DashboardWidgetType.stats,
   DashboardWidgetType.quickActions,
@@ -28,7 +28,7 @@ const Set<DashboardWidgetType> kDefaultHiddenDashboardWidgets = {
   DashboardWidgetType.activity,
 };
 
-/// Ordre par défaut : visibles d'abord, puis les masqués (restaurables en mode perso).
+/// Default order: visible first, then hidden ones (restorable in customize mode).
 const List<DashboardWidgetType> kDefaultDashboardOrder = [
   DashboardWidgetType.serenityBriefing,
   DashboardWidgetType.weekOverview,
@@ -40,7 +40,7 @@ const List<DashboardWidgetType> kDefaultDashboardOrder = [
   DashboardWidgetType.recentDocs,
   DashboardWidgetType.deadlines,
   DashboardWidgetType.connectedAccounts,
-  // Masqués par défaut (fin de liste pour le mode personnalisation).
+  // Hidden by default (end of list for customize mode).
   DashboardWidgetType.stats,
   DashboardWidgetType.quickActions,
   DashboardWidgetType.importantDocs,

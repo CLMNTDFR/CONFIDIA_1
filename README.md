@@ -1,345 +1,596 @@
-# CONFIDIA
+# <p align="center">CONFIDIA</p>
+<p align="center">
+  A secure digital hub for administrative documents, identity, calendar and daily actions.
+</p>
+<p align="center">
+  <strong>Holberton Webstack</strong> portfolio · <strong>RNCP 37873</strong> Concepteur Développeur d'Applications (level 6)<br>
+  Solo project · Clément Defer
+</p>
 
-Hub numérique pour centraliser documents administratifs, calendrier, identité et notifications.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white" alt="Python 3.12">
+  <img src="https://img.shields.io/badge/FastAPI-async-009688?logo=fastapi&logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Flutter-stable-02569B?logo=flutter&logoColor=white" alt="Flutter">
+  <img src="https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL 16">
+  <img src="https://img.shields.io/badge/Keycloak-OIDC-4D4D4D?logo=keycloak&logoColor=white" alt="Keycloak">
+  <img src="https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white" alt="Docker Compose">
+</p>
 
-L’interface est en **Flutter**. Derrière, une API **FastAPI** parle à **PostgreSQL** (données CONFIDIA) et à **Keycloak** (mots de passe). Tu n’as pas besoin de tout comprendre pour lancer le projet : suis les étapes ci-dessous dans l’ordre.
+---
 
-## Lancer l’application (à relire à chaque session)
+## Table of contents
 
-Tu as **deux façons** d’ouvrir CONFIDIA. Ce n’est pas la même chose.
+1. [Overview](#overview)
+2. [Need analysis and scope](#need-analysis-and-scope)
+3. [RNCP 6 competency mapping](#rncp-6-competency-mapping)
+4. [Main features](#main-features)
+5. [Technologies and tools](#technologies-and-tools)
+6. [Architecture](#architecture)
+7. [Data model](#data-model)
+8. [Security](#security)
+9. [User flow](#user-flow)
+10. [Installation and configuration](#installation-and-configuration)
+11. [Usage](#usage)
+12. [Tests and CI](#tests-and-ci)
+13. [Project management](#project-management)
+14. [Repository structure](#repository-structure)
+15. [Resources](#resources)
+16. [Future features](#future-features)
+17. [Contributing](#contributing)
+18. [Author](#author)
+19. [License](#license)
 
-| Mode | Quand l’utiliser | Ce qu’il faut lancer |
-|------|------------------|----------------------|
-| **Mode démo** | Voir l’interface sans base ni login réel | **Uniquement Flutter** |
-| **Stack réelle** | Compte `user` / `user`, profil enregistré en base | **Docker** (Postgres + Keycloak) **+** API **+** Flutter |
+---
 
-Les commandes du type `docker compose` + `alembic` + `uvicorn` démarrent **le serveur** (API + base + login). Elles **ne remplacent pas** Flutter. L’écran dans Chrome, c’est toujours :
+## Overview
+
+Administrative life is split across email, cloud drives, paper scans and calendars. Deadlines are easy to miss. Documents are hard to find when they matter.
+
+**CONFIDIA** is a single, calm place to act: sign in, keep a profile, open a dashboard, store documents, and manage an in-app calendar. The Flutter client never talks to identity or storage providers directly. Every call goes through a layered FastAPI backend that owns authentication, validation, persistence and isolation between households.
+
+This repository is a **strict 4-week MVP** for a Holberton / RNCP 6 jury, not the full product vision. What ships is a real login, a real PostgreSQL workspace, and a demonstrable document path. Messaging, payments, third-party calendar sync, advanced governance and production AI stay out of scope (preview screens are labelled as demo).
+
+Official title reference: [RNCP 37873](https://www.francecompetences.fr/recherche/rncp/37873/).
+
+---
+
+## Need analysis and scope
+
+| Actor | Need | MVP answer |
+|-------|------|------------|
+| Household user | One login, one place for files and dates | Keycloak account `user` / `user`, Flutter app on port 8082 |
+| Same user | Keep a document and open it later | Upload, list, detail and file download, scoped to the household |
+| Same user | See what happens this week | Dashboard week overview + merged in-app calendar |
+| Reviewer / peer | Reproduce the stack from a clone | Docker Compose, Alembic, this README, `./scripts/test.sh` |
+| Future club / family admin | Roles and sharing | Keycloak roles exist; advanced org chart is a mock, out of MVP |
+
+**In the Holberton MVP**
+
+- Authentication (register, login, refresh, logout) and session
+- User profile persisted in PostgreSQL (names, phone, organisation label, avatar)
+- Dashboard (week overview)
+- Documents: upload, list, detail, file download
+- Merged in-app calendar (create, list, update, delete; no Google / Outlook sync)
+- Layered REST API, PostgreSQL 16, Alembic
+- Docker Compose, automated tests, GitHub Actions CI
+
+**Out of the MVP** (product preview only, `ConfidiaDemoBadge`)
+
+- Multi-mailbox messaging
+- Payments and e-signature
+- External calendar sync
+- Advanced organisation chart and consent workflows
+- Live LLM (the API exposes a `MockAIProvider` to show the port)
+
+---
+
+## RNCP 6 competency mapping
+
+The title is built on three blocks. The README, the code and the demo are organised against them.
+
+| Block | Competency | Evidence in this project |
+|-------|------------|--------------------------|
+| **BC01** Develop a secure application | Work environment | Python 3.12, Flutter stable, Docker / Colima, `.env.example` |
+| BC01 | User interfaces | Flutter design system (dark-first, two brand palettes), GoRouter, form validation |
+| BC01 | Business components | Identity, documents, calendar, dashboard services behind ports |
+| BC01 | Project management | 4-week Kanban, locked scope, Git history |
+| **BC02** Layered secure application | Need analysis and mockups | This section + [docs/pitch-holberton](docs/pitch-holberton/README.md) |
+| BC02 | Software architecture | `api` → `application` → `domain` → `infrastructure` |
+| BC02 | Relational database | PostgreSQL schema (users, organisations, memberships, documents, calendars) |
+| BC02 | Data access | SQLAlchemy 2 async + repository adapters; Keycloak for passwords |
+| **BC03** Prepare a secure deployment | Test plans | pytest (API + security + integration), `flutter test`, demo-path test |
+| BC03 | Deployment documentation | This file + [docs/Installation.md](docs/Installation.md) |
+| BC03 | DevOps | Docker Compose, GitHub Actions (Postgres, Alembic, pytest, Flutter) |
+
+---
+
+## Main features
+
+- **Secure sign-in** with Keycloak (OAuth2 / OIDC password grant + refresh). Roles: `USER`, `MANAGER`, `ADMIN`.
+- **Workspace bootstrap** on first live login: one `Famille` organisation, no duplicate user row on the next login.
+- **Profile** stored in PostgreSQL (not only in the JWT).
+- **Documents** for the current organisation: sniff MIME types, size limits, household isolation.
+- **Calendar** month / week / day, stored in Postgres, isolated per organisation.
+- **Dashboard** week overview built from the same calendar data.
+- **Demo mode** in Flutter: explore the UI with mock data, no Docker. This is not the Holberton live path.
+- **API contract** documented by FastAPI / OpenAPI at `/docs` when the backend is running.
+
+---
+
+## Technologies and tools
+
+Choices are justified against a realistic alternative, as expected by a CDA jury.
+
+### Frontend
+
+| Choice | Role | Alternative considered |
+|--------|------|------------------------|
+| **Flutter** (stable) | One UI for web (demo) and later mobile / desktop | React web only: faster for a site, weaker for the multi-device product |
+| **Riverpod** | App state | `provider`: less testable, weaker compile-time safety |
+| **GoRouter** | Declarative routes | Imperative `Navigator`: harder to keep deep links and MVP vs demo paths |
+| **Dio** | HTTP client | `http`: less control over interceptors and errors |
+
+### Backend
+
+| Choice | Role | Alternative considered |
+|--------|------|------------------------|
+| **FastAPI** + Python 3.12 | REST API, OpenAPI, async | Django: heavier for an API-first hub; Express: weaker typing for this stack |
+| **Pydantic v2** | Request / response DTOs | Manual validation: more error-prone |
+| **SQLAlchemy 2** (async) + **Alembic** | ORM and migrations | Raw SQL only: harder to evolve the schema safely |
+| **Keycloak 26** | Passwords, roles, tokens | Homemade JWT in Postgres: more security work, weaker OIDC story |
+| **dependency-injector** | Composition root | Service locator in routes: leaks infrastructure into `api/` |
+
+### Data and infrastructure
+
+| Choice | Role | Alternative considered |
+|--------|------|------------------------|
+| **PostgreSQL 16** | System of record | MongoDB: weaker relational integrity for orgs / memberships |
+| **Docker Compose** | Reproducible local stack | Manual installs: not acceptable for a third-party reviewer |
+| **GitHub Actions** | CI | Local tests only: no proof on every push |
+| Paperless-ngx / Nextcloud | Optional compose services | Not used by the Holberton document path (local disk + Postgres metadata) |
+
+---
+
+## Architecture
+
+Flutter never calls Keycloak, Paperless or Nextcloud. The API is the only orchestrator.
+
+```mermaid
+flowchart LR
+  user[User]
+  flutter[FlutterClient]
+  api[FastAPI]
+  keycloak[Keycloak]
+  postgres[PostgreSQL]
+  disk[LocalDocumentStore]
+
+  user --> flutter
+  flutter -->|"HTTPS REST /api/v1"| api
+  api -->|"token grant and JWKS"| keycloak
+  api -->|"identity documents calendar"| postgres
+  api -->|"file bytes"| disk
+```
+
+### Layered backend (BC02)
+
+```mermaid
+flowchart TB
+  presentation[api: routes, guards, HTTP]
+  application[application: use cases, DTOs]
+  domain[domain: ports and rules]
+  infrastructure[infrastructure: Keycloak, Postgres, disk]
+
+  presentation --> application
+  application --> domain
+  infrastructure --> domain
+```
+
+| Layer | Directory | Responsibility |
+|-------|-----------|----------------|
+| Presentation | `apps/backend_fastapi/api/` | REST routes, status codes, `Depends` |
+| Application | `apps/backend_fastapi/application/` | Use cases, DTOs, orchestration |
+| Domain | `apps/backend_fastapi/domain/` | Ports (interfaces), no framework |
+| Infrastructure | `apps/backend_fastapi/infrastructure/` | Keycloak client, SQLAlchemy repositories, file store |
+| Cross-cutting | `apps/backend_fastapi/core/` | Settings, JWT, upload sniffing, DI |
+
+Patterns in use: **repository**, **port / adapter**, **DTO**, **dependency injection**. A rule change (for example document isolation) lives in the application / domain layer, not in a Flutter widget.
+
+---
+
+## Data model
+
+Passwords are **not** stored in CONFIDIA. `users.id` is the Keycloak `sub`. Soft delete (`deleted_at`) is reserved for later GDPR erasure. Full DDL: [docs/pitch-holberton/SQL_SCHEMA_MVP.md](docs/pitch-holberton/SQL_SCHEMA_MVP.md).
+
+```mermaid
+erDiagram
+  ORGANIZATIONS ||--o{ MEMBERSHIPS : includes
+  USERS ||--o{ MEMBERSHIPS : joins
+  ORGANIZATIONS ||--o{ DOCUMENTS : owns
+  ORGANIZATIONS ||--o{ CALENDARS : owns
+  ORGANIZATIONS ||--o{ NOTIFICATIONS : owns
+  CALENDARS ||--o{ CALENDAR_EVENTS : contains
+  DOCUMENTS ||--o{ DOCUMENT_TAGS : tagged
+  TAGS ||--o{ DOCUMENT_TAGS : used
+  USERS {
+    text id PK
+    citext email
+    text first_name
+    text last_name
+  }
+  ORGANIZATIONS {
+    uuid id PK
+    text name
+    text kind
+  }
+  DOCUMENTS {
+    uuid id PK
+    uuid organization_id FK
+    text title
+    text storage_path
+  }
+```
+
+---
+
+## Security
+
+Aligned with a defensive reading of OWASP / ANSSI for an MVP (not a production hardening audit).
+
+| Control | Implementation |
+|---------|----------------|
+| Authentication | Keycloak RS256 access tokens, JWKS verification (`APP_ENV=test` uses HS256 with a test secret) |
+| Session end | Logout revokes the refresh token; the access token stays valid until `exp` |
+| Authorisation | Household isolation on documents and calendar (`organization_id`); Keycloak roles in the JWT |
+| Uploads | MIME sniffing, 15 MiB documents / 2 MiB avatars, HTML and SVG rejected |
+| Downloads | `Content-Disposition: inline` only for PDF and images |
+| Injection / traversal | Parameterised SQL via SQLAlchemy; Nextcloud paths reject `..` |
+| HTTP | `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store` |
+| Secrets | `.env` gitignored; reviewers copy `.env.example` |
+| CORS | Restricted to the Flutter origin (`http://localhost:8082`) |
+
+Seed passwords (`user` / `user`) stay simple **on purpose** for the jury demo. They are not a production policy.
+
+---
+
+## User flow
+
+Holberton live path (the one to rehearse):
+
+```mermaid
+sequenceDiagram
+  actor User
+  participant Flutter
+  participant API
+  participant Keycloak
+  participant Postgres
+
+  User->>Flutter: open localhost:8082
+  User->>Flutter: login user / user
+  Flutter->>API: POST /api/v1/auth/login
+  API->>Keycloak: password grant
+  API->>Postgres: upsert user and Famille workspace
+  API-->>Flutter: access_token and refresh_token
+  Flutter->>API: GET /dashboard/week-overview
+  Flutter->>API: POST /documents/upload
+  Flutter->>API: GET /documents/{id}
+  User->>Flutter: logout
+  Flutter->>API: POST /auth/logout
+```
+
+Demo mode skips Keycloak and Postgres. Use it to show UI chrome, not persistence.
+
+---
+
+## Installation and configuration
+
+Another developer must be able to start from a clean machine. Run **one command at a time**. Do not paste comment lines that start with `# 1)` into zsh (that causes `parse error near ')'`).
+
+### Prerequisites
+
+| Tool | Version | Check |
+|------|---------|--------|
+| Git | 2.30+ | `git --version` |
+| Docker Engine + Compose v2 | 24+ / 2.20+ | `docker info` |
+| Flutter | stable | `flutter doctor` |
+| Python | 3.12+ | `python3 --version` |
+| curl | any | `curl --version` |
+
+On macOS without Docker Desktop: `brew install colima docker docker-compose`, then `colima start`. The start scripts try to launch Colima when `docker info` fails.
+
+### Ports
+
+| Service | URL | Notes |
+|---------|-----|--------|
+| Flutter web | http://localhost:8082 | What the jury sees |
+| FastAPI | http://localhost:8000 | Swagger: `/docs`, health: `/health` |
+| Keycloak | http://localhost:8080 | Admin console: `admin` / `admin` |
+| PostgreSQL | localhost:5432 | User `confidia` / `confidia_secret` |
+| Paperless (full stack) | http://localhost:8001 | Optional, not required for documents MVP |
+| Nextcloud (full stack) | http://localhost:8081 | Optional, not required for documents MVP |
+
+The Flutter web client calls **`http://localhost:8000/api/v1`**. Only one process may bind port 8000.
+
+### Path 1: full stack for a reviewer (recommended)
+
+From the repository root (the folder that contains this `README.md`):
 
 ```bash
-cd ~/CONFIDIA_1/apps/frontend_flutter
+git clone https://github.com/CLMNTDFR/CONFIDIA_1.git
+cd CONFIDIA_1
+chmod +x scripts/*.sh
+./scripts/start.sh
+```
+
+`start.sh` starts PostgreSQL, Keycloak, Redis, Paperless, Nextcloud **and** the API container on port 8000. It waits until the Keycloak realm (`http://localhost:8080/realms/confidia`) and the API (`http://localhost:8000/health`) both return HTTP 200 before it returns. First boot takes about 3-5 minutes (image download). No `docker/.env` file is required.
+
+Then, in a second terminal:
+
+```bash
+cd apps/frontend_flutter
+flutter pub get
 flutter run -d chrome --web-port=8082
 ```
 
-Sans cette commande (ou sans le bouton **Mode démo**), tu n’as pas l’application visuelle.
+Open http://localhost:8082 and sign in with `user` / `user`.
 
-### Les trois programmes (stack réelle)
+If you use `start.sh`, **do not** also run local `uvicorn` (port clash).
 
-Imagine trois étages. Ils doivent tourner **en même temps**, donc **plusieurs fenêtres de terminal** (une commande bloquante par fenêtre).
+### Path 2: daily development (API hot reload)
 
-1. **Docker** : PostgreSQL (tables et données) + Keycloak (vérifie `user` / `user`). Tu le laisses tourner en arrière-plan (`-d`).
-2. **FastAPI (`uvicorn`)** : l’API sur le port **8000**. Flutter lui envoie login, profil, etc. **Laisse ce terminal ouvert.**
-3. **Flutter** : l’interface sur **http://localhost:8082**. **Laisse ce terminal ouvert aussi.**
-
-`alembic upgrade head` n’est **pas** un quatrième service. C’est une commande **ponctuelle** qui crée les tables dans Postgres (première fois, ou après un changement de schéma SQL). Tu n’as pas besoin de la relancer tous les matins si les tables existent déjà.
-
-### Ports à retenir
-
-Flutter web appelle **toujours** `http://localhost:8000/api/v1`. Si l’API n’écoute pas sur **8000**, le login depuis l’app échoue.
-
-| Service | URL | Rôle |
-|---------|-----|------|
-| Application (Flutter) | http://localhost:8082 | Ce que tu vois |
-| API FastAPI | http://localhost:8000 | Cerveau (Swagger : http://localhost:8000/docs) |
-| Keycloak | http://localhost:8080 | Login (admin console : `admin` / `admin`) |
-| PostgreSQL | localhost:5432 | Données (user `confidia`, mot de passe `confidia_secret`) |
-
-**Ne lance pas l’API sur le port 8010** sauf si le 8000 est déjà pris **et** que tu changes aussi l’URL dans l’app. Le 8010 a servi un jour de contournement (un autre conteneur occupait 8000). Pour CONFIDIA, libère le 8000 :
+Lighter stack: only Postgres + Keycloak in Docker, API on the host.
 
 ```bash
-lsof -nP -iTCP:8000 -sTCP:LISTEN
-```
-
-### Où coller les commandes (sinon rien ne marche)
-
-Le prompt zsh affiche **le dossier courant** (`apps %`, `~ %`, `/ %`…). Les chemins `apps/...` et `scripts/...` ne marchent **que** depuis la racine du dépôt.
-
-1. Le bon dossier s’appelle `CONFIDIA_1`. Il contient `README.md`, `apps`, `docker` et `scripts`.
-2. Colle **une commande à la fois**, jamais un pavé avec des lignes qui commencent par `#`. Sous zsh, `# 1)` n’est **pas** un commentaire et déclenche `parse error near ')'`.
-3. Si le prompt commence par `(.venv)` alors que tu n’es pas dans `apps/backend_fastapi`, tape `deactivate` puis repars de la racine.
-
-```bash
-cd ~/CONFIDIA_1
-pwd
-ls README.md apps docker scripts
-```
-
-`pwd` doit finir par `/CONFIDIA_1`. Si tu vois `.../CONFIDIA_1/apps`, tu es **un étage trop bas** : `cd ..`
-
-### Prérequis (une fois sur la machine)
-
-- **Docker** (Docker Desktop, ou **Colima** sur macOS : `brew install colima docker docker-compose`)
-- **Flutter** (canal stable) : `flutter doctor`
-- **Python 3.12+** : `python3 --version`
-
-### Premier lancement (une fois)
-
-Le plus simple : un seul script, depuis la racine. Il crée le `.env` et le `.venv` s’ils manquent, démarre Postgres + Keycloak, applique les tables.
-
-```bash
-cd ~/CONFIDIA_1
-chmod +x scripts/*.sh
 ./scripts/dev-mvp.sh
 ```
 
-Ce script **ne lance pas** Flutter et **ne lance pas** `uvicorn` : il prépare le terrain, puis affiche les deux commandes à coller.
+The script creates `apps/backend_fastapi/.env` and `.venv` if needed, waits until the Keycloak realm answers, and runs `alembic upgrade head`. It does **not** start the API or Flutter.
 
-À la main, seulement si tu préfères (toujours depuis `~/CONFIDIA_1`). D’abord le fichier d’environnement de l’API :
+Terminal API (leave it open):
+
+```bash
+cd apps/backend_fastapi
+source .venv/bin/activate
+uvicorn api.main:app --reload --port 8000
+```
+
+`source .venv/bin/activate` must be run from `apps/backend_fastapi`, not from the repository root.
+
+Terminal Flutter (leave it open):
+
+```bash
+cd apps/frontend_flutter
+flutter run -d chrome --web-port=8082
+```
+
+### Environment
 
 ```bash
 cp apps/backend_fastapi/.env.example apps/backend_fastapi/.env
 ```
 
-Si le fichier existe déjà, `cp` peut demander confirmation : ce n’est pas grave, tu peux refuser.
+Main variables (host API):
 
-Ensuite Python (le `.venv` doit être **dans** `backend_fastapi`, pas dans `apps`) :
-
-```bash
-cd ~/CONFIDIA_1/apps/backend_fastapi
-python3 -m venv .venv
-source .venv/bin/activate
-pip install ".[dev]"
+```env
+APP_ENV=development
+DATABASE_URL=postgresql+asyncpg://confidia:confidia_secret@localhost:5432/confidia
+KEYCLOAK_URL=http://localhost:8080
+KEYCLOAK_REALM=confidia
+CORS_ORIGINS=http://localhost:3000,http://localhost:8082
 ```
 
-Puis Flutter :
+Inside Compose, the API uses `KEYCLOAK_URL=http://keycloak:8080` and `DATABASE_URL=...@postgres:5432/confidia`.
+
+### Stop
+
+- Flutter and `uvicorn`: `Ctrl+C` in their terminals
+- Containers: `./scripts/stop.sh` (`docker compose down`, volumes kept)
+- Wipe the database: `docker compose -f docker/docker-compose.yml down -v` (destructive, not a daily command)
+
+### Troubleshooting
+
+| Symptom | What to check |
+|---------|----------------|
+| `docker info` fails | `colima start` or open Docker Desktop |
+| `start.sh` times out waiting for Keycloak or `/health` | `docker logs confidia-keycloak` and `docker logs confidia-backend`. `curl` is required (the wait loop uses it). |
+| Keycloak connection error on login | Wait for `http://localhost:8080/realms/confidia` to return 200 |
+| `alembic` connection refused | Postgres is not healthy yet |
+| Flutter login fails, Swagger works | API is not on port 8000, or Flutter is not on 8082 (CORS) |
+| Port 8000 already used | Stop local uvicorn **or** `docker compose -f docker/docker-compose.yml stop backend` |
+| `No such file or directory` / cannot install `.[dev]` | You are not in `apps/backend_fastapi` |
+| Prompt shows `(.venv)` in the wrong folder | `deactivate`, then `cd` to the repo root |
+
+More detail (Paperless token, Nextcloud): [docs/Installation.md](docs/Installation.md).
+
+---
+
+## Usage
+
+### Demo accounts (Keycloak realm `confidia`)
+
+| Username | Password | Roles |
+|----------|----------|--------|
+| `user` | `user` | USER |
+| `admin` | `admin` | ADMIN, USER |
+| `manager` | `manager` | MANAGER, USER |
+
+Do not rotate `user` / `user`. The jury path depends on it.
+
+### Live demo script (about 3 minutes)
+
+Click-by-click path (French UI labels, what to skip): [docs/pitch-holberton/DEMO_CHECKLIST.md](docs/pitch-holberton/DEMO_CHECKLIST.md).
+
+1. Open http://localhost:8082. Press **Se connecter** with `user` / `user`. Do not press **Mode démo**.
+2. Stay on **Accueil** and show the week overview.
+3. **Documents**, then **Importer**, then open the row and **Télécharger**.
+4. Profile chip or **Paramètres**, then **Se déconnecter**.
+5. Optional if time: create one **Calendrier** event. Do not open screens marked **Démo**.
+
+### Demo mode (UI only)
 
 ```bash
-cd ~/CONFIDIA_1/apps/frontend_flutter
-flutter pub get
-```
-
-Sur macOS, si `docker info` échoue, démarre le moteur Docker :
-
-```bash
-colima start
-```
-
-### Tous les jours : stack réelle (3 terminaux)
-
-Chaque bloc commence par `cd ~/CONFIDIA_1/...` : tu peux le coller même si tu étais dans le mauvais dossier.
-
-**Terminal 1** (base + login ; une fois lancé, les conteneurs tournent tout seuls) :
-
-```bash
-cd ~/CONFIDIA_1/docker
-docker compose up -d postgres keycloak
-```
-
-Attends que Keycloak soit prêt (le premier démarrage peut prendre une minute). Test simple :
-
-```bash
-curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/realms/confidia
-```
-
-Tu dois voir `200`. Si tu as `000` ou une erreur de connexion, attends et réessaie.
-
-**Tables** (première fois, ou après modification du SQL) :
-
-```bash
-cd ~/CONFIDIA_1/apps/backend_fastapi
-source .venv/bin/activate
-alembic upgrade head
-```
-
-**Terminal 2** (API, reste ouvert, tu y vois les logs) :
-
-```bash
-cd ~/CONFIDIA_1/apps/backend_fastapi
-source .venv/bin/activate
-uvicorn api.main:app --reload --port 8000
-```
-
-Vérifie : http://localhost:8000/health doit répondre `healthy`.
-
-**Terminal 3** (interface, reste ouvert) :
-
-```bash
-cd ~/CONFIDIA_1/apps/frontend_flutter
+cd apps/frontend_flutter
 flutter run -d chrome --web-port=8082
 ```
 
-Ouvre **http://localhost:8082**, connecte-toi avec `user` / `user` (ou `admin` / `admin`). Le profil est alors écrit dans PostgreSQL (organisation **Famille**, sans dupliquer l’utilisateur au second login).
+On the login screen, click **Mode démo**. No API, no database. Out-of-MVP screens keep a demo badge.
 
-### Tous les jours : mode démo (1 terminal)
+### Main API surface
 
-```bash
-cd ~/CONFIDIA_1/apps/frontend_flutter
-flutter run -d chrome --web-port=8082
+Base URL: `http://localhost:8000/api/v1`. Interactive contract: http://localhost:8000/docs
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| POST | `/auth/register` | no | Create Keycloak user + tokens |
+| POST | `/auth/login` | no | Password grant + workspace upsert |
+| POST | `/auth/logout` | no | Revoke refresh token |
+| GET / PUT | `/users/me` | yes | Profile |
+| GET / POST | `/documents/` and `/documents/upload` | yes | List and upload |
+| GET | `/documents/{id}` and `/documents/{id}/file` | yes | Detail and bytes |
+| GET / POST | `/calendar/events` | yes | In-app calendar |
+| GET | `/dashboard/week-overview` | yes | Home week |
+
+---
+
+## Tests and CI
+
+The test plan follows business risk, not coverage vanity: forged tokens, household isolation, upload sniffing, and the Holberton happy path.
+
+```mermaid
+flowchart LR
+  push[git push]
+  ci[GitHub Actions]
+  pg[CI PostgreSQL]
+  py[pytest]
+  fl[flutter analyze and test]
+  push --> ci
+  ci --> pg
+  pg --> py
+  ci --> fl
 ```
 
-Sur l’écran de connexion, clique **Mode démo**. Aucun Docker, aucune API. Les données sont fictives. C’est pratique pour l’UI ; ce n’est **pas** le parcours Holberton « vrai login + vraie base ».
+| Layer | Tool | What it protects |
+|-------|------|------------------|
+| API unit / HTTP | pytest + TestClient, in-memory fakes | Auth, profile, documents, calendar, dashboard, JWT |
+| Holberton path | `tests/test_demo_path.py` | health → register → login → dashboard → upload → detail → file → logout |
+| Integration | `pytest -m integration` | Real PostgreSQL upsert, documents, calendar (skipped if Postgres is down) |
+| Security | `tests/test_security.py` | Forged HS256, empty `sub`, `alg: none`, expired token, HTML upload |
+| Flutter | `flutter test` | Live login / logout, demo vs empty live workspace, validators, MVP routes |
 
-### Deux pièges fréquents
-
-**1. `./scripts/start.sh` vs le lancement léger**
-
-`./scripts/start.sh` démarre **toute** la stack Docker : Postgres, Keycloak, Paperless, Nextcloud, **et** l’API dans un conteneur sur le port **8000**.
-
-- Si tu utilises `start.sh`, **ne lance pas** `uvicorn` en local (le port 8000 serait pris deux fois). Lance seulement Flutter.
-- Pour le MVP quotidien (login + profil + UI), le lancement léger suffit : **seulement** `postgres` + `keycloak` dans Docker, API avec `uvicorn`, Flutter à part. Paperless et Nextcloud ne sont pas nécessaires pour te connecter.
-
-**2. Tes données ne disparaissent pas quand tu arrêtes Docker**
-
-Postgres écrit dans un **volume** Docker (`postgres_data`). `docker compose stop` ou `./scripts/stop.sh` (`docker compose down`) **garde** les utilisateurs déjà créés. Seul `docker compose down -v` **efface** la base. Ne l’utilise pas par habitude.
-
-### Arrêter
-
-- Flutter et `uvicorn` : `Ctrl+C` dans leur terminal.
-- Conteneurs :
+From the repository root, after each iteration:
 
 ```bash
-cd ~/CONFIDIA_1
-./scripts/stop.sh
-```
-
-ou, si tu n’avais lancé que Postgres et Keycloak :
-
-```bash
-cd ~/CONFIDIA_1/docker
-docker compose stop postgres keycloak
-```
-
-### Si quelque chose refuse de démarrer
-
-| Symptôme | Piste |
-|----------|--------|
-| `docker info` échoue | `colima start` (macOS) ou ouvrir Docker Desktop |
-| Keycloak injoignable | Attendre le premier boot ; `docker compose -f docker/docker-compose.yml ps` et `docker logs confidia-keycloak` |
-| `alembic` : connexion refusée | Postgres n’est pas up ou pas `healthy` |
-| Login KO depuis Flutter, Swagger OK | API pas sur **8000**, ou Flutter pas sur **8082** (CORS) |
-| Port 8000 déjà utilisé | Un autre projet (souvent un conteneur `backend`). Arrête-le, ou `docker compose stop backend` dans `docker/` si `start.sh` a été lancé |
-| `zsh: parse error near ')'` | Tu as collé un commentaire du type `# 1)`. Colle seulement les lignes de commande. |
-| `No such file or directory` / `.[dev]` not installable | Mauvais dossier. `cd ~/CONFIDIA_1` puis `ls README.md` |
-
-Détail Paperless / Nextcloud / variables d’environnement : [docs/Installation.md](docs/Installation.md).
-
-## Vérifier qu’on n’a rien cassé (à chaque itération)
-
-Avant de considérer une modification terminée, lance :
-
-```bash
-cd ~/CONFIDIA_1
 ./scripts/test.sh
 ```
 
-Cela enchaîne, depuis la racine du repo :
-
-1. **pytest** dans `apps/backend_fastapi` : health, register/login, profil, documents (upload / liste / détail / fichier), dashboard, calendrier, isolation entre foyers, JWT, et le parcours de démo Holberton (`tests/test_demo_path.py`). Les tests marqués `integration` s’exécutent si PostgreSQL répond (sinon ils sont skippés).
-2. **flutter test** dans `apps/frontend_flutter` : login live mocké, session démo vs live, validateurs d'inscription, périmètre Démo.
-
-À la main :
+That runs backend pytest then `flutter test`.
 
 ```bash
-cd ~/CONFIDIA_1/apps/backend_fastapi
+cd apps/backend_fastapi
 source .venv/bin/activate
 pytest -q
-```
-
-Frontend (pas besoin de Postgres) :
-
-```bash
-cd ~/CONFIDIA_1/apps/frontend_flutter
-flutter test
-```
-
-Avec Postgres déjà lancé (`./scripts/dev-mvp.sh`) :
-
-```bash
-cd ~/CONFIDIA_1/apps/backend_fastapi
-source .venv/bin/activate
 pytest -m integration -q
 ```
 
-Sur GitHub, [`.github/workflows/ci.yml`](.github/workflows/ci.yml) installe un Postgres de CI, applique Alembic, lance pytest (y compris l’intégration), puis `flutter analyze` et `flutter test`.
+```bash
+cd apps/frontend_flutter
+flutter test
+```
 
-## Fonctionnalités MVP
+CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): GitHub-hosted Postgres, `alembic upgrade head`, full pytest (including integration), `flutter analyze`, `flutter test`. `ruff` is informational (`continue-on-error`) for now.
 
-- Authentification OAuth2/OIDC via Keycloak (rôles ADMIN, USER, MANAGER)
-- Gestion des profils utilisateurs
-- Consultation, upload et classement documentaire (Paperless-ngx)
-- Stockage sécurisé (Nextcloud via WebDAV)
-- Calendrier (mois / semaine / jour)
-- Centre de notifications
-- Tableau de bord premium
-- Architecture IA prête (MockAIProvider)
-- **Gouvernance & accès** : organigramme, rôles, droits, consentement, assistant planning (maquette, hors MVP Holberton)
+---
 
-## Stack technique
+## Project management
 
-| Couche | Technologie |
-|--------|-------------|
-| Frontend | Flutter (Android, iOS, Windows, macOS, Linux, Web) |
-| Backend | FastAPI + Python 3.12+ |
-| Auth | Keycloak (OAuth2, OIDC, Refresh Tokens) |
-| Données CONFIDIA | PostgreSQL 16 (schéma MVP + Alembic) |
-| Documents | Paperless-ngx |
-| Stockage | Nextcloud |
-| État | Riverpod |
-| Routing | GoRouter |
-| HTTP | Dio |
+- **Method:** Kanban, one visible weekly deliverable, scope locked in writing.
+- **Horizon:** 4 weeks / 27 days (Holberton Webstack pitch).
+- **Board:** [docs/pitch-holberton/KANBAN.md](docs/pitch-holberton/KANBAN.md)
+- **Git:** feature work on branches, merge into `main`. `.env` files are gitignored. No secrets in the tree.
+- **Solo constraint:** product framing, UX, backend, frontend and DevOps are owned by one author. Scope stays small on purpose.
 
-## Structure du monorepo
+| Week | Deliverable |
+|------|-------------|
+| 1 | Framing, MVP mockups, SQL, API skeleton, auth |
+| 2 | Documents end to end (API + Flutter) |
+| 3 | Dashboard, calendar, security, tests, Docker |
+| 4 | UI polish, deployment docs, stricter CI, demo rehearsal |
+
+---
+
+## Repository structure
 
 ```
-CONFIDIA/
+CONFIDIA_1/
 ├── apps/
-│   ├── frontend_flutter/     # Application Flutter
-│   └── backend_fastapi/      # API FastAPI (Clean Architecture)
-├── services/
-│   ├── keycloak/             # Configuration realm Keycloak
-│   ├── paperless/            # Documentation Paperless
-│   └── nextcloud/            # Documentation Nextcloud
-├── docker/                   # Docker Compose (tous les services)
-├── docs/                     # Documentation détaillée
-└── scripts/                  # Démarrage, arrêt, tests
+│   ├── frontend_flutter/      # Flutter client (Riverpod, GoRouter, Dio)
+│   └── backend_fastapi/       # FastAPI, layers, Alembic, pytest
+├── services/keycloak/         # Realm export (users, roles, clients)
+├── docker/                    # Compose: Postgres, Keycloak, API, extras
+├── docs/                      # Architecture, installation, pitch, SQL
+├── scripts/                   # start.sh, dev-mvp.sh, stop.sh, test.sh
+└── .github/workflows/ci.yml
 ```
 
-## Comptes de test
+---
 
-| Utilisateur | Mot de passe | Rôles |
-|-------------|--------------|-------|
-| admin | admin | ADMIN, USER |
-| user | user | USER |
-| manager | manager | MANAGER, USER |
+## Resources
 
-## Gouvernance, rôles & droits
-
-CONFIDIA vise des usages **personnels** et **collectifs** (famille, club, association). L'utilisateur configure lui-même :
-
-| Capacité | Description |
-|----------|-------------|
-| **Organigramme** | Hiérarchie visuelle drag-and-drop (directeur → staff → licenciés…) |
-| **Rôles** | Modèles prédéfinis (admin, parent, entraîneur, trésorier…) |
-| **Permissions** | Droits fins : calendrier, pièces d'identité, bulletins de salaire… |
-| **Consentement** | Notification + acceptation/refus avant partage de documents sensibles |
-| **IA Planning** | Détection de conflits calendrier / trajets, proposition ajustable par prompt |
-
-**Dans l'app :** Paramètres → *Gouvernance & accès* (`/access-control`)
-
-**Documentation complète :** [docs/AccessControl.md](docs/AccessControl.md)
-
-**API :** `GET/PUT /api/v1/access-control/*` (voir Swagger)
-
-## Documentation
-
-- [Installation (stack complète, Paperless, Nextcloud)](docs/Installation.md)
-- [Architecture](docs/Architecture.md)
-- [Gouvernance & accès](docs/AccessControl.md)
-- [Design system Flutter](apps/frontend_flutter/README.md)
-- [Schéma SQL MVP](docs/pitch-holberton/SQL_SCHEMA_MVP.md)
+- [Flutter](https://docs.flutter.dev/)
+- [FastAPI](https://fastapi.tiangolo.com/)
+- [SQLAlchemy 2](https://docs.sqlalchemy.org/)
+- [Alembic](https://alembic.sqlalchemy.org/)
+- [Keycloak](https://www.keycloak.org/documentation)
+- [PostgreSQL 16](https://www.postgresql.org/docs/16/)
+- [Docker Compose](https://docs.docker.com/compose/)
+- [RNCP 37873](https://www.francecompetences.fr/recherche/rncp/37873/)
+- [Architecture notes](docs/Architecture.md)
+- [SQL schema](docs/pitch-holberton/SQL_SCHEMA_MVP.md)
+- [Flutter design system](apps/frontend_flutter/README.md)
+- [Full-stack install extras](docs/Installation.md)
+- [Access-control preview](docs/AccessControl.md)
 - [Roadmap](docs/Roadmap.md)
-- [Contributing](docs/Contributing.md)
 
-## Identité visuelle
+---
 
-Deux palettes interchangeables (Paramètres → Apparence) :
+## Future features
 
-| | Thème bleu (défaut) | Thème rose |
-|---|---|---|
-| Primary | `#015AAB` | `#D20050` |
-| Secondary | `#06E5EF` | `#AF73F7` |
+Kept in the backlog on purpose. They must not leak into the MVP demo.
 
-Dark mode par défaut, light mode disponible. Voir le [design system](apps/frontend_flutter/README.md).
+- Google / Outlook / Apple calendar sync
+- Multi-mailbox inbox
+- Payments and e-signature
+- Fine-grained organisation roles and consent
+- Production LLM behind the existing `DocumentAIProvider` port
+- Paperless token and Nextcloud WebDAV as real document backends
 
-## Licence
+---
 
-Propriétaire. CONFIDIA SAS.
+## Contributing
+
+This is a solo portfolio repository. External contributions are welcome as a clean GitHub workflow:
+
+1. Fork the repository.
+2. Create a branch (`feature/...` or `fix/...`).
+3. Keep layers intact (`api` must not import infrastructure adapters directly).
+4. Run `./scripts/test.sh`.
+5. Open a pull request against `main`.
+
+Details: [docs/Contributing.md](docs/Contributing.md).
+
+---
+
+## Author
+
+**Clément Defer** · Holberton Webstack · RNCP 6 CDA candidate
+
+- LinkedIn: [linkedin.com/in/clmntdfr](https://www.linkedin.com/in/clmntdfr/)
+- Portfolio: [clementdefer.netlify.app](https://clementdefer.netlify.app/)
+- Email: deferclement59@gmail.com
+
+Roles covered on this project: product framing, UX mockups, backend, frontend, security, tests, Docker and documentation.
+
+---
+
+## License
+
+Proprietary. CONFIDIA. All rights reserved.

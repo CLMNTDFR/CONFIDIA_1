@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 
-/// Scène graphique à plans  -  halo d'ambiance + contenu au premier plan.
+/// Layered chart stage: ambient glow plus foreground content.
 class PremiumChartStage extends StatelessWidget {
   final Widget child;
   final List<Color> accentColors;
@@ -147,7 +147,7 @@ class _ChartAmbientPainter extends CustomPainter {
       oldDelegate.colors != colors || oldDelegate.isDark != isDark;
 }
 
-/// Opacité d'une série selon le focus (plan actif / arrière-plan).
+/// Series opacity based on focus (active plane / background).
 double premiumSeriesOpacity({
   required int index,
   required int? activeIndex,

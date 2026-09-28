@@ -15,7 +15,7 @@ import 'confidia_text_field.dart';
 import 'confidia_tooltip.dart';
 import 'glass_card.dart';
 
-/// Panneau Confid•IA (calendrier / gouvernance) : analyse, proposition, ajustement.
+/// Confid•IA panel (calendar / governance): analysis, proposal, adjustment.
 class PlanningAiPanel extends StatefulWidget {
   final PlanningProposal? proposal;
   final bool loading;

@@ -6,7 +6,7 @@ import 'confidia_demo_badge.dart';
 import 'confidia_tooltip.dart';
 import 'glass_card.dart';
 
-/// Bouton compact « Voir tout »  -  flèche discrète, cohérente sur tout le tableau de bord.
+/// Compact « Voir tout » button: discreet arrow, consistent across the dashboard.
 class ConfidiaSeeAllButton extends StatelessWidget {
   final VoidCallback onTap;
 
@@ -27,7 +27,7 @@ class ConfidiaSeeAllButton extends StatelessWidget {
   }
 }
 
-/// Enveloppe graphique partagée pour le tableau de bord.
+/// Shared chart wrapper for the dashboard.
 class ConfidiaChartCard extends StatelessWidget {
   final String title;
   final String? subtitle;
@@ -112,7 +112,7 @@ class ConfidiaChartCard extends StatelessWidget {
   }
 }
 
-/// Pastille compacte pour métriques / séries de graphiques.
+/// Compact pill for chart metrics / series.
 class ConfidiaChartMetricChip extends StatelessWidget {
   final String label;
   final Color color;

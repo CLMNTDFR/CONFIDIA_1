@@ -1,8 +1,8 @@
 /// Barrel Design Tokens CONFIDIA.
 ///
-/// Source de vérité esthétique. Les façades [ConfidiaColors], [ConfidiaSpacing]
-/// et [ConfidiaTypography] délèguent ici. Migrer progressivement les widgets
-/// partagés vers ces tokens (sans changer les layouts d'écrans).
+/// Aesthetic source of truth. The [ConfidiaColors], [ConfidiaSpacing]
+/// and [ConfidiaTypography] facades delegate here. Gradually migrate shared
+/// widgets to these tokens (without changing screen layouts).
 library;
 
 export 'app_blur.dart';

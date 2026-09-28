@@ -1,97 +1,29 @@
-# Installation CONFIDIA
+# Installation
 
-**Lancement quotidien (débutant, mode démo vs login réel, ports, tests) :** suis le [README à la racine du dépôt](../README.md). Cette page décrit l’installation **complète** (Paperless, Nextcloud, backend dans Docker).
+The Holberton live path lives in the [root README](../README.md) (Installation and configuration). This page is the short extra: official Docker path, daily host API, optional Paperless token.
 
-## Prérequis
+## Prerequisites
 
-| Outil | Version minimale |
-|-------|-----------------|
-| Docker | 24+ |
-| Docker Compose | 2.20+ |
-| Flutter | 3.7+ (stable) |
-| Python | 3.12+ |
-| Git | 2.30+ |
+| Tool | Version | Check |
+|------|---------|--------|
+| Git | 2.30+ | `git --version` |
+| Docker Engine + Compose v2 | 24+ / 2.20+ | `docker info` |
+| Flutter | stable | `flutter doctor` |
+| Python | 3.12+ | `python3 --version` |
+| curl | any | `curl --version` |
 
-### Plateformes Flutter supportées
+On macOS without Docker Desktop: `brew install colima docker docker-compose`, then `colima start`.
 
-- Android (API 21+)
-- iOS (13+)
-- Windows 10+
-- macOS 10.15+
-- Linux (Ubuntu 20.04+)
+## Official path (reviewer / jury)
 
-## Installation complète
-
-### 1. Cloner le dépôt
-
-```bash
-git clone <repo-url> confidia
-cd confidia
-```
-
-### 2. Configuration environnement
-
-```bash
-cp apps/backend_fastapi/.env.example apps/backend_fastapi/.env
-```
-
-Variables principales :
-
-```env
-APP_ENV=development
-DATABASE_URL=postgresql+asyncpg://confidia:confidia_secret@localhost:5432/confidia
-KEYCLOAK_URL=http://localhost:8080
-KEYCLOAK_REALM=confidia
-PAPERLESS_URL=http://localhost:8001
-PAPERLESS_TOKEN=
-NEXTCLOUD_URL=http://localhost:8081
-```
-
-### 3. Démarrer l'infrastructure Docker
+From the repository root. `start.sh` starts the full Compose stack, including the API on port 8000. It waits until `http://localhost:8080/realms/confidia` and `http://localhost:8000/health` both return HTTP 200, then returns. First boot: about 3-5 minutes (image download). No `docker/.env` file is required.
 
 ```bash
 chmod +x scripts/*.sh
 ./scripts/start.sh
 ```
 
-Premier démarrage : ~3-5 minutes (téléchargement images, init DB).
-
-Le backend applique les migrations Alembic au démarrage du conteneur (`alembic upgrade head`). En local :
-
-```bash
-cd apps/backend_fastapi
-source .venv/bin/activate
-alembic upgrade head
-```
-
-Services disponibles :
-
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| Keycloak | http://localhost:8080 | admin / admin |
-| Paperless | http://localhost:8001 | admin / admin |
-| Nextcloud | http://localhost:8081 | admin / admin |
-| Backend API | http://localhost:8000 | via Keycloak |
-| PostgreSQL | localhost:5432 | confidia / confidia_secret |
-
-### 4. Configurer Paperless (optionnel)
-
-1. Accéder à http://localhost:8001
-2. Se connecter (admin/admin)
-3. Aller dans **Admin → Auth Tokens**
-4. Créer un token et l'ajouter à `PAPERLESS_TOKEN`
-
-### 5. Backend (développement local)
-
-```bash
-cd apps/backend_fastapi
-python3 -m venv .venv
-source .venv/bin/activate
-pip install ".[dev]"
-uvicorn api.main:app --reload --port 8000
-```
-
-### 6. Frontend Flutter
+Do **not** run local `uvicorn` after `start.sh` (port 8000 clash). Next step is Flutter only:
 
 ```bash
 cd apps/frontend_flutter
@@ -99,49 +31,67 @@ flutter pub get
 flutter run -d chrome --web-port=8082
 ```
 
-L’app web écoute sur **http://localhost:8082** et parle à l’API sur **http://localhost:8000**. Sans Flutter, tu n’as que l’API.
+Open http://localhost:8082 and sign in with `user` / `user`.
 
-#### Cibler une plateforme
+## Daily path (API hot reload)
 
-```bash
-flutter run -d macos        # macOS
-flutter run -d chrome --web-port=8082   # Web (port attendu par l'API / CORS)
-flutter run -d windows      # Windows
-flutter devices             # Lister les appareils
-```
-
-#### Mode démo (sans backend)
-
-Sur l'écran de connexion, cliquer **Mode démo** pour utiliser les données mockées.
-
-### 7. Vérification
+Postgres and Keycloak in Docker, API on the host:
 
 ```bash
-# Backend health
-curl http://localhost:8000/health
-
-# Suite de non-régression (API + Flutter)
-./scripts/test.sh
+./scripts/dev-mvp.sh
 ```
 
-## Arrêt des services
+Then uvicorn (leave the terminal open):
+
+```bash
+cd apps/backend_fastapi
+source .venv/bin/activate
+uvicorn api.main:app --reload --port 8000
+```
+
+Then Flutter (same commands as the official path). If `confidia-backend` still holds port 8000, stop it first:
+
+```bash
+docker compose -f docker/docker-compose.yml stop backend
+```
+
+`dev-mvp.sh` creates `apps/backend_fastapi/.env` from `.env.example` when missing. That host `.env` is for uvicorn, not for Compose.
+
+## Optional: Paperless token
+
+Not needed for Holberton documents (local disk + Postgres metadata). Only if you want the Paperless extra:
+
+1. Open http://localhost:8001 and sign in (`admin` / `admin`).
+2. Admin, then Auth Tokens: create a token.
+3. Set `PAPERLESS_TOKEN` in `apps/backend_fastapi/.env` for host uvicorn, or export it before Compose.
+
+## Compose commands
+
+Use the project file from the repository root:
+
+```bash
+docker compose -f docker/docker-compose.yml ps
+docker compose -f docker/docker-compose.yml logs paperless
+```
+
+Or `cd docker` then `docker compose ...`. `docker compose` from the repo root without `-f` will not find this stack.
+
+## Stop and checks
 
 ```bash
 ./scripts/stop.sh
+curl http://localhost:8000/health
+./scripts/test.sh
 ```
 
-## Dépannage
+Wipe volumes (destructive): `docker compose -f docker/docker-compose.yml down -v`
 
-### Keycloak ne démarre pas
-Vérifier que PostgreSQL est healthy : `docker compose ps`
+## Troubleshooting
 
-### Paperless timeout
-Le premier démarrage peut prendre plusieurs minutes. Vérifier les logs : `docker compose logs paperless`
-
-### Flutter — erreur Android Studio
-```bash
-flutter config --android-studio-dir ""
-```
-
-### Port déjà utilisé
-Modifier les ports dans `docker/docker-compose.yml`
+| Symptom | What to check |
+|---------|----------------|
+| `start.sh` times out | `docker logs confidia-keycloak` and `docker logs confidia-backend`. `curl` is required for the wait loop. |
+| `docker info` fails | `colima start` or open Docker Desktop |
+| Keycloak connection error on login | Wait for `http://localhost:8080/realms/confidia` to return 200 |
+| Port 8000 already used | Stop local uvicorn, or `docker compose -f docker/docker-compose.yml stop backend` |
+| Flutter Android Studio error | `flutter config --android-studio-dir ""` |

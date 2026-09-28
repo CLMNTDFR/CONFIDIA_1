@@ -1,7 +1,7 @@
 import '../models/calendar_event_model.dart';
 import '../models/email_model.dart';
 
-/// Chemins des logos (sans préfixe `assets/` → évite le double chemin sur Flutter Web).
+/// Logo paths (no `assets/` prefix, avoids a double path on Flutter Web).
 abstract final class BrandAssets {
   static const base = 'brands';
 
@@ -22,7 +22,7 @@ abstract final class BrandAssets {
   static const paperless = '$base/paperlessngx.png';
   static const nextcloud = '$base/nextcloud.png';
 
-  /// Fichiers actuellement présents dans le bundle (évite les 404 console).
+  /// Files currently present in the bundle (avoids console 404s).
   static const bundled = {
     gmail,
     proton,

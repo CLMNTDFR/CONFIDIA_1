@@ -1,7 +1,7 @@
 import 'tokens/app_radius.dart';
 import 'tokens/app_spacing.dart';
 
-/// Façade rétrocompatible. Source : [AppSpacing] / [AppRadius].
+/// Backward-compatible facade. Source: [AppSpacing] / [AppRadius].
 abstract final class ConfidiaSpacing {
   static const double xs = AppSpacing.xs;
   static const double sm = AppSpacing.sm;

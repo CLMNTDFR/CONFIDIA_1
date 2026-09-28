@@ -63,7 +63,7 @@ class DayStartNotifier extends StateNotifier<DayStartSession> {
     );
   }
 
-  /// Recalcule le briefing à partir des données live (factures payées exclues).
+  /// Recomputes the briefing from live data (paid invoices excluded).
   void refreshBriefing() {
     if (state.briefing == null && !state.isOpen) return;
     final briefing = _buildBriefing();
@@ -94,7 +94,7 @@ class DayStartNotifier extends StateNotifier<DayStartSession> {
     );
   }
 
-  /// Rouvre le briefing avec les données à jour (priorités résolues disparues).
+  /// Reopens the briefing with up-to-date data (resolved priorities gone).
   Future<void> reopen() async {
     state = state.copyWith(phase: DayStartPhase.preparing);
     await Future<void>.delayed(const Duration(milliseconds: 220));
@@ -102,7 +102,7 @@ class DayStartNotifier extends StateNotifier<DayStartSession> {
     state = state.copyWith(phase: DayStartPhase.ready, briefing: _buildBriefing());
   }
 
-  /// Ouvre le briefing depuis le chip top bar (start ou reopen selon le jour).
+  /// Opens the briefing from the top-bar chip (start or reopen depending on the day).
   Future<void> openFromChip() async {
     if (state.isOpen) {
       refreshBriefing();

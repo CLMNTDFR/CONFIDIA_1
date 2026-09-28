@@ -11,7 +11,7 @@ abstract final class ConfidiaAiAssets {
       palette.id == ConfidiaPaletteId.rose ? pink : blue;
 }
 
-/// Logo assistant IA : PNG fixe par thème, halo gris discret quand [speaking].
+/// AI assistant logo: fixed PNG per theme, discreet gray halo when [speaking].
 class ConfidiaAiRobot extends StatefulWidget {
   final double size;
   final bool speaking;

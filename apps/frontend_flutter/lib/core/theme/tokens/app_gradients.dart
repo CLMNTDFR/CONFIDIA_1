@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../palette.dart';
 import 'app_opacity.dart';
 
-/// Dégradés : façade mince sur [ConfidiaPalette] (pas de fork de couleurs).
+/// Gradients: thin facade over [ConfidiaPalette] (no color fork).
 abstract final class AppGradients {
   static LinearGradient primary(ConfidiaPalette palette) => palette.primaryGradient;
 
@@ -16,7 +16,7 @@ abstract final class AppGradients {
 
   static LinearGradient meshDark(ConfidiaPalette palette) => palette.meshGradientDark;
 
-  /// Lavis radial discret (overlays). Compose la palette, n'invente pas de hex.
+  /// Subtle radial wash (overlays). Composes the palette, does not invent hex values.
   static RadialGradient ambientWash(ConfidiaPalette palette, {required bool isDark}) {
     return RadialGradient(
       center: const Alignment(-0.4, -0.55),

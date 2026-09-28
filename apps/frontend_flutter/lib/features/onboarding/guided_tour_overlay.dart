@@ -15,7 +15,7 @@ import 'guided_tour_demo.dart';
 import 'guided_tour_provider.dart';
 import 'onboarding_targets.dart';
 
-/// Overlay spotlight + bulle Confid•IA pour la visite guidée.
+/// Spotlight overlay + Confid•IA bubble for the guided tour.
 class GuidedTourOverlay extends ConsumerStatefulWidget {
   const GuidedTourOverlay({super.key});
 
@@ -181,7 +181,7 @@ class _GuidedTourOverlayState extends ConsumerState<GuidedTourOverlay>
     router.go(route);
     await Future<void>.delayed(_routeSettle);
     if (!mounted) return;
-    // Laisse un frame pour monter les GlobalKeys de la nouvelle page.
+    // Wait one frame so the new page's GlobalKeys can mount.
     await Future<void>.delayed(const Duration(milliseconds: 50));
   }
 
@@ -192,7 +192,7 @@ class _GuidedTourOverlayState extends ConsumerState<GuidedTourOverlay>
     final key = step.targetKeyFor(context);
     Rect? target;
 
-    // Retry léger si la page vient de changer (clés pas encore montées).
+    // Light retry if the page just changed (keys not mounted yet).
     for (var attempt = 0; attempt < 4 && key != null; attempt++) {
       if (key.currentContext != null) break;
       await Future<void>.delayed(Duration(milliseconds: 60 + attempt * 40));
@@ -269,7 +269,7 @@ class _GuidedTourOverlayState extends ConsumerState<GuidedTourOverlay>
     if (from == null && to == null) return null;
     if (from == null) return Rect.lerp(to!.deflate(12), to, t);
     if (to == null) {
-      // Pas de cible (ex. retour accueil) : fermer le spotlight, pas de trou résiduel.
+      // No target (e.g. back to home): close the spotlight, no leftover hole.
       if (t >= 1) return null;
       final collapsed = Rect.fromCenter(center: from.center, width: 0, height: 0);
       return Rect.lerp(from, collapsed, Curves.easeInOutCubic.transform(t));
@@ -756,7 +756,7 @@ class _SpotlightPainter extends CustomPainter {
 
     canvas.drawPath(cut, Paint()..color = scrimColor);
 
-    // Halo très léger, juste pour lire le contour sans éclairer la zone.
+    // Very light halo, just enough to read the outline without lighting up the area.
     canvas.drawRRect(
       rrect.inflate(1),
       Paint()

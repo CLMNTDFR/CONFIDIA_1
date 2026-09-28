@@ -7,7 +7,7 @@ import 'confidia_menu.dart';
 import 'confidia_tappable.dart';
 import 'confidia_text_field.dart';
 
-/// Menu déroulant au style CONFIDIA, aligné sur [ConfidiaTextFormField].
+/// CONFIDIA-styled dropdown menu, aligned with [ConfidiaTextFormField].
 class ConfidiaDropdownField<T> extends StatefulWidget {
   final T? value;
   final List<T> items;

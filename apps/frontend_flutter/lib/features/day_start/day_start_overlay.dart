@@ -24,8 +24,8 @@ import 'day_glance_strip.dart';
 import 'day_priority_carousel.dart';
 import 'day_start_provider.dart';
 
-/// Overlay immersif du rituel « Commencer ma journée ».
-/// Même langage que [showConfidiaSheet] : blur en fondu, sheet en slide, centrage shell.
+/// Immersive overlay for the « Commencer ma journée » ritual.
+/// Same language as [showConfidiaSheet]: fade-in blur, sliding sheet, shell centering.
 class DayStartOverlay extends ConsumerStatefulWidget {
   const DayStartOverlay({super.key});
 
@@ -277,7 +277,7 @@ class _DayStartCardState extends ConsumerState<_DayStartCard> {
             ),
           ),
           Divider(height: 1, color: AppBorders.subtle(isDark).color),
-          // Remplit le plafond parent ; le ListView scroll sans overflow.
+          // Fills the parent bounds; the ListView scrolls without overflow.
           Expanded(
             child: Theme(
               data: Theme.of(context).copyWith(

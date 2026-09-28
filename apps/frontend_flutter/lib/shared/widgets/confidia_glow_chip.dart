@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/tokens/tokens.dart';
 
-/// Chip / pill de sélection  -  filtres, actions, liens compacts.
+/// Selection chip / pill: filters, actions, compact links.
 class ConfidiaGlowChip extends StatefulWidget {
   final String label;
   final bool selected;
@@ -157,7 +157,7 @@ class _ConfidiaGlowChipState extends State<ConfidiaGlowChip> with SingleTickerPr
   }
 }
 
-/// Barre contenant des chips (filtres, actions rapides).
+/// Bar containing chips (filters, quick actions).
 class ConfidiaGlowChipBar extends StatelessWidget {
   final List<Widget> children;
   final bool centered;
@@ -201,7 +201,7 @@ class ConfidiaGlowChipBar extends StatelessWidget {
   }
 }
 
-/// Rangée horizontale scrollable de chips.
+/// Horizontally scrollable chip row.
 class ConfidiaGlowChipScroll extends StatelessWidget {
   final List<Widget> children;
   final EdgeInsetsGeometry padding;
@@ -226,7 +226,7 @@ class ConfidiaGlowChipScroll extends StatelessWidget {
   }
 }
 
-/// Lien compact « Voir tout ».
+/// Compact « Voir tout » link.
 class ConfidiaGlowLink extends StatefulWidget {
   final String label;
   final VoidCallback onTap;

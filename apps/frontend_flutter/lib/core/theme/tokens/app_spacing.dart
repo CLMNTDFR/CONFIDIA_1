@@ -1,7 +1,7 @@
-/// Espacements du Design System (grille stricte 4 px).
+/// Design System spacing (strict 4 px grid).
 ///
-/// Échelle principale : 4 · 8 · 16 · 24 · 32 · 48 · 64.
-/// Pas intermédiaires : 12 · 20 · 28 (quand un pas entre sm/md ou lg/xl est utile).
+/// Main scale: 4 · 8 · 16 · 24 · 32 · 48 · 64.
+/// Intermediate steps: 12 · 20 · 28 (when a step between sm/md or lg/xl is useful).
 abstract final class AppSpacing {
   static const double xs = 4;
   static const double sm = 8;
@@ -19,9 +19,9 @@ abstract final class AppSpacing {
   static const double topBarHeight = 64;
   static const double maxContentWidth = 1400;
 
-  /// Hauteur Material [NavigationBarThemeData].
+  /// Material [NavigationBarThemeData] height.
   static const double materialNavBarHeight = 68;
 
-  /// Chrome bottom nav custom (padding + icône + label), hors safe area.
+  /// Custom chrome bottom nav (padding + icon + label), excluding safe area.
   static const double navBarHeight = 72;
 }

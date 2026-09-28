@@ -8,7 +8,7 @@ import '../../shared/widgets/confidia_tappable.dart';
 import '../day_start/day_start_provider.dart';
 import '../onboarding/onboarding_targets.dart';
 
-/// CTA principal du dashboard pour le rituel « Commencer ma journée ».
+/// Main dashboard CTA for the « Commencer ma journée » ritual.
 class StartMyDayHero extends ConsumerWidget {
   const StartMyDayHero({super.key});
 

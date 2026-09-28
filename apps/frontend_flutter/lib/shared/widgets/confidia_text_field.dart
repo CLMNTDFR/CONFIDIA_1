@@ -4,7 +4,7 @@ import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 
-/// Champ de formulaire premium - typo compacte, bordures sobres.
+/// Premium form field: compact typography, understated borders.
 class ConfidiaTextFormField extends StatelessWidget {
   final TextEditingController? controller;
   final FocusNode? focusNode;
@@ -15,6 +15,7 @@ class ConfidiaTextFormField extends StatelessWidget {
   final bool obscureText;
   final int maxLines;
   final String? Function(String?)? validator;
+  final AutovalidateMode? autovalidateMode;
   final bool enabled;
   final bool autofocus;
   final TextInputAction? textInputAction;
@@ -38,6 +39,7 @@ class ConfidiaTextFormField extends StatelessWidget {
     this.obscureText = false,
     this.maxLines = 1,
     this.validator,
+    this.autovalidateMode,
     this.enabled = true,
     this.autofocus = false,
     this.textInputAction,
@@ -71,6 +73,7 @@ class ConfidiaTextFormField extends StatelessWidget {
       obscureText: obscureText,
       maxLines: maxLines,
       validator: validator,
+      autovalidateMode: autovalidateMode,
       textInputAction: textInputAction,
       keyboardType: keyboardType,
       textCapitalization: textCapitalization,
@@ -127,6 +130,7 @@ class ConfidiaTextFormField extends StatelessWidget {
           borderRadius: AppRadius.controlAll,
           borderSide: AppBorders.error(width: AppBorders.focus),
         ),
+        errorMaxLines: 3,
       ),
     );
   }

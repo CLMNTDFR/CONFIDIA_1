@@ -12,7 +12,7 @@ import '../../../shared/widgets/glass_card.dart';
 import 'org_chart_layout.dart';
 import 'org_chart_sheets.dart';
 
-/// Organigramme par niveaux horizontaux avec grille, toolbar et drag-and-drop.
+/// Org chart by horizontal levels with grid, toolbar, and drag-and-drop.
 class OrgChartWidget extends StatefulWidget {
   final List<OrgNode> nodes;
   final List<AccessMember> members;

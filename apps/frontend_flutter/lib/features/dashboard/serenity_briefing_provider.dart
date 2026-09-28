@@ -10,7 +10,7 @@ import '../messaging/messaging_provider.dart';
 import '../notifications/notifications_provider.dart';
 import '../payments/payments_provider.dart';
 
-/// Briefing calculé depuis les providers du compte courant (démo ou live).
+/// Briefing computed from the current account providers (demo or live).
 final serenityBriefingProvider = Provider<SerenityBriefing>((ref) {
   final auth = ref.watch(authStateProvider);
   return SerenityService.build(

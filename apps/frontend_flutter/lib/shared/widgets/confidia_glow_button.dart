@@ -5,7 +5,7 @@ import '../../core/theme/theme_context.dart';
 import '../../core/theme/tokens/tokens.dart';
 import 'confidia_tappable.dart';
 
-/// Bouton d'action compact. Primary = fill marque sobre (pas de glow néon).
+/// Compact action button. Primary = understated brand fill (no neon glow).
 class ConfidiaGlowButton extends StatelessWidget {
   final String label;
   final IconData icon;

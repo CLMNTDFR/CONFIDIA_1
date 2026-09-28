@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'tokens/app_colors.dart';
 
-/// Façade rétrocompatible. Source de vérité : [AppColors].
+/// Backward-compatible facade. Source of truth: [AppColors].
 abstract final class ConfidiaColors {
   static const Color darkBackground = AppColors.darkBackground;
   static const Color darkSurface = AppColors.darkSurface;

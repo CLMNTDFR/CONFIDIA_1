@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 enum StructureTemplate { family, club, enterprise, custom }
 
-/// Type de lien hiérarchique entre un nœud et son parent.
+/// Type of hierarchical link between a node and its parent.
 enum OrgHierarchyLinkType {
   reportsTo,
   dottedLine,

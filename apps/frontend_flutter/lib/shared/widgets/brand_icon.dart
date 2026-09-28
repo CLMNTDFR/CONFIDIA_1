@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Affiche le logo d'une marque tierce si [assetPath] est fourni et présent dans le bundle.
-/// Les PNG noirs sur fond transparent reçoivent un socle clair en dark mode.
+/// Shows a third-party brand logo if [assetPath] is provided and present in the bundle.
+/// Black PNGs on a transparent background get a light pedestal in dark mode.
 class BrandIcon extends StatelessWidget {
   final String? assetPath;
   final IconData fallbackIcon;
@@ -68,7 +68,7 @@ class BrandIcon extends StatelessWidget {
   }
 }
 
-/// Logo + libellé pour les chips de fournisseurs.
+/// Logo + label for provider chips.
 class BrandLabel extends StatelessWidget {
   final String? assetPath;
   final IconData fallbackIcon;

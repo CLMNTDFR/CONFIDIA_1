@@ -251,7 +251,7 @@ class _ProfileEditContentState extends ConsumerState<_ProfileEditContent> {
         validator: (v) => v?.trim().isEmpty == true ? 'Requis' : null,
       ),
       const SizedBox(height: ConfidiaSpacing.sm),
-      // Email lié à l'auth : non modifiable tant qu'il n'y a pas de flux backend dédié.
+      // Email tied to auth: not editable until a dedicated backend flow exists.
       ConfidiaTextFormField(
         controller: _emailCtrl,
         labelText: 'Email',

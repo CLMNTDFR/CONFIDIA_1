@@ -3,7 +3,7 @@ import '../models/ai_insight_model.dart';
 import '../models/document_model.dart';
 import '../models/email_model.dart';
 
-/// Couche IA simulée pour la démo investisseurs.
+/// Simulated AI layer for the investor demo.
 class MockAiService {
   const MockAiService();
 
@@ -38,7 +38,7 @@ class MockAiService {
   String generatePaymentConfirmation(String creditor, double amount) =>
       'Paiement de ${amount.toStringAsFixed(2)} € à $creditor traité avec succès. Reçu archivé dans votre coffre-fort numérique.';
 
-  /// Narration du rituel "Commencer ma journée" (streaming UI).
+  /// Narration for the "Commencer ma journée" ritual (streaming UI).
   String composeDayNarrative({
     required String firstName,
     required int currentScore,

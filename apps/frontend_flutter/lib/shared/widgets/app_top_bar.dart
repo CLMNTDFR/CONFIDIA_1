@@ -45,7 +45,7 @@ class AppTopBar extends ConsumerWidget {
 
   static (String, String?) routeMeta(String path, {Uri? uri}) {
     if (path.startsWith('/dashboard')) return (ConfidiaRouteLabels.home, 'Widgets personnalisables');
-    // /documents/add avant /documents/ sinon titre « Document » à tort
+    // /documents/add before /documents/, otherwise the title would wrongly be « Document »
     if (path.startsWith('/documents/add')) {
       final mode = uri?.queryParameters['mode'];
       if (mode == 'camera') return ('Scanner', 'Photo ou scan');
@@ -81,8 +81,8 @@ class AppTopBar extends ConsumerWidget {
         height: ConfidiaSpacing.topBarHeight,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: ConfidiaSpacing.lg),
-          // Largeur disponible (colonne contenu), pas la fenêtre : la sidebar
-          // ouverte réduit cette zone et provoquait des overflows.
+          // Available width (content column), not the window: an open
+          // sidebar shrinks this area and used to cause overflows.
           child: LayoutBuilder(
             builder: (context, constraints) {
               final w = constraints.maxWidth;

@@ -4,11 +4,11 @@ import '../../core/theme/spacing.dart';
 import '../../core/theme/tokens/tokens.dart';
 import '../../shared/widgets/confidia_tappable.dart';
 
-/// Deux actions Scanner / Importer (liste Documents + sheet dashboard).
+/// Two Scanner / Importer actions (Documents list + dashboard sheet).
 class DocumentSourceActions extends StatelessWidget {
   final VoidCallback? onScan;
   final VoidCallback? onImport;
-  /// Empile verticalement (sheet) au lieu d'une rangée.
+  /// Stacks vertically (sheet) instead of a row.
   final bool stacked;
 
   const DocumentSourceActions({
@@ -53,7 +53,7 @@ class DocumentSourceActions extends StatelessWidget {
   }
 }
 
-/// Même langage que le sélecteur Mois / Semaine / Jour : lave grise, bordure, ombre douce.
+/// Same language as the Mois / Semaine / Jour selector: grey wash, border, soft shadow.
 class DocumentSourceCard extends StatelessWidget {
   final String title;
   final IconData icon;

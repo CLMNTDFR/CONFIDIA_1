@@ -153,7 +153,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       }
       state = state.copyWith(user: UserModel.fromJson(response.data as Map<String, dynamic>));
     } catch (_) {
-      // L'écran Profil propose un nouvel essai.
+      // The Profile screen offers a retry.
     }
   }
 
@@ -185,7 +185,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  /// Mode démo « Visite guidée » : simule une première connexion utilisateur.
+  /// « Visite guidée » demo mode: simulates a first-time user login.
   Future<void> loginDemoGuidedTour() async {
     await _storage.delete(key: 'refresh_token');
     await _storage.delete(key: 'access_token');
@@ -195,7 +195,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     );
   }
 
-  /// Met à jour l'utilisateur en mémoire après un PUT profil réussi.
+  /// Updates the in-memory user after a successful profile PUT.
   void updateLocalUser(UserModel user) {
     state = state.copyWith(user: user);
   }
@@ -209,7 +209,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           if (refresh != null) 'refresh_token': refresh,
         });
       } catch (_) {
-        // Le stockage local est vidé même si la révocation distante échoue.
+        // Local storage is cleared even if remote revocation fails.
       }
     }
     await _storage.deleteAll();

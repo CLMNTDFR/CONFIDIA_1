@@ -1,4 +1,4 @@
-# CONFIDIA — Frontend Flutter
+# CONFIDIA Frontend Flutter
 
 Application multi-plateforme (web, mobile, desktop) du hub numérique CONFIDIA.
 
@@ -61,7 +61,7 @@ palette.chartColors
 
 ### Couleurs sémantiques
 
-Indépendantes de la palette de marque — `lib/core/theme/colors.dart`
+Indépendantes de la palette de marque : `lib/core/theme/colors.dart`
 
 | Token | Hex | Usage |
 |---|---|---|
@@ -119,7 +119,7 @@ Indépendantes de la palette de marque — `lib/core/theme/colors.dart`
 | `radiusLg` | 16 px |
 | `radiusXl` | 24 px |
 
-**Insets pages :** `ConfidiaInsets.page(context)` — tient compte de la bottom bar mobile.
+**Insets pages :** `ConfidiaInsets.page(context)` tient compte de la bottom bar mobile.
 
 ---
 
@@ -199,7 +199,7 @@ Le `MaterialApp` injecte `ConfidiaPaletteTheme` dans `ThemeData.extensions` à c
 
 Logos des services connectés : `assets/brands/` + `BrandIcon` / `BrandLabel`.
 
-Les couleurs des providers externes (Gmail, Google Calendar, etc.) restent fixes — seule la marque CONFIDIA suit la palette active.
+Les couleurs des providers externes (Gmail, Google Calendar, etc.) restent fixes : seule la marque CONFIDIA suit la palette active.
 
 ---
 

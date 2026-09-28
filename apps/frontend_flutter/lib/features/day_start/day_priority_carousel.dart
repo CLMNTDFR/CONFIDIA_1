@@ -9,7 +9,7 @@ import '../../shared/utils/serenity_palette.dart';
 import '../../shared/widgets/confidia_tappable.dart';
 import 'day_briefing_model.dart';
 
-/// Carrousel horizontal premium des priorités du jour (toutes visibles, scrollables).
+/// Premium horizontal carousel of the day's priorities (all visible, scrollable).
 class DayPriorityCarousel extends StatefulWidget {
   final List<DayPriority> priorities;
   final int totalGain;

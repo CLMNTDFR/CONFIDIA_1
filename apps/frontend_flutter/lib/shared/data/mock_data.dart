@@ -5,7 +5,7 @@ import 'mock_ecosystem.dart';
 
 export 'mock_ecosystem.dart';
 
-/// Alias rétrocompatible  -  toutes les données proviennent de [MockEcosystem].
+/// Backward-compatible alias: all data comes from [MockEcosystem].
 abstract final class MockData {
   static List<DocumentModel> get documents => MockEcosystem.documents;
   static List<CalendarEventModel> get calendarEvents => MockEcosystem.calendarEvents;

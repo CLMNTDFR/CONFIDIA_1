@@ -1,6 +1,6 @@
 import 'auth_provider.dart';
 
-/// Identifie le compte courant pour recharger (ou vider) les données locales.
+/// Identifies the current account so local data can be reloaded (or cleared).
 String workspaceSessionKey(AuthState? state) {
   if (state == null || !state.isAuthenticated) return 'anon';
   if (state.isDemoSession) return 'demo:${state.user?.id ?? 'demo'}';

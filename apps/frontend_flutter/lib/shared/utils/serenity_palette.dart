@@ -4,21 +4,21 @@ import '../../core/theme/palette.dart';
 import '../../core/theme/tokens/app_colors.dart';
 import '../models/serenity_briefing_model.dart';
 
-/// Couleurs sémantiques sérénité : rouge 0-40, orange 41-60, vert >60 (toast success).
+/// Serenity semantic colors: red 0-40, orange 41-60, green >60 (success toast).
 abstract final class SerenityPalette {
   static const excellent = AppColors.success;
   static const good = AppColors.success;
   static const moderate = Color(0xFFFB8C00);
   static const attention = Color(0xFFE53935);
 
-  /// [palette] conservé pour compatibilité d'appel ; non utilisé dans les seuils.
+  /// [palette] kept for call-site compatibility; unused in the thresholds.
   static Color forScore(int score, {ConfidiaPalette? palette}) {
     if (score > 60) return excellent;
     if (score >= 41) return moderate;
     return attention;
   }
 
-  /// [palette] conservé pour compatibilité d'appel ; excellent/good partagent le vert succès.
+  /// [palette] kept for call-site compatibility; excellent/good share the success green.
   static Color forLevel(SerenityLevel level, ConfidiaPalette palette) {
     return switch (level) {
       SerenityLevel.excellent || SerenityLevel.good => excellent,

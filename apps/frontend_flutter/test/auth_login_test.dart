@@ -57,12 +57,59 @@ void main() {
     expect(notifier.state.error, isNotNull);
     expect(await storage.read(key: 'access_token'), isNull);
   });
+
+  test('logout calls the API then clears tokens and session', () async {
+    final storage = FlutterSecureStorage();
+    final client = ApiClient(storage: storage);
+    await client.configureBaseUrl('http://localhost/api/v1');
+    final adapter = _LoginAdapter();
+    client.dio.httpClientAdapter = adapter;
+
+    final notifier = AuthNotifier(
+      client,
+      restoreSession: false,
+      storage: storage,
+    );
+    addTearDown(notifier.dispose);
+
+    await notifier.login('user', 'user');
+    await notifier.logout();
+
+    expect(adapter.logoutCalls, 1);
+    expect(notifier.state.isAuthenticated, isFalse);
+    expect(notifier.state.user, isNull);
+    expect(await storage.read(key: 'access_token'), isNull);
+    expect(await storage.read(key: 'refresh_token'), isNull);
+  });
+
+  test('logout still clears the local session when revoke fails', () async {
+    final storage = FlutterSecureStorage();
+    final client = ApiClient(storage: storage);
+    await client.configureBaseUrl('http://localhost/api/v1');
+    client.dio.httpClientAdapter = _LoginAdapter(failLogout: true);
+
+    final notifier = AuthNotifier(
+      client,
+      restoreSession: false,
+      storage: storage,
+    );
+    addTearDown(notifier.dispose);
+
+    await notifier.login('user', 'user');
+    await notifier.logout();
+
+    expect(notifier.state.isAuthenticated, isFalse);
+    expect(await storage.read(key: 'access_token'), isNull);
+    expect(await storage.read(key: 'refresh_token'), isNull);
+  });
 }
 
 class _LoginAdapter implements HttpClientAdapter {
-  _LoginAdapter({this.failLogin = false});
+  _LoginAdapter({this.failLogin = false, this.failLogout = false});
 
   final bool failLogin;
+  final bool failLogout;
+  int logoutCalls = 0;
 
   @override
   void close({bool force = false}) {}
@@ -73,6 +120,25 @@ class _LoginAdapter implements HttpClientAdapter {
     Stream<Uint8List>? requestStream,
     Future<void>? cancelFuture,
   ) async {
+    if (options.path.contains('/auth/logout')) {
+      logoutCalls += 1;
+      if (failLogout) {
+        return ResponseBody.fromString(
+          '{"detail":"Keycloak unreachable"}',
+          503,
+          headers: {
+            Headers.contentTypeHeader: [Headers.jsonContentType],
+          },
+        );
+      }
+      return ResponseBody.fromString(
+        '{"message":"Logged out successfully"}',
+        200,
+        headers: {
+          Headers.contentTypeHeader: [Headers.jsonContentType],
+        },
+      );
+    }
     if (options.path.contains('/auth/login')) {
       if (failLogin) {
         return ResponseBody.fromString(

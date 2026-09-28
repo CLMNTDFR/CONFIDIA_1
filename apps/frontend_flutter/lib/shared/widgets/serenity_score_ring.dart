@@ -2,7 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
-/// Anneau de score sérénité animé (dashboard, chip, moments).
+/// Animated serenity score ring (dashboard, chip, moments).
 class SerenityScoreRing extends StatelessWidget {
   final int score;
   final String label;
@@ -12,7 +12,7 @@ class SerenityScoreRing extends StatelessWidget {
   final double scoreFontSize;
   final double labelFontSize;
   final double strokeWidth;
-  /// Si false, l'anneau suit [score] immédiatement (compteur externe).
+  /// If false, the ring follows [score] immediately (external counter).
   final bool animateFromZero;
   final bool showLabel;
 

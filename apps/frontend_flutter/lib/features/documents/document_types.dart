@@ -1,5 +1,5 @@
-/// Types documentaires proposés à l'import et à l'édition.
-/// « Autre » ouvre une saisie libre ; la valeur vide reste autorisée (champ optionnel).
+/// Document types offered on import and edit.
+/// « Autre » opens a free-text field; an empty value remains allowed (optional field).
 abstract final class DocumentTypes {
   static const unspecifiedKey = '__none__';
   static const otherKey = '__other__';

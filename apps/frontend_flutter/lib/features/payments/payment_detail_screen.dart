@@ -173,12 +173,12 @@ class _PaymentDetailScreenState extends ConsumerState<PaymentDetailScreen> {
     final payment = ref.read(paymentsProvider.notifier).byId(id);
     final penaltyAvoided =
         payment != null ? SerenityService.estimatePenaltyAvoided(payment) : 0.0;
-    // Avant payNow : le listen score lit cette valeur pour l'overlay.
+    // Before payNow: the score listener reads this value for the overlay.
     if (payment != null) {
       ref.read(serenityMomentsProvider.notifier).notifyPaymentSuccess(penaltyAvoided: penaltyAvoided);
     }
     final msg = await ref.read(paymentsProvider.notifier).payNow(id);
-    // Démo : le courrier lié disparaît aussi du briefing / des priorités.
+    // Demo: the linked mail also disappears from the briefing / priorities.
     final emailId = payment?.emailId;
     if (emailId != null) {
       ref.read(messagingProvider.notifier).markProcessed(emailId);

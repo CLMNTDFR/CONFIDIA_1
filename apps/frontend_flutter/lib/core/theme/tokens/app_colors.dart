@@ -2,19 +2,19 @@ import 'package:flutter/material.dart';
 
 import 'app_opacity.dart';
 
-/// Couleurs sémantiques et surfaces. Source de vérité du Design System.
+/// Semantic colors and surfaces. Design System source of truth.
 ///
-/// Hiérarchie macOS : trois niveaux uniquement (luminosité > contours).
-/// Indépendantes du thème de marque ([ConfidiaPalette] / `context.palette`).
+/// macOS hierarchy: three levels only (luminosity > outlines).
+/// Independent of the brand theme ([ConfidiaPalette] / `context.palette`).
 abstract final class AppColors {
   // --- Dark: Surface 0 / 1 / 2 ---
-  /// Fond principal.
+  /// Main background.
   static const Color darkSurface0 = Color(0xFF06060B);
 
-  /// Cartes et chrome. Plus clair que le fond, contraste doux.
+  /// Cards and chrome. Lighter than the background, soft contrast.
   static const Color darkSurface1 = Color(0xFF12121A);
 
-  /// Éléments actifs / sélection / chips.
+  /// Active / selected / chip elements.
   static const Color darkSurface2 = Color(0xFF1A1A22);
 
   static const Color darkBackground = darkSurface0;
@@ -22,8 +22,8 @@ abstract final class AppColors {
   static const Color darkSurfaceElevated = darkSurface1;
   static const Color darkSurfaceVariant = darkSurface2;
 
-  /// Encre de bordure (opaque). Composer avec [AppOpacity.border*], ne pas
-  /// réappliquer une alpha forte sur [border].
+  /// Border ink (opaque). Compose with [AppOpacity.border*], do not
+  /// reapply a strong alpha on [border].
   static const Color darkBorderInk = Color(0xFFFFFFFF);
 
   static const Color darkTextPrimary = Color(0xFFF4F4F8);
@@ -52,7 +52,7 @@ abstract final class AppColors {
   static const Color error = Color(0xFFEF4444);
   static const Color info = Color(0xFF3B82F6);
 
-  /// Bordure prête à l'emploi (hairline). Ne pas chaîner `.withValues(alpha:)`.
+  /// Ready-to-use hairline border. Do not chain `.withValues(alpha:)`.
   static Color darkBorder = darkBorderInk.withValues(alpha: AppOpacity.borderHairline);
   static Color darkBorderSubtle = darkBorderInk.withValues(alpha: AppOpacity.borderSubtle);
   static Color lightBorder = lightBorderInk.withValues(alpha: AppOpacity.borderHairline);

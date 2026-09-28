@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Pont léger entre la visite guidée et [AccessControlScreen].
+/// Light bridge between the guided tour and [AccessControlScreen].
 final accessTourHeaderExpandedProvider = StateProvider<bool?>((ref) => null);
 final accessTourTabIndexProvider = StateProvider<int?>((ref) => null);
 

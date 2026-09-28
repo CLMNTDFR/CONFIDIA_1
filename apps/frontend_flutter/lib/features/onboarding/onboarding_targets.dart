@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// GlobalKeys partagés pour le spotlight de la visite guidée.
+/// Shared GlobalKeys for the guided-tour spotlight.
 abstract final class OnboardingTargets {
   static final startMyDay = GlobalKey(debugLabel: 'onboarding_start_my_day');
   static final serenity = GlobalKey(debugLabel: 'onboarding_serenity');
@@ -21,7 +21,7 @@ abstract final class OnboardingTargets {
 
   static bool isWideLayout(BuildContext context) => MediaQuery.sizeOf(context).width >= 900;
 
-  /// Cible navigation principale : bottom bar mobile ou sidebar desktop.
+  /// Main navigation target: mobile bottom bar or desktop sidebar.
   static GlobalKey navigationFor(BuildContext context) =>
       isWideLayout(context) ? sidebarNav : mobileNav;
 }

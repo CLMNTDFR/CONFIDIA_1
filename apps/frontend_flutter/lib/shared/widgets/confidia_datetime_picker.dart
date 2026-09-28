@@ -8,9 +8,9 @@ import 'confidia_glow_button.dart';
 import 'confidia_modal_sheet.dart';
 import 'confidia_tappable.dart';
 
-/// Sélecteur date (+ heure optionnelle) au style CONFIDIA / macOS.
-/// Réutilise [showConfidiaSheet] : mêmes blur, slide et barrière.
-/// Plus compact que la sheet parente pour l'effet de superposition.
+/// Date picker (+ optional time) in CONFIDIA / macOS style.
+/// Reuses [showConfidiaSheet]: same blur, slide, and barrier.
+/// More compact than the parent sheet for a stacked overlay effect.
 Future<DateTime?> showConfidiaDateTimePicker(
   BuildContext context, {
   required DateTime initial,

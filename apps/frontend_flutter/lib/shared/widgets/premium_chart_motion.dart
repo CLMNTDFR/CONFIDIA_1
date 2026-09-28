@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Durées et courbes des graphiques premium (hors donut).
+/// Durations and curves for premium charts (excluding the donut).
 abstract final class PremiumChartMotion {
   static const entryDuration = Duration(milliseconds: 2500);
   static const focusDuration = Duration(milliseconds: 1100);
@@ -26,7 +26,7 @@ class PremiumChartMotionValues {
   }
 }
 
-/// Pilote l'animation d'entrée (montée des données) et le fondu de focus au survol.
+/// Drives the entry animation (data rise) and the hover focus fade.
 class PremiumChartMotionScope extends StatefulWidget {
   final bool hasFocus;
   final Widget Function(BuildContext context, PremiumChartMotionValues motion) builder;

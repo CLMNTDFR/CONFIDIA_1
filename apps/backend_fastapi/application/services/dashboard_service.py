@@ -25,7 +25,7 @@ _MONTH_LABELS = [
 
 
 class DashboardService:
-    """Synthèse hebdomadaire calculée depuis les événements de l'espace."""
+    """Weekly overview computed from workspace calendar events."""
 
     async def get_week_overview(
         self,

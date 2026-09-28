@@ -29,7 +29,7 @@ def greet(first_name: str) -> str:
 
 
 class SerenityService:
-    """Briefing de sérénité à partir des événements réels de l'espace."""
+    """Serenity briefing from real workspace events."""
 
     async def get_briefing(
         self,

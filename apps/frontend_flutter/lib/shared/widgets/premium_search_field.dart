@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 
-/// Champ de recherche compact et premium.
+/// Compact premium search field.
 class PremiumSearchField extends StatelessWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;

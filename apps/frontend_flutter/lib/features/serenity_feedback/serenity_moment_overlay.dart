@@ -15,7 +15,7 @@ import '../../shared/widgets/serenity_score_ring.dart';
 import 'serenity_moment.dart';
 import 'serenity_moments_provider.dart';
 
-/// Overlay ou toast riche pour un moment de sérénité.
+/// Overlay or rich toast for a serenity moment.
 class SerenityMomentOverlay extends ConsumerWidget {
   const SerenityMomentOverlay({super.key});
 
@@ -177,7 +177,7 @@ class _SerenityOverlayCardState extends ConsumerState<_SerenityOverlayCard>
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final moment = widget.moment;
     final score = moment.scoreAfter ?? 0;
-    // État de l'indice (rouge ≤40) ≠ signal de réussite (toujours vert succès).
+    // Index state (red ≤40) ≠ success signal (always success green).
     final scoreColor = SerenityPalette.forScore(score, palette: context.palette);
     const successColor = SerenityPalette.excellent;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);

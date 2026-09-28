@@ -39,7 +39,7 @@ async def week_overview(
     identity: IdentityService = Depends(get_identity_service),
     calendar: CalendarService = Depends(get_calendar_service),
 ):
-    """Synthèse hebdomadaire : charge par jour, réunions, échéances et tâches."""
+    """Weekly overview: daily load, meetings, deadlines and tasks."""
     events = await _workspace_events(token, identity, calendar)
     return await _dashboard_service.get_week_overview(events, scopes=scopes)
 
@@ -50,7 +50,7 @@ async def serenity_briefing(
     identity: IdentityService = Depends(get_identity_service),
     calendar: CalendarService = Depends(get_calendar_service),
 ):
-    """Briefing de sérénité : score, charge calendrier et prochaines actions."""
+    """Serenity briefing: score, calendar load and next actions."""
     events = await _workspace_events(token, identity, calendar)
     return await _serenity_service.get_briefing(token=token, events=events)
 
@@ -61,6 +61,6 @@ async def day_briefing(
     identity: IdentityService = Depends(get_identity_service),
     calendar: CalendarService = Depends(get_calendar_service),
 ):
-    """Briefing du jour : priorités et agenda réel, sans paiements inventés."""
+    """Day briefing: priorities and real agenda, no invented payments."""
     events = await _workspace_events(token, identity, calendar)
     return await _day_briefing_service.get_day_briefing(token=token, events=events)

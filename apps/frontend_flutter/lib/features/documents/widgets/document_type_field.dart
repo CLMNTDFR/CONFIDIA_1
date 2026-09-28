@@ -5,7 +5,7 @@ import '../../../shared/widgets/confidia_dropdown_field.dart';
 import '../../../shared/widgets/confidia_text_field.dart';
 import '../document_types.dart';
 
-/// Liste de types + option « Autre » avec saisie libre. Champ optionnel.
+/// Type list + « Autre » option with free text. Optional field.
 class DocumentTypeField extends StatefulWidget {
   final String? initialValue;
   final ValueChanged<String?> onChanged;

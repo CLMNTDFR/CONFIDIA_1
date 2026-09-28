@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'premium_chart_motion.dart';
 
-/// Barre à deux plans  -  socle large atténué + tige lumineuse au premier plan.
+/// Two-plane bar: wide muted base plus a luminous rod in the foreground.
 BarChartRodData premiumBarRod({
   required double toY,
   required Color color,
@@ -39,7 +39,7 @@ BarChartRodData premiumBarRod({
   );
 }
 
-/// Barre groupée (activité hub) avec socle et surbrillance au survol.
+/// Grouped bar (hub activity) with a base and hover highlight.
 BarChartRodData premiumGroupedBarRod({
   required double toY,
   required Color color,

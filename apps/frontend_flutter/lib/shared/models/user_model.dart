@@ -33,7 +33,7 @@ class UserModel extends Equatable {
   bool get isAdmin => roles.contains('ADMIN');
   bool get isManager => roles.contains('MANAGER');
 
-  /// Libellé humain pour l'UI (évite d'afficher « USER » brut).
+  /// Human-readable label for the UI (avoids showing raw "USER").
   String get roleLabel {
     if (isAdmin) return 'Administrateur';
     if (isManager) return 'Manager';
@@ -111,7 +111,7 @@ class UserModel extends Equatable {
         'timezone': timezone,
       };
 
-  /// Body de PUT /users/me. `phone: null` vide le téléphone.
+  /// Body for PUT /users/me. `phone: null` clears the phone.
   Map<String, dynamic> toProfileUpdateJson() => {
         'first_name': firstName,
         'last_name': lastName,

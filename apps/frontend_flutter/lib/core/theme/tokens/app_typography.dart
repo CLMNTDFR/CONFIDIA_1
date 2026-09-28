@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'app_colors.dart';
 
-/// Typographie du Design System (Inter). Source pour [ThemeData.textTheme].
+/// Design System typography (Inter). Source for [ThemeData.textTheme].
 abstract final class AppTypography {
   static TextTheme textTheme({required bool isDark}) {
     final base = GoogleFonts.interTextTheme();

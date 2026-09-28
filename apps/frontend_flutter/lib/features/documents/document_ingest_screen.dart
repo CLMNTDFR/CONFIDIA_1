@@ -19,8 +19,8 @@ import 'documents_provider.dart';
 import 'widgets/document_ingest_widgets.dart';
 import 'widgets/document_type_field.dart';
 
-/// Écran unique d'ajout : photo caméra ou fichiers appareil.
-/// [mode] : `camera` | `files` (défaut si null / inconnu).
+/// Single add screen: camera photo or device files.
+/// [mode]: `camera` | `files` (default if null / unknown).
 class DocumentIngestScreen extends ConsumerStatefulWidget {
   final String? mode;
 
@@ -38,11 +38,13 @@ class _DocumentIngestScreenState extends ConsumerState<DocumentIngestScreen> {
   String _category = DocumentCategories.values.first;
   String? _documentType;
   bool _busy = false;
+  final _formKey = GlobalKey<FormState>();
+  final List<TextEditingController> _titles = [];
 
   bool get _isCamera => widget.mode == 'camera';
   bool get _hasContent => _imageBytes != null || _files.isNotEmpty;
 
-  /// Caméra native fiable uniquement sur iOS / Android.
+  /// Native camera is reliable only on iOS / Android.
   bool get _canAutoLaunchCamera {
     if (kIsWeb) return false;
     return defaultTargetPlatform == TargetPlatform.iOS ||
@@ -52,11 +54,37 @@ class _DocumentIngestScreenState extends ConsumerState<DocumentIngestScreen> {
   @override
   void initState() {
     super.initState();
-    // Jamais d'auto FilePicker. Caméra auto uniquement sur mobile.
+    // Never auto FilePicker. Auto camera only on mobile.
     if (_isCamera && _canAutoLaunchCamera) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _captureCamera();
       });
+    }
+  }
+
+  @override
+  void dispose() {
+    _disposeTitles();
+    super.dispose();
+  }
+
+  void _disposeTitles() {
+    for (final controller in _titles) {
+      controller.dispose();
+    }
+    _titles.clear();
+  }
+
+  void _setTitles(List<String> filenames) {
+    _disposeTitles();
+    for (final name in filenames) {
+      _titles.add(TextEditingController(text: documentTitleFromFilename(name)));
+    }
+  }
+
+  void _addTitles(Iterable<String> filenames) {
+    for (final name in filenames) {
+      _titles.add(TextEditingController(text: documentTitleFromFilename(name)));
     }
   }
 
@@ -74,6 +102,7 @@ class _DocumentIngestScreenState extends ConsumerState<DocumentIngestScreen> {
         _imageBytes = bytes;
         _imageName = file.name;
         _files.clear();
+        _setTitles([file.name]);
       });
     } catch (e) {
       if (!mounted) return;
@@ -95,8 +124,12 @@ class _DocumentIngestScreenState extends ConsumerState<DocumentIngestScreen> {
     setState(() {
       _imageBytes = null;
       _imageName = null;
-      if (!append) _files.clear();
+      if (!append) {
+        _files.clear();
+        _disposeTitles();
+      }
       _files.addAll(result.files);
+      _addTitles(result.files.map((file) => file.name));
     });
   }
 
@@ -104,12 +137,14 @@ class _DocumentIngestScreenState extends ConsumerState<DocumentIngestScreen> {
     _imageBytes = null;
     _imageName = null;
     _files.clear();
+    _disposeTitles();
   }
 
   void _clear() => setState(_resetContent);
 
   Future<void> _submit() async {
     if (!_hasContent || _busy) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _busy = true);
     try {
       final notifier = ref.read(documentsProvider.notifier);
@@ -118,18 +153,19 @@ class _DocumentIngestScreenState extends ConsumerState<DocumentIngestScreen> {
         last = await notifier.upload(
           filename: _imageName ?? 'scan.jpg',
           bytes: _imageBytes!,
-          title: _imageName,
+          title: _titles.single.text.trim(),
           category: _category,
           documentType: _documentType,
         );
       } else {
-        for (final file in _files) {
+        for (var i = 0; i < _files.length; i++) {
+          final file = _files[i];
           final bytes = file.bytes;
           if (bytes == null || bytes.isEmpty) continue;
           last = await notifier.upload(
             filename: file.name,
             bytes: bytes,
-            title: file.name,
+            title: _titles[i].text.trim(),
             category: _category,
             documentType: _documentType,
           );
@@ -208,6 +244,15 @@ class _DocumentIngestScreenState extends ConsumerState<DocumentIngestScreen> {
                       ),
                       const SizedBox(height: ConfidiaSpacing.md),
                     ],
+                    Form(
+                      key: _formKey,
+                      child: DocumentIngestTitleFields(
+                        controllers: _titles,
+                        filenames: _imageName != null ? [_imageName!] : _files.map((file) => file.name).toList(),
+                        enabled: !_busy,
+                      ),
+                    ),
+                    const SizedBox(height: ConfidiaSpacing.md),
                     ConfidiaDropdownField<String>(
                       value: _category,
                       labelText: 'Catégorie',
@@ -311,7 +356,12 @@ class _DocumentIngestScreenState extends ConsumerState<DocumentIngestScreen> {
                     name: f.name,
                     sizeLabel: '${(f.size / 1024).toStringAsFixed(1)} Ko',
                     onRemove: () => setState(() {
-                      _files.remove(f);
+                      final index = _files.indexOf(f);
+                      if (index < 0) return;
+                      _files.removeAt(index);
+                      if (index < _titles.length) {
+                        _titles.removeAt(index).dispose();
+                      }
                       if (_files.isEmpty) _resetContent();
                     }),
                   ),

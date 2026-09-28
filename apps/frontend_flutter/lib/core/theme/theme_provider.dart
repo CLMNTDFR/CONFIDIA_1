@@ -2,10 +2,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'palette.dart';
 
-/// `true` = mode sombre.
+/// `true` = dark mode.
 final themeModeProvider = StateProvider<bool>((ref) => true);
 
-/// Thème couleur de marque (bleu par défaut).
+/// Brand color theme (blue by default).
 final colorPaletteProvider = StateProvider<ConfidiaPaletteId>((ref) => ConfidiaPaletteId.blue);
 
 ConfidiaPalette watchPalette(WidgetRef ref) =>

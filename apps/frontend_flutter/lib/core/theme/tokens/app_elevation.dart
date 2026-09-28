@@ -1,4 +1,4 @@
-/// Élévations Material discrètes (souvent 0 en UI glass).
+/// Subtle Material elevations (often 0 in glass UI).
 abstract final class AppElevation {
   static const double flat = 0;
   static const double raised = 2;

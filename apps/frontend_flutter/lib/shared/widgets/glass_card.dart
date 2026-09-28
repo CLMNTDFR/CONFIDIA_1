@@ -3,10 +3,10 @@ import 'package:flutter/material.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/tokens/tokens.dart';
 
-/// Carte de contenu. Quasi sans flou : surface opaque et ombre douce.
+/// Content card. Almost no blur: opaque surface and a soft shadow.
 ///
-/// [Material] + [clipBehavior] : les surbrillances InkWell / ListTile
-/// restent dans les coins arrondis (pas de splash rectangulaire).
+/// [Material] + [clipBehavior]: InkWell / ListTile highlights
+/// stay within the rounded corners (no rectangular splash).
 class GlassCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;

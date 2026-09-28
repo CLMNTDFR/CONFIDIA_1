@@ -98,7 +98,7 @@ class DayDocumentDTO(BaseModel):
 
 
 class DayBriefingResponse(BaseModel):
-    """Briefing « démarrer la journée » : priorités, agenda et projection de sérénité."""
+    """Start-the-day briefing: priorities, agenda and serenity projection."""
 
     greeting: str
     summary: str

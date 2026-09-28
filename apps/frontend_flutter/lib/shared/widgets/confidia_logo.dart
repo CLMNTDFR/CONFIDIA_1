@@ -9,11 +9,11 @@ abstract final class ConfidiaLogoAssets {
   static const pink128 = 'assets/logo/confidia-logo-pink-128.png';
   static const pink256 = 'assets/logo/confidia-logo-pink-256.png';
 
-  /// Wordmark intégré (empreinte = « o ») · thème bleu / rose.
+  /// Integrated wordmark (mark = « o ») · blue / pink theme.
   static const wordmarkBlue = 'assets/logo/confidia-wordmark-blue.png';
   static const wordmarkPink = 'assets/logo/confidia-wordmark-pink.png';
 
-  /// Ratio intrinsèque des wordmarks (~998×208).
+  /// Intrinsic wordmark aspect ratio (~998×208).
   static const wordmarkAspect = 998 / 208;
 
   static String markForPalette(ConfidiaPalette palette, {required double displaySize}) {
@@ -31,12 +31,12 @@ abstract final class ConfidiaLogoAssets {
     return palette.id == ConfidiaPaletteId.rose ? wordmarkPink : wordmarkBlue;
   }
 
-  /// Ancien alias conservé pour les appels existants.
+  /// Legacy alias kept for existing call sites.
   static String forPalette(ConfidiaPalette palette, {required double displaySize}) =>
       markForPalette(palette, displaySize: displaySize);
 }
 
-/// Métriques du bloc marque (wordmark ou marque seule).
+/// Brand block metrics (wordmark or mark only).
 abstract final class ConfidiaBrandMetrics {
   static double wordmarkWidth(double height) => height * ConfidiaLogoAssets.wordmarkAspect;
 
@@ -48,7 +48,7 @@ abstract final class ConfidiaBrandMetrics {
   static double brandBlockHeight(double logoSize, {bool showText = true}) => logoSize;
 }
 
-/// Marque graphique seule (fond transparent).
+/// Graphic mark only (transparent background).
 class ConfidiaLogoMark extends StatelessWidget {
   final double size;
 
@@ -71,7 +71,7 @@ class ConfidiaLogoMark extends StatelessWidget {
   }
 }
 
-/// Wordmark Confidia (empreinte intégrée dans le « o »), thème bleu ou rose.
+/// Confidia wordmark (mark integrated in the « o »), blue or pink theme.
 class ConfidiaWordmark extends StatelessWidget {
   final double height;
 
@@ -112,7 +112,7 @@ class ConfidiaWordmark extends StatelessWidget {
   }
 }
 
-/// Logo CONFIDIA  -  wordmark si [showText], empreinte seule sinon.
+/// CONFIDIA logo: wordmark if [showText], mark only otherwise.
 class ConfidiaLogo extends StatelessWidget {
   final double size;
   final bool showText;

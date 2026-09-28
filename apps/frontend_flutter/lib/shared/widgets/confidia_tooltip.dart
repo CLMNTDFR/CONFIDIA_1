@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/tokens/tokens.dart';
 
-/// Info-bulle sobre, alignée sur le chrome CONFIDIA (clair et sombre).
+/// Understated tooltip, aligned with CONFIDIA chrome (light and dark).
 class ConfidiaTooltip extends StatelessWidget {
   final String message;
   final Widget child;

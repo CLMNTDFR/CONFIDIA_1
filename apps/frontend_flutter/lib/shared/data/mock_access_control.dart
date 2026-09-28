@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/access_control_models.dart';
 
-/// Données démo, miroir du backend `AccessControlService`.
+/// Demo data, mirroring the backend `AccessControlService`.
 abstract final class MockAccessControl {
   static const permissions = [
     AccessPermission(id: 'calendar.read', label: 'Lire le calendrier', category: 'Calendrier', description: 'Voir les événements partagés'),

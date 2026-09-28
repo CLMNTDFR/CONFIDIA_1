@@ -83,8 +83,8 @@ class _AppShellState extends ConsumerState<AppShell> {
         body: MediaQuery(
           data: MediaQuery.of(context).copyWith(
             padding: MediaQuery.paddingOf(context).copyWith(
-              // Réserve l'emprise barre + air : les pages qui s'appuient sur
-              // MediaQuery.padding (SafeArea, etc.) restent au-dessus de la nav.
+              // Reserve the bar footprint plus spacing: pages that rely on
+              // MediaQuery.padding (SafeArea, etc.) stay above the nav.
               bottom: ConfidiaMobileShell.bottomScrollInset(context),
             ),
           ),
@@ -191,7 +191,7 @@ class _Sidebar extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          // Largeur animée vs booléen : afficher le chrome étendu seulement quand il y a la place.
+          // Animated width vs boolean: show expanded chrome only when there is room.
           final showExpandedChrome = constraints.maxWidth >= 160;
 
           return Column(

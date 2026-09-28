@@ -41,14 +41,14 @@ class SerenityMomentsNotifier extends StateNotifier<SerenityMomentsState> {
     state = state.copyWith(queue: state.queue.skip(1).toList());
   }
 
-  /// Mémorise la pénalité évitée pour l'inclure dans le prochain moment de score.
+  /// Remembers the avoided penalty to include it in the next score moment.
   void notifyPaymentSuccess({required double penaltyAvoided}) {
     if (penaltyAvoided >= 1) {
       _pendingPenaltyAvoided = penaltyAvoided;
     }
   }
 
-  /// Branché depuis AppShell via ref.listen(serenityBriefingProvider...).
+  /// Wired from AppShell via ref.listen(serenityBriefingProvider...).
   void onScoreChanged(int? previous, int next, String levelLabel) {
     if (previous == null) return;
     final delta = next - previous;
@@ -86,7 +86,7 @@ class SerenityMomentsNotifier extends StateNotifier<SerenityMomentsState> {
       return;
     }
 
-    // Toujours l'overlay premium (avant, seuls les gains ≥ 5 pts l'ouvraient).
+    // Always the premium overlay (previously, only gains ≥ 5 pts opened it).
     enqueue(SerenityMoment(
       kind: SerenityMomentKind.beforeAfter,
       title: 'Sérénité en hausse',

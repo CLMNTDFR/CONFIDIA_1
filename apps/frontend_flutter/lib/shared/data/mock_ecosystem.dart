@@ -8,7 +8,7 @@ import '../models/email_model.dart';
 import '../models/notification_model.dart';
 import '../models/payment_model.dart';
 
-/// Écosystème mock cohérent : email → document → paiement → calendrier.
+/// Coherent mock ecosystem: email → document → payment → calendar.
 abstract final class MockEcosystem {
   static final now = DateTime.now();
 
@@ -111,7 +111,7 @@ abstract final class MockEcosystem {
     ),
   ];
 
-  // ── Paiements ──────────────────────────────────────────────────────────
+  // ── Payments ───────────────────────────────────────────────────────────
   static final payments = [
     PaymentModel(
       id: 'pay-edf',
@@ -287,13 +287,13 @@ abstract final class MockEcosystem {
     ),
   ];
 
-  // ── Calendrier ─────────────────────────────────────────────────────────
+  // ── Calendar ───────────────────────────────────────────────────────────
   static DateTime _calDay(int dayOffset, {int hour = 9, int minute = 0}) {
     return DateTime(now.year, now.month, now.day + dayOffset, hour, minute);
   }
 
   static final calendarEvents = [
-    // Journée chargée  -  4 types différents (J+3)
+    // Busy day  -  4 different types (D+3)
     CalendarEventModel(
       id: 'evt-busy-deadline',
       title: 'Paiement loyer',
@@ -334,7 +334,7 @@ abstract final class MockEcosystem {
       eventType: EventType.reminder,
       source: CalendarSource.confidia,
     ),
-    // J+5  -  deux échéances le même jour
+    // D+5  -  two deadlines on the same day
     CalendarEventModel(
       id: 'evt-edf',
       title: 'Paiement EDF',
@@ -525,7 +525,7 @@ abstract final class MockEcosystem {
 
   static List<CalendarEventModel> get allCalendarEvents => [...calendarEvents, ...clubCalendarEvents];
 
-  // ── Comptes connectés ──────────────────────────────────────────────────
+  // ── Connected accounts ─────────────────────────────────────────────────
   static final connectedAccounts = [
     ConnectedAccountModel(
       id: 'acc-gmail',
@@ -667,7 +667,7 @@ abstract final class MockEcosystem {
     ),
   ];
 
-  // ── Insights IA par entité ─────────────────────────────────────────────
+  // ── AI insights by entity ──────────────────────────────────────────────
   static final emailInsights = <String, AiInsightModel>{
     'mail-edf': AiInsightModel(
       summary: 'Facture d\'électricité EDF de 96 € avec échéance au 15 mars. Paiement recommandé dans les 5 jours.',

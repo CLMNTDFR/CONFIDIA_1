@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/colors.dart';
 import 'confidia_ai_robot.dart';
 
-/// Affiche du texte progressivement, comme une réponse IA en cours de rédaction.
+/// Displays text progressively, like an AI reply being written.
 class AiStreamingText extends StatefulWidget {
   final String text;
   final TextStyle? style;

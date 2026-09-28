@@ -6,10 +6,10 @@ import '../../core/theme/tokens/tokens.dart';
 import 'confidia_ai_robot.dart';
 import 'confidia_animated_logo.dart';
 
-/// Profil de vitesse : connexion (boucle modérée) vs chargement post-login.
+/// Speed profile: sign-in (moderate loop) vs post-login loading.
 enum LogoTransitionProfile { connection, welcome }
 
-/// Overlay de chargement post-login ou pendant la connexion.
+/// Loading overlay after login or during sign-in.
 class LogoAuthTransition extends StatefulWidget {
   final bool active;
   final String? subtitle;

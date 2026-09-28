@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/colors.dart';
 
-/// Fond d'accueil post-login  -  orbes flottantes floues, translucides et sobres.
+/// Post-login welcome background: soft, translucent, muted floating orbs.
 class WelcomeAmbientBackground extends StatefulWidget {
   final Widget child;
 

@@ -11,7 +11,7 @@ import '../../shared/widgets/confidia_text_field.dart';
 import '../../shared/models/access_control_models.dart';
 import 'access_control_provider.dart';
 
-/// Icônes proposées pour les structures personnalisées.
+/// Icons offered for custom structures.
 abstract final class StructureIconOptions {
   static const icons = <IconData>[
     Icons.apartment_rounded,

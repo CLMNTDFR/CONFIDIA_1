@@ -7,7 +7,7 @@ import '../../shared/services/mock_ai_service.dart';
 import '../../shared/services/serenity_service.dart';
 import 'day_briefing_model.dart';
 
-/// Agrège les données locales pour le rituel "Commencer ma journée".
+/// Aggregates local data for the "Commencer ma journée" ritual.
 abstract final class DayBriefingService {
   static DayBriefing build({
     required String firstName,
@@ -20,7 +20,7 @@ abstract final class DayBriefingService {
   }) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    // Horizon aligné sur la démo : factures à +5/+8/+12 j restent actionnables.
+    // Horizon aligned with the demo: invoices at +5/+8/+12 days stay actionable.
     final urgentHorizon = today.add(const Duration(days: 14));
 
     final currentScore = SerenityService.build(
@@ -58,7 +58,7 @@ abstract final class DayBriefingService {
         .where((p) => p.status == PaymentStatus.pending || p.status == PaymentStatus.waiting)
         .length;
 
-    // Gains marginaux séquentiels : somme des badges = projection affichée.
+    // Sequential marginal gains: sum of badges = displayed projection.
     final scored = _buildScoredPriorities(
       firstName: firstName,
       emails: emails,
@@ -93,8 +93,8 @@ abstract final class DayBriefingService {
       newDocCount: newDocuments.length,
     );
 
-    // Listes affichées = compteurs du coup d'œil (docs / RDV).
-    // paymentsDue reste le total des paiements en attente (aperçu portefeuille).
+    // Displayed lists = glance counters (docs / appointments).
+    // paymentsDue remains the total of pending payments (wallet overview).
     final priorityPayKeys = {
       for (final p in scored.priorities)
         if (p.kind == DayPriorityKind.payment) p.id,
@@ -147,7 +147,7 @@ abstract final class DayBriefingService {
     ).score;
   }
 
-  /// Priorités qui font réellement monter le score, avec gains cumulatifs cohérents.
+  /// Priorities that actually raise the score, with consistent cumulative gains.
   static ({List<DayPriority> priorities, int projectedScore}) _buildScoredPriorities({
     required String firstName,
     required List<EmailModel> emails,
@@ -211,7 +211,7 @@ abstract final class DayBriefingService {
       for (final p in paymentsState)
         if (p.status == PaymentStatus.paid) p.id,
     };
-    // Courriers déjà réglés via le paiement lié : exclus du briefing.
+    // Mail already settled via the linked payment: excluded from the briefing.
     final unprocessed = emailsState
         .where((e) =>
             !e.isProcessed &&

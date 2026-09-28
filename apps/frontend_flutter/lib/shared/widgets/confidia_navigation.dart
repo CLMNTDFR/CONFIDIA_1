@@ -8,7 +8,7 @@ import 'confidia_chrome_material.dart';
 import 'confidia_demo_badge.dart';
 import 'confidia_tooltip.dart';
 
-/// Entrée de navigation partagée (sidebar + bottom bar).
+/// Shared navigation entry (sidebar + bottom bar).
 class ConfidiaNavDestination {
   final IconData iconOutlined;
   final IconData iconFilled;
@@ -32,7 +32,7 @@ bool confidiaNavIsActive(String path, String currentPath) {
   return currentPath == path || currentPath.startsWith('$path/');
 }
 
-/// Item de sidebar desktop  -  surface2 + textPrimary pour l'actif.
+/// Desktop sidebar item: surface2 + textPrimary for the active state.
 class ConfidiaSidebarNavItem extends StatefulWidget {
   final ConfidiaNavDestination destination;
   final bool isActive;
@@ -61,8 +61,8 @@ class _ConfidiaSidebarNavItemState extends State<ConfidiaSidebarNavItem> {
     final activeColor = AppColors.textPrimary(isDark);
     final idleColor = AppColors.textSecondary(isDark);
 
-    // Pendant l'animation de largeur, `collapsed` bascule avant la fin :
-    // on se base sur l'espace réel pour éviter les overflows.
+    // During the width animation, `collapsed` flips before it finishes:
+    // use the actual space to avoid overflows.
     final item = Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: MouseRegion(
@@ -156,7 +156,7 @@ class _NavBadge extends StatelessWidget {
   }
 }
 
-/// Bottom bar mobile  -  actif sans couleur de marque.
+/// Mobile bottom bar: active state without brand color.
 class ConfidiaMobileNavBar extends StatelessWidget {
   final String currentPath;
   final List<ConfidiaNavDestination> destinations;
@@ -287,7 +287,7 @@ class _MobileNavItem extends StatelessWidget {
   }
 }
 
-/// Destinations principales de l'application.
+/// Main application destinations.
 abstract final class ConfidiaNavDestinations {
   static ConfidiaNavDestination home() => const ConfidiaNavDestination(
         iconOutlined: Icons.space_dashboard_outlined,

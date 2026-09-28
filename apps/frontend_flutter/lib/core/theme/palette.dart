@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'colors.dart';
 
-/// Identifiant du thème couleur de marque.
+/// Brand color theme identifier.
 enum ConfidiaPaletteId {
   blue,
   rose;
@@ -13,7 +13,7 @@ enum ConfidiaPaletteId {
       };
 }
 
-/// Couleurs et dégradés de marque  -  source unique pour les deux thèmes.
+/// Brand colors and gradients  -  single source for both themes.
 @immutable
 class ConfidiaPalette {
   final ConfidiaPaletteId id;
@@ -103,7 +103,7 @@ class ConfidiaPalette {
         end: Alignment.bottomRight,
       );
 
-  /// Palette étendue pour graphiques (donut, barres, légendes).
+  /// Extended palette for charts (donut, bars, legends).
   List<Color> get chartColors => [
         primary,
         secondary,
@@ -115,7 +115,7 @@ class ConfidiaPalette {
       ];
 }
 
-/// Extension Riverpod / thème  -  exposée via [ThemeData.extensions].
+/// Riverpod / theme extension  -  exposed via [ThemeData.extensions].
 @immutable
 class ConfidiaPaletteTheme extends ThemeExtension<ConfidiaPaletteTheme> {
   final ConfidiaPalette palette;

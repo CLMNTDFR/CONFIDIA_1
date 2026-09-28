@@ -32,4 +32,24 @@ void main() {
     expect(createAccount.outlined, isTrue);
     expect(demo.outlined, isTrue);
   });
+
+  testWidgets('login actions stay inside a phone width', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp(
+          theme: ConfidiaTheme.dark(ConfidiaPalette.blue),
+          home: const Scaffold(body: LoginScreen()),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Pas encore de compte ? Créer un compte'), findsOneWidget);
+  });
 }

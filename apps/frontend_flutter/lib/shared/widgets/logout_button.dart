@@ -23,7 +23,7 @@ Future<void> performLogout(BuildContext context, WidgetRef ref) async {
   if (context.mounted) context.go('/login');
 }
 
-/// Bouton de déconnexion compact avec confirmation.
+/// Compact logout button with confirmation.
 class LogoutButton extends ConsumerWidget {
   const LogoutButton({super.key});
 

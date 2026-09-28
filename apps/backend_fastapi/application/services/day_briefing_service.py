@@ -13,7 +13,7 @@ from core.security import TokenPayload
 
 
 class DayBriefingService:
-    """Briefing du jour à partir des événements réels. Paiements et mails restent hors MVP."""
+    """Day briefing from real events. Payments and mail stay out of the MVP."""
 
     def __init__(self, serenity_service: SerenityService | None = None):
         self._serenity = serenity_service or SerenityService()

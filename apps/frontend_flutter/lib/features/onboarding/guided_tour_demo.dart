@@ -4,7 +4,7 @@ import '../access_control/access_control_provider.dart';
 import 'guided_tour_access_bridge.dart';
 import 'guided_tour_provider.dart';
 
-/// Actions automatiques légères pendant certaines étapes du tutoriel.
+/// Light automatic actions during some tutorial steps.
 class GuidedTourDemo {
   GuidedTourDemo._();
 
@@ -12,7 +12,7 @@ class GuidedTourDemo {
     switch (action) {
       case GuidedTourDemoAction.none:
       case GuidedTourDemoAction.initThemes:
-        // Les thèmes sont initialisés explicitement avant le spotlight.
+        // Themes are initialized explicitly before the spotlight.
         return;
       case GuidedTourDemoAction.prepareAccess:
         await _prepareAccess(ref, tabIndex: 0);

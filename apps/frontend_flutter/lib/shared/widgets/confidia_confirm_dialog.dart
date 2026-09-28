@@ -9,8 +9,8 @@ import '../../core/theme/tokens/tokens.dart';
 import 'confidia_chrome_material.dart';
 import 'confidia_glow_button.dart';
 
-/// Dialogue de confirmation au style CONFIDIA (matière chrome, boutons centrés).
-/// Même chorégraphie que [showConfidiaSheet] : blur/voile progressifs + slide.
+/// CONFIDIA-styled confirmation dialog (chrome material, centered buttons).
+/// Same choreography as [showConfidiaSheet]: progressive blur/scrim + slide.
 Future<bool> showConfidiaConfirmDialog(
   BuildContext context, {
   required String title,

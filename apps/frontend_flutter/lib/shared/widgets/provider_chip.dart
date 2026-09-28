@@ -65,7 +65,7 @@ class CalendarSourceChip extends StatelessWidget {
   }
 }
 
-/// Logo pour les services de stockage (Paperless, Nextcloud).
+/// Logo for storage services (Paperless, Nextcloud).
 class StorageBrandChip extends StatelessWidget {
   final String assetPath;
   final String label;

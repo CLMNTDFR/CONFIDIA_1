@@ -6,7 +6,6 @@ import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/widgets/confidia_button.dart';
-import '../../shared/widgets/confidia_logo.dart';
 import '../../shared/widgets/confidia_text_field.dart';
 import '../../shared/widgets/glass_card.dart';
 import '../../shared/widgets/mesh_background.dart';
@@ -33,18 +32,59 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _obscureConfirm = true;
   bool _submitting = false;
   bool _fieldsUnlocked = false;
+  bool _submitAttempted = false;
   String _passwordLive = '';
+  final Set<String> _revealed = {};
+  late final FocusNode _emailFocus;
+  late final FocusNode _emailConfirmFocus;
+  late final FocusNode _usernameFocus;
+  late final FocusNode _firstNameFocus;
+  late final FocusNode _lastNameFocus;
+  late final FocusNode _passwordFocus;
+  late final FocusNode _passwordConfirmFocus;
 
   @override
   void initState() {
     super.initState();
+    _emailFocus = _blurNode('email');
+    _emailConfirmFocus = _blurNode('emailConfirm');
+    _usernameFocus = _blurNode('username');
+    _firstNameFocus = _blurNode('firstName');
+    _lastNameFocus = _blurNode('lastName');
+    _passwordFocus = _blurNode('password');
+    _passwordConfirmFocus = _blurNode('passwordConfirm');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _fieldsUnlocked = true);
     });
   }
 
+  FocusNode _blurNode(String fieldId) {
+    final node = FocusNode();
+    node.addListener(() {
+      if (node.hasFocus || !mounted || _revealed.contains(fieldId)) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || node.hasFocus || _revealed.contains(fieldId)) return;
+        setState(() => _revealed.add(fieldId));
+      });
+    });
+    return node;
+  }
+
+  /// Keep incomplete fields quiet until the user leaves them, or submits.
+  String? _visibleError(String fieldId, String? error) {
+    if (!_submitAttempted && !_revealed.contains(fieldId)) return null;
+    return error;
+  }
+
   @override
   void dispose() {
+    _emailFocus.dispose();
+    _emailConfirmFocus.dispose();
+    _usernameFocus.dispose();
+    _firstNameFocus.dispose();
+    _lastNameFocus.dispose();
+    _passwordFocus.dispose();
+    _passwordConfirmFocus.dispose();
     _email.dispose();
     _emailConfirm.dispose();
     _username.dispose();
@@ -56,6 +96,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Future<void> _submit() async {
+    setState(() => _submitAttempted = true);
     final valid = _formKey.currentState?.validate() ?? false;
     if (!valid) return;
     setState(() => _submitting = true);
@@ -85,16 +126,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         body: SafeArea(
           child: Stack(
             children: [
-              const Positioned(top: 16, right: 16, child: ThemeToggleButton()),
               Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+                  padding: EdgeInsets.fromLTRB(
+                    ConfidiaSpacing.lg,
+                    isWide ? ConfidiaSpacing.lg : 72,
+                    ConfidiaSpacing.lg,
+                    ConfidiaSpacing.lg,
+                  ),
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 1000),
                     child: isWide ? _buildWide(auth) : _buildNarrow(auth),
                   ),
                 ),
               ),
+              const Positioned(top: 12, right: 16, child: ThemeToggleButton()),
             ],
           ),
         ),
@@ -112,8 +158,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const ConfidiaLogo(size: 48),
-                const SizedBox(height: ConfidiaSpacing.xxl),
                 Text(
                   'Créez votre espace\nCONFIDIA.',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
@@ -139,13 +183,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   Widget _buildNarrow(AuthState auth) {
-    return Column(
-      children: [
-        const ConfidiaLogo(size: 44),
-        const SizedBox(height: ConfidiaSpacing.xl),
-        _formCard(auth),
-      ],
-    );
+    return _formCard(auth);
   }
 
   Widget _formCard(AuthState auth) {
@@ -155,7 +193,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       child: AutofillGroup(
         child: Form(
         key: _formKey,
-        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -168,6 +205,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: ConfidiaSpacing.xl),
             ConfidiaTextFormField(
               controller: _email,
+              focusNode: _emailFocus,
               enabled: !busy,
               readOnly: !_fieldsUnlocked,
               labelText: 'Adresse e-mail',
@@ -176,11 +214,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               autofillHints: const [AutofillHints.email],
               autocorrect: false,
               textInputAction: TextInputAction.next,
-              validator: RegisterValidators.email,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              validator: (v) => _visibleError('email', RegisterValidators.email(v)),
             ),
             const SizedBox(height: ConfidiaSpacing.md),
             ConfidiaTextFormField(
               controller: _emailConfirm,
+              focusNode: _emailConfirmFocus,
               enabled: !busy,
               readOnly: !_fieldsUnlocked,
               labelText: 'Confirmation de l\'e-mail',
@@ -189,11 +229,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               autofillHints: const [AutofillHints.email],
               autocorrect: false,
               textInputAction: TextInputAction.next,
-              validator: (v) => RegisterValidators.emailConfirm(v, _email.text),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              validator: (v) => _visibleError(
+                'emailConfirm',
+                RegisterValidators.emailConfirm(v, _email.text),
+              ),
             ),
             const SizedBox(height: ConfidiaSpacing.md),
             ConfidiaTextFormField(
               controller: _username,
+              focusNode: _usernameFocus,
               enabled: !busy,
               readOnly: !_fieldsUnlocked,
               labelText: 'Nom d\'utilisateur',
@@ -202,7 +247,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               autocorrect: false,
               enableSuggestions: false,
               textInputAction: TextInputAction.next,
-              validator: RegisterValidators.username,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              validator: (v) => _visibleError('username', RegisterValidators.username(v)),
             ),
             const SizedBox(height: ConfidiaSpacing.md),
             Row(
@@ -210,6 +256,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 Expanded(
                   child: ConfidiaTextFormField(
                     controller: _firstName,
+                    focusNode: _firstNameFocus,
                     enabled: !busy,
                     readOnly: !_fieldsUnlocked,
                     labelText: 'Prénom',
@@ -217,13 +264,18 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     autofillHints: const [AutofillHints.givenName],
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
-                    validator: (v) => RegisterValidators.requiredName(v, label: 'Le prénom'),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    validator: (v) => _visibleError(
+                      'firstName',
+                      RegisterValidators.requiredName(v, label: 'Le prénom'),
+                    ),
                   ),
                 ),
                 const SizedBox(width: ConfidiaSpacing.md),
                 Expanded(
                   child: ConfidiaTextFormField(
                     controller: _lastName,
+                    focusNode: _lastNameFocus,
                     enabled: !busy,
                     readOnly: !_fieldsUnlocked,
                     labelText: 'Nom',
@@ -231,7 +283,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     autofillHints: const [AutofillHints.familyName],
                     textCapitalization: TextCapitalization.words,
                     textInputAction: TextInputAction.next,
-                    validator: (v) => RegisterValidators.requiredName(v, label: 'Le nom'),
+                    autovalidateMode: AutovalidateMode.onUserInteraction,
+                    validator: (v) => _visibleError(
+                      'lastName',
+                      RegisterValidators.requiredName(v, label: 'Le nom'),
+                    ),
                   ),
                 ),
               ],
@@ -239,6 +295,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: ConfidiaSpacing.md),
             ConfidiaTextFormField(
               controller: _password,
+              focusNode: _passwordFocus,
               enabled: !busy,
               readOnly: !_fieldsUnlocked,
               obscureText: _obscurePassword,
@@ -249,7 +306,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               enableSuggestions: false,
               textInputAction: TextInputAction.next,
               onChanged: (v) => setState(() => _passwordLive = v),
-              validator: RegisterValidators.password,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              validator: (v) => _visibleError('password', RegisterValidators.password(v)),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
@@ -263,6 +321,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SizedBox(height: ConfidiaSpacing.md),
             ConfidiaTextFormField(
               controller: _passwordConfirm,
+              focusNode: _passwordConfirmFocus,
               enabled: !busy,
               readOnly: !_fieldsUnlocked,
               obscureText: _obscureConfirm,
@@ -273,7 +332,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
               enableSuggestions: false,
               textInputAction: TextInputAction.done,
               onFieldSubmitted: busy ? null : (_) => _submit(),
-              validator: (v) => RegisterValidators.passwordConfirm(v, _password.text),
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              validator: (v) => _visibleError(
+                'passwordConfirm',
+                RegisterValidators.passwordConfirm(v, _password.text),
+              ),
               suffixIcon: IconButton(
                 icon: Icon(
                   _obscureConfirm ? Icons.visibility_off_outlined : Icons.visibility_outlined,

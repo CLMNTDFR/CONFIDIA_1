@@ -146,7 +146,7 @@ class AccessControlNotifier extends StateNotifier<AccessControlState> {
     _updateActiveData(state.activeData.copyWith(nodes: updated));
   }
 
-  /// Repositionne un nœud sur un niveau hiérarchique (0 = racine / niveau 1 affiché).
+  /// Repositions a node onto a hierarchy level (0 = root / displayed level 1).
   void reparentToLevel(String nodeId, int targetDepth) {
     final nodes = state.activeData.nodes;
     final depths = OrgChartLayout.computeDepths(nodes);
@@ -169,7 +169,7 @@ class AccessControlNotifier extends StateNotifier<AccessControlState> {
     reparentNode(nodeId, newParentId);
   }
 
-  /// Crée un niveau supérieur : le nœud devient responsable des autres racines.
+  /// Creates a higher level: the node becomes responsible for the other roots.
   void reparentAboveTop(String nodeId) {
     final nodes = state.activeData.nodes;
     final depths = OrgChartLayout.computeDepths(nodes);

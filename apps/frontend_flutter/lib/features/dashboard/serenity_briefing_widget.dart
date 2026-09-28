@@ -17,7 +17,7 @@ import '../../shared/widgets/serenity_score_ring.dart';
 import '../../shared/widgets/workspace_empty_hint.dart';
 import 'serenity_briefing_provider.dart';
 
-/// Carte score + courbe 14 j  -  briefing narratif dans « Commencer ma journée ».
+/// Score card + 14-day curve - narrative briefing inside « Commencer ma journée ».
 class SerenityBriefingWidget extends ConsumerWidget {
   const SerenityBriefingWidget({super.key});
 

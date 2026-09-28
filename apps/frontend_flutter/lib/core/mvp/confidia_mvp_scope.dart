@@ -1,7 +1,7 @@
-/// Périmètre Holberton : tout l'UI reste visible, le hors-MVP est marqué « Démo ».
+/// Holberton scope: the full UI stays visible; out-of-MVP features are marked « Démo ».
 ///
-/// IN : auth, dashboard, calendrier fusionné (interne), documents, profil, paramètres de base.
-/// OUT : messagerie, paiements, gouvernance, IA production, sync calendriers tiers.
+/// IN: auth, dashboard, merged calendar (internal), documents, profile, basic settings.
+/// OUT: messaging, payments, governance, production AI, third-party calendar sync.
 abstract final class ConfidiaMvpScope {
   static const demoTooltip = 'Hors MVP Holberton · aperçu du produit final';
 

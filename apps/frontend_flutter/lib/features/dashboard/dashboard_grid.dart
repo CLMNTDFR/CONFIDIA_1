@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/spacing.dart';
 import 'dashboard_provider.dart';
 
-/// Groupe de widgets affichés sur une même ligne (1 ou 2 colonnes).
+/// Group of widgets shown on the same row (1 or 2 columns).
 class DashboardGridSegment {
   final List<DashboardWidgetType> types;
 
@@ -24,7 +24,7 @@ class DashboardGridSegment {
   }
 }
 
-/// Compose les widgets du tableau de bord en lignes pleine ou demi-largeur.
+/// Lays out dashboard widgets in full-width or half-width rows.
 abstract final class DashboardGrid {
   static const double breakpoint = 720;
   static const double rowGap = ConfidiaSpacing.md;

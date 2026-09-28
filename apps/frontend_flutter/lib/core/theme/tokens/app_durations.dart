@@ -1,4 +1,4 @@
-/// Durées d'animation récurrentes (hors chorégraphies locales type splash).
+/// Recurring animation durations (excluding local choreographies such as splash).
 abstract final class AppDurations {
   static const Duration press = Duration(milliseconds: 90);
   static const Duration fast = Duration(milliseconds: 120);

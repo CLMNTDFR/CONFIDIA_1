@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../core/theme/tokens/tokens.dart';
 
-/// Matière chrome discrète : flou léger, fill quasi opaque, ombre diffuse,
-/// lavis haut très faible. Pas pour les cartes de contenu.
+/// Discreet chrome material: light blur, nearly opaque fill, diffuse shadow,
+/// very faint top wash. Not for content cards.
 class ConfidiaChromeMaterial extends StatelessWidget {
   final Widget child;
   final BorderRadius borderRadius;

@@ -3,39 +3,39 @@ import 'package:flutter/material.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/tokens/app_spacing.dart';
 
-/// Insets liés au shell mobile (bottom bar + safe area).
+/// Insets tied to the mobile shell (bottom bar + safe area).
 abstract final class ConfidiaMobileShell {
-  /// Hauteur du chrome nav hors safe area (padding 8×2 + icône + label + pads item).
+  /// Nav chrome height excluding the safe area (8×2 padding + icon + label + item pads).
   static const double navBarHeight = AppSpacing.navBarHeight;
 
-  /// Air confortable entre le bas du contenu / FAB et le haut de la barre.
+  /// Comfort gap between the bottom of the content / FAB and the top of the bar.
   static const double contentGap = AppSpacing.md;
 
   static bool isMobileShell(BuildContext context) => MediaQuery.sizeOf(context).width < 900;
 
-  /// Emprise réelle de la barre (chrome + home indicator), sans marge de confort.
+  /// Actual bar occupancy (chrome + home indicator), without the comfort margin.
   static double barOccupiedHeight(BuildContext context) {
     if (!isMobileShell(context)) return 0;
     return navBarHeight + MediaQuery.viewPaddingOf(context).bottom;
   }
 
-  /// Espace à réserver sous le contenu scrollable (barre + safe area + air).
+  /// Space to reserve under scrollable content (bar + safe area + gap).
   static double bottomScrollInset(BuildContext context) {
     if (!isMobileShell(context)) return 0;
     return barOccupiedHeight(context) + contentGap;
   }
 
-  /// Décalage pour FAB / actions flottantes au-dessus de la barre.
+  /// Offset for FAB / floating actions above the bar.
   static double fabBottom(BuildContext context, {double gap = contentGap}) {
     if (!isMobileShell(context)) return gap + ConfidiaSpacing.lg;
     return barOccupiedHeight(context) + gap;
   }
 
-  /// Padding scroll supplémentaire pour ne pas passer sous un FAB (~40 px).
+  /// Extra scroll padding so content does not pass under a FAB (~40 px).
   static double fabScrollClearance({double fabHeight = 40}) => fabHeight + contentGap;
 }
 
-/// Padding de page cohérent avec le shell mobile.
+/// Page padding consistent with the mobile shell.
 abstract final class ConfidiaInsets {
   static EdgeInsets page(BuildContext context) {
     final isMobile = ConfidiaMobileShell.isMobileShell(context);
@@ -56,7 +56,7 @@ abstract final class ConfidiaInsets {
     return base.copyWith(bottom: base.bottom + extraBottom);
   }
 
-  /// Espace final sous une liste (padding latéral déjà géré ailleurs).
+  /// Trailing space under a list (horizontal padding already handled elsewhere).
   static double scrollTail(BuildContext context) {
     if (MediaQuery.sizeOf(context).width >= 900) return ConfidiaSpacing.lg;
     return ConfidiaSpacing.lg + ConfidiaMobileShell.bottomScrollInset(context);

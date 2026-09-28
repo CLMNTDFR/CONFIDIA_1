@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/tokens/tokens.dart';
 import 'confidia_tappable.dart';
 
-/// Interrupteur compact  -  piste discrète, pouce calme.
+/// Compact switch: discreet track, calm thumb.
 class ConfidiaSwitch extends StatelessWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
@@ -74,7 +74,7 @@ class ConfidiaSwitch extends StatelessWidget {
   }
 }
 
-/// Ligne de réglage avec [ConfidiaSwitch] à droite.
+/// Settings row with [ConfidiaSwitch] on the right.
 class ConfidiaSwitchTile extends StatelessWidget {
   final String title;
   final String? subtitle;

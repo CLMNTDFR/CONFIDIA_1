@@ -35,9 +35,9 @@ class HubActivityMonth {
   });
 }
 
-/// Données agrégées pour les graphiques du tableau de bord.
+/// Aggregated data for dashboard charts.
 abstract final class DashboardChartData {
-  /// Dépenses mensuelles sur 6 mois (factures + paiements du hub).
+  /// Monthly spending over 6 months (invoices + hub payments).
   static List<MonthlyPoint> expenseTrend({
     List<PaymentModel> payments = const [],
     bool seedDemo = false,
@@ -63,7 +63,7 @@ abstract final class DashboardChartData {
     });
   }
 
-  /// Répartition des documents par catégorie.
+  /// Document breakdown by category.
   static List<ChartSlice> documentsByCategory(List<DocumentModel> docs, ConfidiaPalette palette) {
     final counts = <String, int>{};
     for (final doc in docs) {
@@ -83,7 +83,7 @@ abstract final class DashboardChartData {
     });
   }
 
-  /// Activité mensuelle du hub (documents, mails, paiements).
+  /// Monthly hub activity (documents, mail, payments).
   static List<HubActivityMonth> hubActivity({
     List<DocumentModel> documents = const [],
     List<EmailModel> emails = const [],
@@ -118,7 +118,7 @@ abstract final class DashboardChartData {
     });
   }
 
-  /// Montants par statut de paiement.
+  /// Amounts by payment status.
   static List<ChartSlice> paymentsByStatus(List<PaymentModel> payments, ConfidiaPalette palette) {
     final totals = <PaymentStatus, double>{};
     for (final payment in payments) {
