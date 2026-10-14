@@ -22,23 +22,21 @@
 
 1. [Overview](#overview)
 2. [Need analysis and scope](#need-analysis-and-scope)
-3. [RNCP 6 competency mapping](#rncp-6-competency-mapping)
-4. [Main features](#main-features)
-5. [Technologies and tools](#technologies-and-tools)
-6. [Architecture](#architecture)
-7. [Data model](#data-model)
-8. [Security](#security)
-9. [User flow](#user-flow)
-10. [Installation and configuration](#installation-and-configuration)
-11. [Usage](#usage)
-12. [Tests and CI](#tests-and-ci)
-13. [Project management](#project-management)
-14. [Repository structure](#repository-structure)
-15. [Resources](#resources)
-16. [Future features](#future-features)
-17. [Contributing](#contributing)
-18. [Author](#author)
-19. [License](#license)
+3. [Main features](#main-features)
+4. [Technologies and tools](#technologies-and-tools)
+5. [Architecture](#architecture)
+6. [Data model](#data-model)
+7. [Security](#security)
+8. [User flow](#user-flow)
+9. [Installation and configuration](#installation-and-configuration)
+10. [Usage](#usage)
+11. [Tests and CI](#tests-and-ci)
+12. [Project management](#project-management)
+13. [Repository structure](#repository-structure)
+14. [Resources](#resources)
+15. [Future features](#future-features)
+16. [Author](#author)
+17. [License](#license)
 
 ---
 
@@ -47,10 +45,6 @@
 Administrative life is split across email, cloud drives, paper scans and calendars. Deadlines are easy to miss. Documents are hard to find when they matter.
 
 **CONFIDIA** is a single, calm place to act: sign in, keep a profile, open a dashboard, store documents, and manage an in-app calendar. The Flutter client never talks to identity or storage providers directly. Every call goes through a layered FastAPI backend that owns authentication, validation, persistence and isolation between households.
-
-This repository is a **strict 4-week MVP** for a Holberton / RNCP 6 jury, not the full product vision. What ships is a real login, a real PostgreSQL workspace, and a demonstrable document path. Messaging, payments, third-party calendar sync, advanced governance and production AI stay out of scope (preview screens are labelled as demo).
-
-Official title reference: [RNCP 37873](https://www.francecompetences.fr/recherche/rncp/37873/).
 
 ---
 
@@ -81,26 +75,6 @@ Official title reference: [RNCP 37873](https://www.francecompetences.fr/recherch
 - External calendar sync
 - Advanced organisation chart and consent workflows
 - Live LLM (the API exposes a `MockAIProvider` to show the port)
-
----
-
-## RNCP 6 competency mapping
-
-The title is built on three blocks. The README, the code and the demo are organised against them.
-
-| Block | Competency | Evidence in this project |
-|-------|------------|--------------------------|
-| **BC01** Develop a secure application | Work environment | Python 3.12, Flutter stable, Docker / Colima, `.env.example` |
-| BC01 | User interfaces | Flutter design system (dark-first, two brand palettes), GoRouter, form validation |
-| BC01 | Business components | Identity, documents, calendar, dashboard services behind ports |
-| BC01 | Project management | 4-week Kanban, locked scope, Git history |
-| **BC02** Layered secure application | Need analysis and mockups | This section + [docs/pitch-holberton](docs/pitch-holberton/README.md) |
-| BC02 | Software architecture | `api` → `application` → `domain` → `infrastructure` |
-| BC02 | Relational database | PostgreSQL schema (users, organisations, memberships, documents, calendars) |
-| BC02 | Data access | SQLAlchemy 2 async + repository adapters; Keycloak for passwords |
-| **BC03** Prepare a secure deployment | Test plans | pytest (API + security + integration), `flutter test`, demo-path test |
-| BC03 | Deployment documentation | This file + [docs/Installation.md](docs/Installation.md) |
-| BC03 | DevOps | Docker Compose, GitHub Actions (Postgres, Alembic, pytest, Flutter) |
 
 ---
 
@@ -542,7 +516,6 @@ CONFIDIA_1/
 - [Keycloak](https://www.keycloak.org/documentation)
 - [PostgreSQL 16](https://www.postgresql.org/docs/16/)
 - [Docker Compose](https://docs.docker.com/compose/)
-- [RNCP 37873](https://www.francecompetences.fr/recherche/rncp/37873/)
 - [Architecture notes](docs/Architecture.md)
 - [SQL schema](docs/pitch-holberton/SQL_SCHEMA_MVP.md)
 - [Flutter design system](apps/frontend_flutter/README.md)
@@ -565,27 +538,12 @@ Kept in the backlog on purpose. They must not leak into the MVP demo.
 
 ---
 
-## Contributing
-
-This is a solo portfolio repository. External contributions are welcome as a clean GitHub workflow:
-
-1. Fork the repository.
-2. Create a branch (`feature/...` or `fix/...`).
-3. Keep layers intact (`api` must not import infrastructure adapters directly).
-4. Run `./scripts/test.sh`.
-5. Open a pull request against `main`.
-
-Details: [docs/Contributing.md](docs/Contributing.md).
-
----
-
 ## Author
 
 **Clément Defer** · Holberton Webstack · RNCP 6 CDA candidate
 
 - LinkedIn: [linkedin.com/in/clmntdfr](https://www.linkedin.com/in/clmntdfr/)
 - Portfolio: [clementdefer.netlify.app](https://clementdefer.netlify.app/)
-- Email: deferclement59@gmail.com
 
 Roles covered on this project: product framing, UX mockups, backend, frontend, security, tests, Docker and documentation.
 
