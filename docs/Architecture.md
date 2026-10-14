@@ -1,88 +1,74 @@
-# Architecture CONFIDIA
+# CONFIDIA architecture
 
-## Vue d'ensemble
+## Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Flutter Frontend                          │
-│  Riverpod · GoRouter · Dio · Design System                  │
-│  (Android · iOS · Windows · macOS · Linux)                  │
+│                    Flutter frontend                          │
+│  Riverpod · GoRouter · Dio · design system                  │
 └────────────────────────┬────────────────────────────────────┘
-                         │ HTTPS / REST
+                         │ HTTPS / REST  /api/v1
                          ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                    FastAPI Backend                           │
-│  Clean Architecture · DI · Guards · DTOs                    │
-├─────────────┬──────────────┬──────────────┬─────────────────┤
-│   Keycloak  │  Paperless   │  Nextcloud   │  MockAIProvider │
-│  OAuth2/OIDC│  Documents   │  WebDAV      │  (futur LLM)    │
-└─────────────┴──────────────┴──────────────┴─────────────────┘
+│                    FastAPI backend                           │
+│  Layers · DTOs · guards · FastAPI Depends                   │
+├──────────────────┬──────────────────┬───────────────────────┤
+│  Keycloak        │  PostgreSQL 16   │  Local disk           │
+│  OAuth2 / OIDC   │  metadata        │  var/documents        │
+├──────────────────┴──────────────────┴───────────────────────┤
+│  Optional, not the documents screen:                        │
+│  Paperless-ngx · Nextcloud (WebDAV) · MockAIProvider        │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-## Principe fondamental
+## Rule
 
-**Flutter ne communique jamais directement avec Paperless, Nextcloud ou Keycloak.** Tout passe par l'API FastAPI qui agit comme couche d'orchestration et d'abstraction.
+The Flutter client never calls Keycloak, Paperless, or Nextcloud. Every request goes to the FastAPI API.
 
-## Backend — Clean Architecture
+## Backend
 
 ```
 apps/backend_fastapi/
-├── api/                  # Couche présentation (routes, dépendances)
+├── api/                  # Routes and FastAPI dependencies
 │   └── v1/
-├── application/          # Cas d'usage, services, DTOs
+├── application/          # Use cases, services, DTOs
 │   ├── dto/
 │   └── services/
-├── domain/               # Entités, interfaces (ports)
+├── domain/               # Ports (ABC interfaces)
 │   └── interfaces/
-├── infrastructure/       # Implémentations (adaptateurs)
+├── infrastructure/       # Adapters
+│   ├── db/               # SQLAlchemy models and Postgres repositories
 │   ├── keycloak/
 │   ├── paperless/
 │   ├── nextcloud/
 │   └── ai/
-└── core/                 # Config, sécurité, DI
+├── core/                 # Settings, JWT, upload checks, DI container
+└── migrations/           # Alembic
 ```
 
-### Couches
+| Layer | Responsibility |
+|-------|----------------|
+| `api/` | REST endpoints, input validation, role guards |
+| `application/` | Use cases, orchestration, Pydantic v2 DTOs |
+| `domain/` | Abstract ports, no framework |
+| `infrastructure/` | Keycloak, PostgreSQL, disk, Paperless, Nextcloud, mock AI |
+| `core/` | Settings, security, dependency injection |
 
-| Couche | Responsabilité |
-|--------|----------------|
-| `api/` | Endpoints REST, validation entrée, guards |
-| `application/` | Logique métier, orchestration, DTOs |
-| `domain/` | Interfaces abstraites (ports) |
-| `infrastructure/` | Intégrations concrètes (adaptateurs) |
-| `core/` | Configuration, sécurité, injection de dépendances |
+### Documents (Holberton path)
 
-### Interfaces clés
+`/documents` uses `WorkspaceDocumentService` and `PostgresDocumentRepository` (`api/deps.py`, `api/v1/documents.py`).
 
-```python
-class DocumentRepository(ABC):      # Port documents (Paperless)
-class StorageProvider(ABC):         # Port stockage (Nextcloud → S3, etc.)
-class DocumentAIProvider(ABC):      # Port IA (OpenAI, Claude, Mistral, local)
-```
+- Metadata lives in PostgreSQL, scoped to the current organisation.
+- File bytes live on local disk (`documents_storage_dir`, default `var/documents`).
+- The port is `WorkspaceDocumentRepository`: list, get, read file, create, update, delete.
 
-## Authentification
+`PaperlessClient` still implements the older `DocumentRepository` port (list, get, upload, delete, search). If `PAPERLESS_TOKEN` is empty, that client returns mock rows. It is registered in `core/di.py` and is not what `/documents` calls.
 
-- **Keycloak** realm `confidia` avec import automatique
-- Flux : Password Grant (MVP) → Refresh Token automatique
-- Rôles : `ADMIN`, `USER`, `MANAGER`
-- Guards backend : `require_roles(Role.ADMIN)`
-- Guards frontend : vérification rôles via `authStateProvider`
+### Nextcloud
 
-## Intégration Paperless-ngx
+`NextcloudStorageProvider` implements `StorageProvider` (upload, download, delete, list, share link). `api/v1/storage.py` builds it for `/storage`. The documents screen does not use it.
 
-`PaperlessClient` implémente `DocumentRepository` :
-- Liste, détail, upload, suppression, recherche
-- Fallback automatique sur données mock si service indisponible
-- Token API configurable via `PAPERLESS_TOKEN`
-
-## Intégration Nextcloud
-
-`NextcloudStorageProvider` implémente `StorageProvider` :
-- WebDAV pour upload/download/list
-- Partage de fichiers
-- Remplaçable par S3, MinIO, etc. sans modifier l'application
-
-## Architecture IA
+### AI
 
 ```python
 class DocumentAIProvider(ABC):
@@ -92,52 +78,62 @@ class DocumentAIProvider(ABC):
     async def extract_amounts(document_id, content) -> AmountExtractionDTO
 ```
 
-`MockAIProvider` retourne des données simulées. Pour brancher un vrai LLM :
-1. Créer `OpenAIProvider(DocumentAIProvider)`
-2. Enregistrer dans `core/di.py`
-3. Aucune modification frontend nécessaire
+`MockAIProvider` returns fixed sample data. `api/v1/ai.py` constructs that class directly. A real provider would implement the same port and replace that construction. The Flutter client would keep calling the API.
+
+### Wiring
+
+`core/di.py` is a `dependency_injector` container for `PaperlessClient`, `NextcloudStorageProvider`, and `MockAIProvider`.
+
+Holberton routes (documents, calendar, profile) do not read that container. They use FastAPI `Depends` and PostgreSQL repositories. Storage and AI routes construct their adapters in the route module.
+
+## Authentication
+
+- Keycloak realm `confidia`, imported when Compose starts.
+- Login uses the OAuth2 password grant. The API refreshes the token.
+- Roles: `ADMIN`, `USER`, `MANAGER`.
+- Backend guard: `require_roles(...)` in `core/security.py`.
+- Flutter: `authStateProvider`. Tokens sit in `flutter_secure_storage`. A 401 triggers `/auth/refresh`, then the call is retried.
+
+## Data
+
+PostgreSQL 16 is the system of record (users, organisations, documents, calendar). Schema changes go through Alembic (`migrations/`).
 
 ## Frontend
 
-### Design System
+### Theme
 
 ```
 lib/core/theme/
-├── colors.dart       # Palette (#d20050, #af73f7, #4b96b4)
-├── spacing.dart      # Espacements et rayons
-├── typography.dart   # Inter via Google Fonts
-└── theme.dart        # Thèmes dark/light
+├── theme.dart          # Dark and light ThemeData
+├── palette.dart        # Blue and rose brand palettes
+├── colors.dart         # Facade over surface tokens
+├── spacing.dart
+├── typography.dart     # Inter via Google Fonts
+└── tokens/             # Spacing, radius, type, surfaces
 ```
 
-### Architecture feature-based
+Rose brand colors in `palette.dart`: `#d20050`, `#af73f7`, `#4b96b4`. Blue is the other palette (`#015AAB`, `#06E5EF`, `#3B9AE8`).
 
-```
-lib/
-├── core/             # API, auth, router, theme
-├── features/         # Un dossier par écran/fonctionnalité
-│   ├── auth/
-│   ├── dashboard/
-│   ├── documents/
-│   ├── calendar/
-│   ├── notifications/
-│   ├── profile/
-│   ├── settings/
-│   └── admin/
-└── shared/           # Modèles, widgets, mock data
-```
+### Features
 
-### API Client (Dio)
+`lib/features/` has one folder per area: `auth`, `dashboard`, `documents`, `calendar`, `profile`, `notifications`, `settings`, `admin`, `access_control`, `day_start`, `messaging`, `onboarding`, `payments`, `serenity_feedback`.
 
-- Intercepteur auth (Bearer token)
-- Refresh automatique sur 401
-- Stockage sécurisé des tokens (`flutter_secure_storage`)
+`lib/shared/` holds models, widgets, and mock data. `lib/core/` holds the API client, auth, router, and theme.
 
-## Décisions techniques
+Messaging, payments, and the organisation chart are demo screens. They are not the Holberton document path.
 
-| Décision | Choix | Justification |
-|----------|-------|---------------|
-| Monorepo | Oui | Cohérence, CI unifiée |
-| Clean Architecture | Oui | Évolutivité, testabilité |
-| Mock fallback | Oui | MVP exécutable sans tous les services |
-| Paperless direct | Non | Sécurité, abstraction |
-| Provider classique | Non | Riverpod (requirement) |
+### API client (Dio)
+
+- Base URL from `ApiConfig` (default `http://localhost:8000/api/v1` on web and desktop).
+- Bearer token on each call.
+- Refresh on 401.
+
+## Technical choices
+
+| Decision | Choice | Why |
+|----------|--------|-----|
+| Repository layout | Monorepo | One clone, one CI |
+| Backend shape | Layered ports and adapters | Swap an adapter without rewriting routes |
+| Document bytes | Local disk + Postgres metadata | The demo does not depend on Paperless |
+| Paperless and Nextcloud | Present in Compose, off the documents screen | Optional integrations |
+| App state | Riverpod | Not the classic `provider` package |
