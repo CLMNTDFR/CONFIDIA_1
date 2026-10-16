@@ -2,9 +2,13 @@
 
 Support pour l'oral. Les schémas s'affichent dans la prévisualisation Markdown (GitHub, Cursor, VS Code).
 
-## Le projet
+## Le pitch
 
-La vie administrative est éparpillée. Une facture dans les mails, un contrat sur un drive, une échéance dans la tête. CONFIDIA est l'endroit unique où je me connecte, je range un document, et je le retrouve le jour où j'en ai besoin.
+La paperasse du quotidien est éparpillée. La facture est dans les mails, le contrat sur un drive, la date dans la tête. CONFIDIA est l'endroit où je dépose tout ça, et où je le retrouve le jour où j'en ai besoin.
+
+J'ouvre l'application, je me connecte, je vois ma semaine. J'importe un document, je lui donne un titre, je le rouvre, je le télécharge. Il est encore là si je reviens plus tard. Le calendrier et le profil sont là aussi. La messagerie, les paiements et l'organigramme se voient à l'écran, mais ce sont des aperçus : ils montrent la suite, ils ne rangent rien pour de vrai.
+
+## Le projet
 
 L'objectif de ce dépôt n'est pas toute la vision produit. C'est un MVP Holberton que quelqu'un d'autre peut lancer : un vrai compte, une vraie base, un fichier qui reste là après un rafraîchissement.
 
