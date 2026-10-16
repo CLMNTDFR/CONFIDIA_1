@@ -211,15 +211,9 @@ Paperless-ngx, Nextcloud et l'IA sont dans l'architecture visée. Pour la démo,
 
 **Ce qui a bien fonctionné.** Séparer le client et l'API. Une fois que Flutter n'a plus qu'une URL, Keycloak peut être lent, PostgreSQL peut redémarrer, l'écran ne change pas. Le script de démarrage attend vraiment que Keycloak et `/health` répondent, au lieu de me laisser deviner. Le titre du document se saisit à l'import, pas seulement après coup.
 
-**Les difficultés.** Le port 8000 était déjà pris par un autre conteneur Docker. L'API CONFIDIA ne pouvait pas démarrer, et le message ressemblait à un uvicorn oublié. Le script s'arrête maintenant si le port est occupé par autre chose que notre conteneur.
-
-L'autre difficulté est le récit. Le schéma visé place le PDF dans Paperless. Celui de la démo est sur le disque. Si je mélange les deux phrases, le dessin et l'écran se contredisent.
-
-Côté écran, l'aperçu PDF ne montrait que le haut de la première page, et il bougeait en même temps que le scroll de la fiche. Le formulaire d'inscription passait tous les champs au rouge dès la première lettre de l'e-mail. Les deux se voient tout de suite en démo. Je les ai repris : page entière avec flèches, et erreurs seulement quand on quitte le champ ou quand on valide.
+**Les difficultés.** 
 
 Sur Mac, compiler l'application native demande Xcode complet. Les outils en ligne de commande ne suffisent pas. La démo Holberton reste donc dans Chrome.
-
-**Ce que j'en retiens.** La sécurité ne se répartit pas dans les widgets. L'isolation par organisation est une règle de l'API, pas un filtre visuel. Et un badge Démo doit vouloir dire « ne pas ouvrir pendant l'oral », sinon je mélange des données fictives avec la base.
 
 **Ce que j'améliorerais.** Remplacer les réponses fixes de l'IA par un vrai modèle. Synchroniser un calendrier externe. Prévoir l'export et la suppression des données, au sens du RGPD. Le profil, lui, est déjà enregistré dans PostgreSQL. Je ne le compte plus dans la suite.
 
@@ -229,7 +223,7 @@ Sur Mac, compiler l'application native demande Xcode complet. Les outils en lign
 2. Une synchro de calendrier (CalDAV), en plus de l'agenda interne.
 3. Des notifications push. Le schéma a déjà le canal, l'envoi n'est pas branché.
 4. L'export et l'effacement des données d'une organisation.
-5. Plus tard, une publication mobile. Pas pour cet oral.
+5. Plus tard, une publication mobile.
 
 ## Conclusion
 

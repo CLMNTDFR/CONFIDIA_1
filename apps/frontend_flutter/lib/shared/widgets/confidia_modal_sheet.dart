@@ -191,82 +191,70 @@ class ConfidiaSheet extends StatelessWidget {
     this.actions,
   });
 
-  static const double _headerBlock = 56;
-
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final radius = BorderRadius.circular(22);
-    final actionsBlock = (actions != null && actions!.isNotEmpty) ? 72.0 : 0.0;
+    final sheetActions = actions;
 
     return ConfidiaChromeMaterial(
       borderRadius: radius,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final maxBody = constraints.maxHeight.isFinite
-              ? (constraints.maxHeight - _headerBlock - actionsBlock).clamp(80.0, constraints.maxHeight)
-              : double.infinity;
-
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 14),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, 4, 8, 0),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: ShaderMask(
-                        shaderCallback: (b) => context.palette.brandGradient.createShader(b),
-                        child: Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 14),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(ConfidiaSpacing.lg, 4, 8, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ShaderMask(
+                    shaderCallback: (b) => context.palette.brandGradient.createShader(b),
+                    child: Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
                     ),
-                    Material(
-                      color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
-                      borderRadius: BorderRadius.circular(10),
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        onTap: () => Navigator.pop(context),
-                        borderRadius: BorderRadius.circular(10),
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Icon(Icons.close_rounded, size: 18),
-                        ),
-                      ),
+                  ),
+                ),
+                Material(
+                  color: (isDark ? Colors.white : Colors.black).withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(10),
+                  clipBehavior: Clip.antiAlias,
+                  child: InkWell(
+                    onTap: () => Navigator.pop(context),
+                    borderRadius: BorderRadius.circular(10),
+                    child: const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Icon(Icons.close_rounded, size: 18),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 4),
-              Divider(height: 1, color: AppBorders.subtle(isDark).color),
-              // shrinkWrap: height = content, capped by maxBody (scroll if needed).
-              ConstrainedBox(
-                constraints: BoxConstraints(maxHeight: maxBody),
-                child: ListView(
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.all(ConfidiaSpacing.lg),
-                  children: [child],
-                ),
-              ),
-              if (actions != null && actions!.isNotEmpty) ...[
-                Divider(height: 1, color: AppBorders.subtle(isDark).color),
-                Padding(
-                  padding: const EdgeInsets.all(ConfidiaSpacing.md),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: actions!,
                   ),
                 ),
               ],
-            ],
-          );
-        },
+            ),
+          ),
+          const SizedBox(height: 4),
+          Divider(height: 1, color: AppBorders.subtle(isDark).color),
+          Flexible(
+            child: ListView(
+              shrinkWrap: true,
+              padding: const EdgeInsets.all(ConfidiaSpacing.lg),
+              children: [child],
+            ),
+          ),
+          if (sheetActions != null && sheetActions.isNotEmpty) ...[
+            Divider(height: 1, color: AppBorders.subtle(isDark).color),
+            Padding(
+              padding: const EdgeInsets.all(ConfidiaSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: sheetActions,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }

@@ -32,8 +32,18 @@ class SerenityMomentsNotifier extends StateNotifier<SerenityMomentsState> {
   double? _pendingPenaltyAvoided;
 
   void enqueue(SerenityMoment moment) {
-    if (_ref.read(guidedTourProvider).active) return;
+    if (_tourRunning) return;
     state = state.copyWith(queue: [...state.queue, moment]);
+  }
+
+  void discard() {
+    if (state.queue.isEmpty) return;
+    state = state.copyWith(queue: const []);
+  }
+
+  bool get _tourRunning {
+    final tour = _ref.read(guidedTourProvider);
+    return tour.armed || tour.active;
   }
 
   void dismissCurrent() {
@@ -56,7 +66,7 @@ class SerenityMomentsNotifier extends StateNotifier<SerenityMomentsState> {
       _pendingPenaltyAvoided = null;
       return;
     }
-    if (_ref.read(guidedTourProvider).active) return;
+    if (_tourRunning) return;
 
     final penalty = _pendingPenaltyAvoided;
     _pendingPenaltyAvoided = null;
@@ -121,5 +131,11 @@ class SerenityMomentsNotifier extends StateNotifier<SerenityMomentsState> {
 
 final serenityMomentsProvider =
     StateNotifierProvider<SerenityMomentsNotifier, SerenityMomentsState>((ref) {
-  return SerenityMomentsNotifier(ref);
+  final notifier = SerenityMomentsNotifier(ref);
+  ref.listen(guidedTourProvider, (prev, next) {
+    final open = next.armed || next.active;
+    final wasOpen = prev != null && (prev.armed || prev.active);
+    if (open && !wasOpen) notifier.discard();
+  });
+  return notifier;
 });

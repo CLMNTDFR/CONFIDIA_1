@@ -44,6 +44,7 @@ class _AppShellState extends ConsumerState<AppShell> {
     final mailUnread = ref.watch(messagingUnreadCountProvider);
     final topBar = AppTopBar.fromRoute(context, showNotifications: true);
     final tourActive = ref.watch(guidedTourProvider.select((s) => s.active));
+    final tourRunning = ref.watch(guidedTourProvider.select((s) => s.armed || s.active));
     final dayStartOpen = ref.watch(dayStartSessionProvider.select((s) => s.isOpen));
     final hasMoment = ref.watch(serenityMomentsProvider.select((s) => s.current != null));
 
@@ -138,7 +139,7 @@ class _AppShellState extends ConsumerState<AppShell> {
       child: Stack(
         children: [
           shell,
-          if (hasMoment) const SerenityMomentOverlay(),
+          if (hasMoment && !tourRunning) const SerenityMomentOverlay(),
           if (dayStartOpen) const DayStartOverlay(),
           if (tourActive) const GuidedTourOverlay(),
         ],

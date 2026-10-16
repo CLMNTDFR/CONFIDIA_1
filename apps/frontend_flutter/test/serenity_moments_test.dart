@@ -1,3 +1,4 @@
+import 'package:confidia/features/onboarding/guided_tour_provider.dart';
 import 'package:confidia/features/serenity_feedback/serenity_moment.dart';
 import 'package:confidia/features/serenity_feedback/serenity_moments_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -47,5 +48,30 @@ void main() {
     expect(current?.useOverlay, isTrue);
     expect(current?.scoreBefore, 50);
     expect(current?.scoreAfter, 52);
+  });
+
+  test('guided tour drops a queued moment and ignores score changes', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    final notifier = container.read(serenityMomentsProvider.notifier);
+    notifier.onScoreChanged(43, 100, 'Excellent');
+    expect(container.read(serenityMomentsProvider).current?.title, 'Félicitations');
+
+    container.read(guidedTourProvider.notifier).startNow();
+    expect(container.read(serenityMomentsProvider).current, isNull);
+
+    notifier.onScoreChanged(43, 100, 'Excellent');
+    expect(container.read(serenityMomentsProvider).current, isNull);
+  });
+
+  test('armed guided tour does not enqueue a serenity moment', () {
+    final container = ProviderContainer();
+    addTearDown(container.dispose);
+
+    container.read(serenityMomentsProvider);
+    container.read(guidedTourProvider.notifier).arm();
+    container.read(serenityMomentsProvider.notifier).onScoreChanged(43, 100, 'Excellent');
+    expect(container.read(serenityMomentsProvider).current, isNull);
   });
 }
