@@ -75,7 +75,48 @@ Flutter n'appelle personne d'autre. FastAPI parle à Keycloak pour le compte, à
 
 Le jour de l'oral, deux branchements sont plus simples. Le PDF va sur le disque de l'API (`var/documents`), pas dans Paperless. L'IA renvoie un texte fixe. Nextcloud démarre avec Docker, l'écran Documents ne s'en sert pas. Le dessin, lui, reste celui de la cible.
 
-Dans le code, les routes (`api/`) valident la requête. Les services (`application/`) portent le cas d'usage. Les interfaces (`domain/`) sont les prises : Paperless, Nextcloud, ou un vrai modèle. Les adaptateurs (`infrastructure/`) font le branchement.
+## Les dossiers
+
+Le dépôt a trois grands morceaux. `apps/frontend_flutter` est l'application qu'on voit. `docker` lance les services avec Compose. `apps/backend_fastapi` est l'API. C'est ce dernier qu'on m'a demandé de détailler.
+
+```mermaid
+flowchart TB
+  repo[Depot CONFIDIA]
+  repo --> front[apps/frontend_flutter<br/>ecrans]
+  repo --> compose[docker<br/>Compose]
+  repo --> back[apps/backend_fastapi]
+
+  back --> api[api<br/>les routes HTTP]
+  back --> application[application<br/>les cas d'usage]
+  back --> domain[domain<br/>les interfaces, rien d'autre]
+  back --> infrastructure[infrastructure<br/>Postgres, Keycloak, disque]
+  back --> core[core<br/>reglages, jeton, taille des fichiers]
+  back --> migrations[migrations<br/>Alembic, lance hors requete]
+  back --> tests[tests]
+```
+
+Chaque dossier a un seul métier.
+
+- `api/` reçoit la requête HTTP. `api/v1/documents.py` est la route d'upload. Elle vérifie le jeton et la taille du fichier. Elle ne parle pas à PostgreSQL elle-même.
+- `application/` fait le travail. `WorkspaceDocumentService` décide quoi enregistrer. Les `dto/` sont la forme des données qui entrent et qui sortent.
+- `domain/` ne contient pas de base de données. Ce sont des interfaces, des contrats. `WorkspaceDocumentRepository` dit « on doit pouvoir créer, lister, lire et supprimer un document », sans dire comment.
+- `infrastructure/` fait le comment. `PostgresDocumentRepository` écrit la fiche dans PostgreSQL et les octets dans `var/documents`. Keycloak, Paperless et Nextcloud sont dans ce même dossier, mais l'écran Documents n'utilise que Postgres et le disque.
+- `core/` est transversal : les réglages, la lecture du jeton, la limite de taille d'un fichier.
+- `migrations/` ne tourne pas pendant une requête. Alembic applique le schéma, une fois, au démarrage. Le fichier `001_mvp_schema.py` crée les dix tables. C'est l'historique de la structure, pas la logique de l'import.
+- `tests/` vérifie ces pièces, avec parfois de fausses bases pour ne pas dépendre de Docker.
+
+Pour un import, le chemin est celui-ci.
+
+```mermaid
+flowchart LR
+  route[api/v1/documents.py] --> service[WorkspaceDocumentService]
+  service --> port[interface WorkspaceDocumentRepository]
+  port --> repo[PostgresDocumentRepository]
+  repo --> pg[(PostgreSQL)]
+  repo --> disk[var/documents]
+```
+
+L'interface est au milieu pour qu'on puisse changer le stockage plus tard sans réécrire la route. Aujourd'hui, l'implémentation derrière est Postgres plus le disque.
 
 ## Base de données
 
@@ -192,13 +233,46 @@ Lecture rapide des cardinalités :
 - un événement a zéro ou plusieurs rappels
 - une notification vise un utilisateur, dans une organisation
 
-Deux comptes ne voient pas les mêmes documents, tant qu'ils ne sont pas dans la même organisation.
+La liste des documents est filtrée sur l'organisation du compte connecté. Deux inscriptions séparées créent deux espaces. Deux membres du même espace voient les mêmes documents.
 
 `organization_id` est aussi sur l'événement. Ça permet de lister la semaine de cet espace sans passer par le calendrier. `document_id` est facultatif : d'où le `o` du côté document.
 
-Les suppressions sont logiques (`deleted_at`) pour les organisations, les comptes, les membres, les documents, les calendriers, les événements et les notifications. Les étiquettes n'ont pas ce champ. Le lien document / étiquette et les rappels disparaissent vraiment si le parent est supprimé (`ON DELETE CASCADE`).
-
 Pas dans cette base : mails, paiements, signatures, analyses d'IA. Ces écrans existent dans l'interface, en démo, sans tables.
+
+Les suppressions sont logiques (`deleted_at`) pour les organisations, les comptes, les membres, les documents, les calendriers, les événements et les notifications. Les étiquettes n'ont pas ce champ. Le lien document / étiquette et les rappels ne partent en cascade que si on fait un vrai `DELETE`. La suppression d'un document ne le fait pas.
+
+### Pourquoi un soft delete sur les documents
+
+Supprimer un document ne retire pas la ligne. `delete_for_org` remplit `deleted_at`. Les listes, la fiche et le téléchargement ignorent ces lignes. Il n'y a pas de route pour annuler.
+
+Je ne fais pas un `DELETE` pour deux raisons concrètes.
+
+Un événement peut pointer vers le document. Cette clé étrangère n'a pas de `ON DELETE`. Un vrai `DELETE` serait refusé tant que le lien existe. Avec `deleted_at`, le document sort de l'écran, et l'événement peut rester.
+
+Le schéma prévoit une purge plus tard, pour l'effacement au sens du RGPD. Cette purge n'existe pas. La ligne reste. Le fichier sur le disque aussi : `delete_for_org` ne touche pas à `var/documents`.
+
+## RGPD
+
+Le projet n'est pas conforme au RGPD. Il traite des données personnelles, et plusieurs droits de la personne ne sont pas en place.
+
+Ce que l'application détient vraiment :
+
+- le compte : e-mail, nom, téléphone. Le mot de passe est chez Keycloak, pas dans PostgreSQL
+- les documents : le titre en base, le fichier sur le disque de l'API
+- l'agenda : titre, lieu, horaires
+- les jetons de session, gardés sur l'appareil, pas dans notre base
+
+Ce qui est déjà là, modestement. On ne crée pas de tables au-delà du MVP. Le mot de passe ne passe pas par notre base. Un document supprimé disparaît de l'écran.
+
+Ce qui manque, et qui concerne directement ce projet :
+
+- le droit d'accès et la portabilité : on peut lire son profil, il n'y a pas d'export de toutes ses données
+- le droit à l'effacement : pas de suppression de compte. Le soft delete cache la fiche, il ne l'efface pas, et le fichier reste sur le disque
+- la durée de conservation : aucune purge, aucune limite
+- l'information de la personne : rien n'est expliqué au moment de créer le compte, pas de case de consentement
+- le reste du cadre : pas de registre des traitements, pas de contact, pas de procédure si des données fuient
+
+L'export et l'effacement sont dans la suite. Les écrire dans la présentation ne les rend pas faits.
 
 ## Technos, et ce que le développement m'a appris
 

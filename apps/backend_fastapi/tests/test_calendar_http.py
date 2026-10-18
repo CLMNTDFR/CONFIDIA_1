@@ -21,6 +21,8 @@ CLAIMS = {
     "given_name": "Camille",
     "family_name": "Martin",
     "realm_access": {"roles": ["USER"]},
+    "iss": "http://localhost:8080/realms/confidia",
+    "azp": "confidia-backend",
 }
 TOKEN = jwt.encode(CLAIMS, key="test", algorithm="HS256")
 HEADERS = {"Authorization": f"Bearer {TOKEN}"}
@@ -124,6 +126,8 @@ def test_calendar_is_isolated_between_workspaces(calendar_harness):
         "given_name": "Other",
         "family_name": "User",
         "realm_access": {"roles": ["USER"]},
+        "iss": "http://localhost:8080/realms/confidia",
+        "azp": "confidia-backend",
     }
     other_headers = {
         "Authorization": f"Bearer {jwt.encode(other_claims, key='test', algorithm='HS256')}"

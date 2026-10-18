@@ -16,6 +16,8 @@ CLAIMS = {
     "preferred_username": "amandine",
     "given_name": "Amandine",
     "realm_access": {"roles": ["USER"]},
+    "iss": "http://localhost:8080/realms/confidia",
+    "azp": "confidia-backend",
 }
 
 
