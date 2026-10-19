@@ -37,6 +37,29 @@ void main() {
     expect(await storage.read(key: 'refresh_token'), 'refresh-live');
   });
 
+  test('login after demo replaces the demo user', () async {
+    final storage = FlutterSecureStorage();
+    final client = ApiClient(storage: storage);
+    await client.configureBaseUrl('http://localhost/api/v1');
+    client.dio.httpClientAdapter = _LoginAdapter();
+
+    final notifier = AuthNotifier(
+      client,
+      restoreSession: false,
+      storage: storage,
+    );
+    addTearDown(notifier.dispose);
+
+    await notifier.loginDemo();
+    expect(notifier.state.isDemoSession, isTrue);
+
+    await notifier.login('user', 'user');
+
+    expect(notifier.state.isDemoSession, isFalse);
+    expect(notifier.state.user?.id, 'kc-live-1');
+    expect(notifier.state.user?.firstName, 'Ada');
+  });
+
   test('login keeps an error when credentials are rejected', () async {
     final storage = FlutterSecureStorage();
     final client = ApiClient(storage: storage);

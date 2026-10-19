@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/access_control_models.dart';
@@ -14,6 +15,7 @@ import 'widgets/member_permissions_picker.dart';
 import '../../shared/widgets/mobile_shell_insets.dart';
 import '../../shared/widgets/planning_ai_panel.dart';
 import '../../shared/widgets/status_badge.dart';
+import '../../shared/widgets/workspace_empty_hint.dart';
 import '../onboarding/guided_tour_access_bridge.dart';
 import '../onboarding/onboarding_targets.dart';
 import 'access_control_provider.dart';
@@ -69,6 +71,21 @@ class _AccessControlScreenState extends ConsumerState<AccessControlScreen> with 
         _tabs.animateTo(next);
       }
     });
+
+    final demo = ref.watch(authStateProvider).isDemoSession;
+    if (!demo) {
+      return Padding(
+        padding: ConfidiaInsets.page(context),
+        child: KeyedSubtree(
+          key: OnboardingTargets.accessHeader,
+          child: const WorkspaceEmptyHint(
+            icon: Icons.account_tree_outlined,
+            title: 'Aucune gouvernance sur cet espace',
+            subtitle: 'Cet aperçu reste vide tant que personne n\'est invité. Le mode démo montre un exemple.',
+          ),
+        ),
+      );
+    }
 
     return Column(
       children: [

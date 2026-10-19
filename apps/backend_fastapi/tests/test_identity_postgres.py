@@ -132,3 +132,89 @@ async def test_postgres_document_upload_list_detail(db_session: AsyncSession, tm
     assert fetched.title == "Facture test"
     stored_file = tmp_path / str(stored.organization_id) / f"{created.id}.pdf"
     assert stored_file.read_bytes() == b"%PDF-test"
+
+
+async def test_postgres_purge_clears_event_links_and_the_file(db_session: AsyncSession, tmp_path):
+    from datetime import UTC, datetime, timedelta
+    from uuid import UUID
+
+    from application.dto.calendar_dto import CalendarEventCreateDTO
+    from application.dto.document_dto import DocumentCreateDTO, DocumentPurgeDecision
+    from application.services.calendar_service import CalendarService
+    from application.services.workspace_document_service import WorkspaceDocumentService
+    from domain.interfaces.workspace_document_repository import DocumentPurgeError
+    from infrastructure.db.postgres_calendar_repository import PostgresCalendarRepository
+    from infrastructure.db.postgres_document_repository import PostgresDocumentRepository
+
+    identity = IdentityService(PostgresIdentityRepository(db_session))
+    user_id = f"pytest-{uuid4()}"
+    stored = await identity.ensure_from_token_claims(
+        {"sub": user_id, "email": f"{user_id}@confidia.test", "given_name": "Docs"}
+    )
+    org = stored.organization_id
+    assert org is not None
+    docs = WorkspaceDocumentService(PostgresDocumentRepository(db_session, tmp_path))
+    calendar = CalendarService(PostgresCalendarRepository(db_session))
+    start = datetime(2026, 10, 18, 8, 30, tzinfo=UTC)
+
+    async def upload(title: str) -> str:
+        created = await docs.upload_document(
+            organization_id=org,
+            owner_id=stored.id,
+            filename="piece.pdf",
+            payload=b"%PDF-purge",
+            metadata=DocumentCreateDTO(title=title),
+        )
+        return created.id
+
+    async def event_for(doc_id: str, title: str) -> str:
+        created = await calendar.create_event(
+            org,
+            stored.id,
+            CalendarEventCreateDTO(
+                title=title,
+                start=start,
+                end=start + timedelta(hours=1),
+                document_id=doc_id,
+            ),
+        )
+        return created.id
+
+    kept_doc = await upload("A conserver")
+    kept_event = await event_for(kept_doc, "Signature")
+    kept_uuid = UUID(kept_doc)
+    assert await docs.delete_document(org, kept_uuid) is True
+    kept_file = tmp_path / str(org) / f"{kept_doc}.pdf"
+    assert kept_file.is_file()
+    with pytest.raises(DocumentPurgeError):
+        await docs.purge_document(org, kept_uuid, [])
+    assert kept_file.is_file()
+    assert await docs.purge_document(
+        org,
+        kept_uuid,
+        [DocumentPurgeDecision(event_id=UUID(kept_event), action="keep")],
+    )
+    assert not kept_file.exists()
+    kept = await calendar.get_event(org, UUID(kept_event))
+    assert kept is not None
+    assert kept.document_id is None
+
+    dropped_doc = await upload("A retirer")
+    dropped_event = await event_for(dropped_doc, "Rendez-vous")
+    dropped_uuid = UUID(dropped_doc)
+    assert await docs.delete_document(org, dropped_uuid) is True
+    assert await docs.purge_document(
+        org,
+        dropped_uuid,
+        [DocumentPurgeDecision(event_id=UUID(dropped_event), action="delete")],
+    )
+    assert await calendar.get_event(org, UUID(dropped_event)) is None
+    assert not (tmp_path / str(org) / f"{dropped_doc}.pdf").exists()
+
+    archived_doc = await upload("Deja detache")
+    archived_event = await event_for(archived_doc, "Ancien rappel")
+    assert await calendar.delete_event(org, UUID(archived_event)) is True
+    archived_uuid = UUID(archived_doc)
+    assert await docs.delete_document(org, archived_uuid) is True
+    assert await docs.purge_document(org, archived_uuid, []) is True
+    assert not (tmp_path / str(org) / f"{archived_doc}.pdf").exists()

@@ -32,6 +32,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeModeProvider);
     final paletteId = ref.watch(colorPaletteProvider);
+    final demo = ref.watch(authStateProvider).isDemoSession;
 
     return ListView(
       padding: ConfidiaInsets.page(context),
@@ -97,11 +98,11 @@ class SettingsScreen extends ConsumerWidget {
           padding: EdgeInsets.zero,
           child: Column(
             children: [
-              ConfidiaSwitchTile(title: 'Notifications push', value: true, onChanged: _noop),
+              ConfidiaSwitchTile(title: 'Notifications push', value: demo, onChanged: _noop),
               Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
-              ConfidiaSwitchTile(title: 'Rappels d\'échéances', value: true, onChanged: _noop),
+              ConfidiaSwitchTile(title: 'Rappels d\'échéances', value: demo, onChanged: _noop),
               Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
-              ConfidiaSwitchTile(title: 'Alertes documents', value: true, onChanged: _noop),
+              ConfidiaSwitchTile(title: 'Alertes documents', value: demo, onChanged: _noop),
             ],
           ),
         ),
@@ -141,8 +142,17 @@ class SettingsScreen extends ConsumerWidget {
           },
         ),
         const SizedBox(height: ConfidiaSpacing.md),
-        _SectionTitle(label: 'Stockage documentaire'),
+        _SectionTitle(label: 'Stockage documentaire', demo: true),
         const SizedBox(height: 8),
+        if (!demo)
+          GlassCard(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Aucun stockage externe n\'est rattaché à cet espace.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        if (demo)
         ...MockEcosystem.storageServices.map((svc) {
               final svcColor = svc.id == 'paperless' ? context.palette.primary : svc.color;
               return Padding(

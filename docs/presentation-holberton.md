@@ -38,7 +38,7 @@ cd apps/frontend_flutter
 flutter run -d chrome --web-port=8082
 ```
 
-Compte de démo : `user` / `user`. Je prépare un petit PDF avant l'oral (une facture, n'importe laquelle). Il n'y en a pas dans le dépôt.
+Compte préparé : `user` / `user`. Je prépare un petit PDF avant l'oral (une facture, n'importe laquelle). Il n'y en a pas dans le dépôt. Créer un compte est une autre page. Un e-mail ou un identifiant déjà pris est refusé. Le nouvel espace est vide. Il n'affiche pas un agenda Google connecté, ni les documents du mode démo.
 
 | Moment | Ce que je fais | Ce qu'on doit voir |
 |--------|----------------|--------------------|
@@ -99,11 +99,11 @@ Chaque dossier a un seul métier.
 
 - `api/` reçoit la requête HTTP. `api/v1/documents.py` est la route d'upload. Elle vérifie le jeton et la taille du fichier. Elle ne parle pas à PostgreSQL elle-même.
 - `application/` fait le travail. `WorkspaceDocumentService` décide quoi enregistrer. Les `dto/` sont la forme des données qui entrent et qui sortent.
-- `domain/` ne contient pas de base de données. Ce sont des interfaces, des contrats. `WorkspaceDocumentRepository` dit « on doit pouvoir créer, lister, lire et supprimer un document », sans dire comment.
+- `domain/` ne contient pas de base de données. Ce sont des interfaces, des contrats. `WorkspaceDocumentRepository` dit qu'on doit pouvoir créer, lister, lire, mettre à la corbeille, restaurer et supprimer définitivement un document, sans dire comment.
 - `infrastructure/` fait le comment. `PostgresDocumentRepository` écrit la fiche dans PostgreSQL et les octets dans `var/documents`. Keycloak, Paperless et Nextcloud sont dans ce même dossier, mais l'écran Documents n'utilise que Postgres et le disque.
-- `core/` est transversal : les réglages, la lecture du jeton, la limite de taille d'un fichier.
+- `core/` est transversal : les réglages, la lecture du jeton, la limite de taille d'un fichier, le fuseau des jours du calendrier. Le jeton n'est accepté que s'il vient du realm Keycloak du projet (`iss`) et s'il a été émis pour le client de l'API (`azp`). La signature seule ne suffit pas. Keycloak met `account` dans `aud`, donc ce champ ne sert pas de filtre.
 - `migrations/` ne tourne pas pendant une requête. Alembic applique le schéma, une fois, au démarrage. Le fichier `001_mvp_schema.py` crée les dix tables. C'est l'historique de la structure, pas la logique de l'import.
-- `tests/` vérifie ces pièces, avec parfois de fausses bases pour ne pas dépendre de Docker.
+- `tests/` vérifie ces pièces, souvent avec de fausses bases pour ne pas dépendre de Docker. Un parcours passe par l'API jusqu'à PostgreSQL, puis annule la transaction. Un autre enchaîne des lectures simultanées dans le même processus : le seuil de temps sert à voir si l'API se bloque.
 
 Pour un import, le chemin est celui-ci.
 
@@ -237,19 +237,21 @@ La liste des documents est filtrée sur l'organisation du compte connecté. Deux
 
 `organization_id` est aussi sur l'événement. Ça permet de lister la semaine de cet espace sans passer par le calendrier. `document_id` est facultatif : d'où le `o` du côté document.
 
+Les horaires sont stockés en UTC. Le jour affiché, dans la semaine et le briefing, suit le fuseau du compte. Sans précision, c'est `Europe/Paris`. Une date sans fuseau est refusée.
+
 Pas dans cette base : mails, paiements, signatures, analyses d'IA. Ces écrans existent dans l'interface, en démo, sans tables.
 
-Les suppressions sont logiques (`deleted_at`) pour les organisations, les comptes, les membres, les documents, les calendriers, les événements et les notifications. Les étiquettes n'ont pas ce champ. Le lien document / étiquette et les rappels ne partent en cascade que si on fait un vrai `DELETE`. La suppression d'un document ne le fait pas.
+Les suppressions sont logiques (`deleted_at`) pour les organisations, les comptes, les membres, les documents, les calendriers, les événements et les notifications. Les étiquettes n'ont pas ce champ. Le lien document / étiquette ne disparaît qu'au `DELETE` réel, celui de la suppression définitive. Les rappels sont attachés à l'événement, pas au document.
 
 ### Pourquoi un soft delete sur les documents
 
-Supprimer un document ne retire pas la ligne. `delete_for_org` remplit `deleted_at`. Les listes, la fiche et le téléchargement ignorent ces lignes. Il n'y a pas de route pour annuler.
+Depuis la fiche, supprimer un document ne retire pas la ligne. `delete_for_org` remplit `deleted_at`. Les listes, la fiche et le téléchargement ignorent ces lignes. Le fichier reste dans `var/documents`. L'écran Documents a une page Corbeille : on restaure, ou on supprime définitivement.
 
-Je ne fais pas un `DELETE` pour deux raisons concrètes.
+Je ne fais pas un `DELETE` tout de suite pour une raison concrète.
 
-Un événement peut pointer vers le document. Cette clé étrangère n'a pas de `ON DELETE`. Un vrai `DELETE` serait refusé tant que le lien existe. Avec `deleted_at`, le document sort de l'écran, et l'événement peut rester.
+Un événement peut pointer vers le document. Cette clé étrangère n'a pas de `ON DELETE`. Un vrai `DELETE` serait refusé tant que le lien existe. Avec `deleted_at`, le document sort de la bibliothèque, et l'événement peut rester.
 
-Le schéma prévoit une purge plus tard, pour l'effacement au sens du RGPD. Cette purge n'existe pas. La ligne reste. Le fichier sur le disque aussi : `delete_for_org` ne touche pas à `var/documents`.
+La suppression définitive est un second geste, depuis la corbeille. S'il n'y a aucun événement lié, la ligne et le fichier partent. S'il en reste, on choisit pour chacun : conserver l'événement en retirant seulement le lien, ou retirer aussi l'événement de l'agenda. Un événement déjà sorti de l'agenda est seulement détaché, sinon la base refuserait encore le `DELETE`. Ce n'est pas l'effacement du compte.
 
 ## RGPD
 
@@ -262,13 +264,13 @@ Ce que l'application détient vraiment :
 - l'agenda : titre, lieu, horaires
 - les jetons de session, gardés sur l'appareil, pas dans notre base
 
-Ce qui est déjà là, modestement. On ne crée pas de tables au-delà du MVP. Le mot de passe ne passe pas par notre base. Un document supprimé disparaît de l'écran.
+Ce qui est déjà là, modestement. On ne crée pas de tables au-delà du MVP. Le mot de passe ne passe pas par notre base. Un document mis à la corbeille disparaît de la bibliothèque. La suppression définitive retire aussi le fichier.
 
 Ce qui manque, et qui concerne directement ce projet :
 
 - le droit d'accès et la portabilité : on peut lire son profil, il n'y a pas d'export de toutes ses données
-- le droit à l'effacement : pas de suppression de compte. Le soft delete cache la fiche, il ne l'efface pas, et le fichier reste sur le disque
-- la durée de conservation : aucune purge, aucune limite
+- le droit à l'effacement : pas de suppression de compte. La corbeille peut effacer un document et son fichier. Le profil et le reste de l'espace restent
+- la durée de conservation : rien ne s'efface tout seul, aucune limite de temps
 - l'information de la personne : rien n'est expliqué au moment de créer le compte, pas de case de consentement
 - le reste du cadre : pas de registre des traitements, pas de contact, pas de procédure si des données fuient
 
@@ -293,7 +295,7 @@ Paperless-ngx, Nextcloud et l'IA sont dans l'architecture visée. Pour la démo,
 
 Sur Mac, compiler l'application native demande Xcode complet. Les outils en ligne de commande ne suffisent pas. La démo Holberton reste donc dans Chrome.
 
-**Ce que j'améliorerais.** Remplacer les réponses fixes de l'IA par un vrai modèle. Synchroniser un calendrier externe. Prévoir l'export et la suppression des données, au sens du RGPD. Le profil, lui, est déjà enregistré dans PostgreSQL. Je ne le compte plus dans la suite.
+**Ce que j'améliorerais.** Remplacer les réponses fixes de l'IA par un vrai modèle. Synchroniser un calendrier externe. Prévoir l'export du compte et sa suppression : la corbeille efface un document, pas la personne. Le profil, lui, est déjà enregistré dans PostgreSQL. Je ne le compte plus dans la suite.
 
 ## Et après
 

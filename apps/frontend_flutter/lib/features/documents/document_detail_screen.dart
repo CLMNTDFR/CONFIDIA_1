@@ -74,9 +74,9 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
   Future<void> _confirmDelete(DocumentModel doc) async {
     final ok = await showConfidiaConfirmDialog(
       context,
-      title: 'Supprimer le document ?',
-      message: '« ${doc.title} » sera définitivement retiré de votre espace.',
-      confirmLabel: 'Supprimer',
+      title: 'Mettre à la corbeille ?',
+      message: '« ${doc.title} » quittera la bibliothèque. Vous pourrez le restaurer, ou le supprimer définitivement depuis la corbeille.',
+      confirmLabel: 'Mettre à la corbeille',
       icon: Icons.delete_outline_rounded,
       destructive: true,
     );
@@ -87,7 +87,7 @@ class _DocumentDetailScreenState extends ConsumerState<DocumentDetailScreen> {
       showConfidiaSnackBar(context, error, type: ConfidiaSnackType.error);
       return;
     }
-    showConfidiaSnackBar(context, 'Document supprimé', type: ConfidiaSnackType.success);
+    showConfidiaSnackBar(context, 'Document placé dans la corbeille', type: ConfidiaSnackType.success);
     if (!mounted) return;
     context.go('/documents');
   }
@@ -255,7 +255,7 @@ class _DocumentHeader extends StatelessWidget {
                 ),
                 ConfidiaMenuEntry(
                   value: 'delete',
-                  label: 'Supprimer',
+                  label: 'Mettre à la corbeille',
                   icon: Icons.delete_outline_rounded,
                   destructive: true,
                 ),

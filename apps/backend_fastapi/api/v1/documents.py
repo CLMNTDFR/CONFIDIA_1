@@ -8,7 +8,9 @@ from api.deps import get_identity_service, get_workspace_document_service
 from application.dto.document_dto import (
     DocumentCreateDTO,
     DocumentDTO,
+    DocumentEventLink,
     DocumentListResponse,
+    DocumentPurgeRequest,
     DocumentSearchDTO,
     DocumentUpdateDTO,
 )
@@ -22,6 +24,7 @@ from core.uploads import (
     read_limited,
     upload_error_status,
 )
+from domain.interfaces.workspace_document_repository import DocumentPurgeError
 
 router = APIRouter()
 
@@ -50,6 +53,19 @@ async def list_documents(
 ):
     organization_id, _ = await _workspace(token, identity)
     return await documents.list_documents(organization_id, page, page_size, query)
+
+
+@router.get("/trash", response_model=DocumentListResponse)
+async def list_trash(
+    page: int = Query(1, ge=1),
+    page_size: int = Query(25, ge=1, le=100),
+    query: str | None = None,
+    token: TokenPayload = Depends(decode_token),
+    identity: IdentityService = Depends(get_identity_service),
+    documents: WorkspaceDocumentService = Depends(get_workspace_document_service),
+):
+    organization_id, _ = await _workspace(token, identity)
+    return await documents.list_trash(organization_id, page, page_size, query)
 
 
 @router.get("/{document_id}", response_model=DocumentDTO)
@@ -120,6 +136,54 @@ async def delete_document(
     organization_id, _ = await _workspace(token, identity)
     deleted = await documents.delete_document(organization_id, document_id)
     if not deleted:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document introuvable")
+
+
+@router.post("/{document_id}/restore", response_model=DocumentDTO)
+async def restore_document(
+    document_id: UUID,
+    token: TokenPayload = Depends(decode_token),
+    identity: IdentityService = Depends(get_identity_service),
+    documents: WorkspaceDocumentService = Depends(get_workspace_document_service),
+):
+    organization_id, _ = await _workspace(token, identity)
+    doc = await documents.restore_document(organization_id, document_id)
+    if not doc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document introuvable")
+    return doc
+
+
+@router.get("/{document_id}/links", response_model=list[DocumentEventLink])
+async def list_document_links(
+    document_id: UUID,
+    token: TokenPayload = Depends(decode_token),
+    identity: IdentityService = Depends(get_identity_service),
+    documents: WorkspaceDocumentService = Depends(get_workspace_document_service),
+):
+    organization_id, _ = await _workspace(token, identity)
+    links = await documents.list_document_links(organization_id, document_id)
+    if links is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document introuvable")
+    return links
+
+
+@router.post("/{document_id}/purge", status_code=status.HTTP_204_NO_CONTENT)
+async def purge_document(
+    document_id: UUID,
+    body: DocumentPurgeRequest,
+    token: TokenPayload = Depends(decode_token),
+    identity: IdentityService = Depends(get_identity_service),
+    documents: WorkspaceDocumentService = Depends(get_workspace_document_service),
+):
+    organization_id, _ = await _workspace(token, identity)
+    try:
+        purged = await documents.purge_document(organization_id, document_id, body.decisions)
+    except DocumentPurgeError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Les événements liés ont changé. Rouvrez la suppression pour choisir à nouveau.",
+        ) from exc
+    if not purged:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document introuvable")
 
 

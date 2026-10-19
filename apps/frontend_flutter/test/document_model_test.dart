@@ -25,6 +25,18 @@ void main() {
     expect(doc.id, '7');
   });
 
+  test('fromJson reads deleted_at for the trash', () {
+    final doc = DocumentModel.fromJson({
+      'id': '1',
+      'title': 'Scan',
+      'created': '2026-03-01T00:00:00.000Z',
+      'modified': '2026-03-02T00:00:00.000Z',
+      'deleted_at': '2026-10-18T10:00:00.000Z',
+    });
+    expect(doc.deletedAt, isNotNull);
+    expect(doc.deletedAt!.toUtc(), DateTime.utc(2026, 10, 18, 10));
+  });
+
   test('suggestedFilename adds an extension from the mime type', () {
     final doc = DocumentModel(
       id: '1',

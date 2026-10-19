@@ -147,6 +147,178 @@ def test_update_and_delete_document(docs_harness):
     assert deleted.status_code == 204
     assert client.get(f"/api/v1/documents/{doc_id}", headers=HEADERS).status_code == 404
     assert client.get("/api/v1/documents/", headers=HEADERS).json()["total"] == 0
+    trash = client.get("/api/v1/documents/trash", headers=HEADERS)
+    assert trash.status_code == 200
+    assert trash.json()["total"] == 1
+    assert trash.json()["items"][0]["id"] == doc_id
+
+
+def test_trash_restore_keeps_the_file_until_purge(docs_harness):
+    client, _, repo = docs_harness
+    payload = b"%PDF-trash"
+    upload = client.post(
+        "/api/v1/documents/upload",
+        headers=HEADERS,
+        files={"file": ("scan.pdf", BytesIO(payload), "application/pdf")},
+        data={"title": "Scan corbeille"},
+    )
+    doc_id = upload.json()["id"]
+    assert client.delete(f"/api/v1/documents/{doc_id}", headers=HEADERS).status_code == 204
+    assert doc_id in repo.payloads
+    assert client.get(f"/api/v1/documents/{doc_id}/file", headers=HEADERS).status_code == 404
+
+    restored = client.post(f"/api/v1/documents/{doc_id}/restore", headers=HEADERS)
+    assert restored.status_code == 200
+    assert restored.json()["title"] == "Scan corbeille"
+    assert client.get("/api/v1/documents/trash", headers=HEADERS).json()["total"] == 0
+    assert client.get(f"/api/v1/documents/{doc_id}/file", headers=HEADERS).content == payload
+
+    assert client.delete(f"/api/v1/documents/{doc_id}", headers=HEADERS).status_code == 204
+    purged = client.post(
+        f"/api/v1/documents/{doc_id}/purge",
+        headers=HEADERS,
+        json={"decisions": []},
+    )
+    assert purged.status_code == 204
+    assert doc_id not in repo.payloads
+    assert client.get("/api/v1/documents/trash", headers=HEADERS).json()["total"] == 0
+    assert client.post(f"/api/v1/documents/{doc_id}/restore", headers=HEADERS).status_code == 404
+
+
+def test_purge_asks_for_every_live_event_link(docs_harness):
+    from datetime import UTC, datetime
+    from uuid import UUID, uuid4
+
+    from application.dto.document_dto import DocumentPurgeDecision
+    from tests.fakes.document_repository import MemoryEventLink
+
+    client, identity_repo, repo = docs_harness
+    upload = client.post(
+        "/api/v1/documents/upload",
+        headers=HEADERS,
+        files={"file": ("scan.pdf", BytesIO(b"%PDF-link"), "application/pdf")},
+        data={"title": "Contrat"},
+    )
+    doc_id = upload.json()["id"]
+    org_id = identity_repo.rows["kc-docs-1"].stored.organization_id
+    assert org_id is not None
+    live = MemoryEventLink(
+        event_id=uuid4(),
+        organization_id=org_id,
+        document_id=UUID(doc_id),
+        title="Signature",
+        start=datetime(2026, 10, 18, 8, 0, tzinfo=UTC),
+    )
+    archived = MemoryEventLink(
+        event_id=uuid4(),
+        organization_id=org_id,
+        document_id=UUID(doc_id),
+        title="Ancien rappel",
+        start=datetime(2026, 10, 1, 8, 0, tzinfo=UTC),
+        deleted_at=datetime(2026, 10, 2, tzinfo=UTC),
+    )
+    repo.events.extend([live, archived])
+    assert client.delete(f"/api/v1/documents/{doc_id}", headers=HEADERS).status_code == 204
+
+    links = client.get(f"/api/v1/documents/{doc_id}/links", headers=HEADERS)
+    assert links.status_code == 200
+    body = links.json()
+    assert {item["title"] for item in body} == {"Signature", "Ancien rappel"}
+    assert next(item for item in body if item["title"] == "Ancien rappel")["deleted"] is True
+
+    missing = client.post(
+        f"/api/v1/documents/{doc_id}/purge",
+        headers=HEADERS,
+        json={"decisions": []},
+    )
+    assert missing.status_code == 409
+    assert live.document_id == UUID(doc_id)
+
+    kept = client.post(
+        f"/api/v1/documents/{doc_id}/purge",
+        headers=HEADERS,
+        json={
+            "decisions": [
+                DocumentPurgeDecision(event_id=live.event_id, action="keep").model_dump(mode="json")
+            ]
+        },
+    )
+    assert kept.status_code == 204
+    assert live.document_id is None
+    assert live.deleted_at is None
+    assert archived.document_id is None
+    assert doc_id not in repo.payloads
+
+
+def test_purge_can_delete_a_linked_event(docs_harness):
+    from datetime import UTC, datetime
+    from uuid import UUID, uuid4
+
+    from application.dto.document_dto import DocumentPurgeDecision
+    from tests.fakes.document_repository import MemoryEventLink
+
+    client, identity_repo, repo = docs_harness
+    upload = client.post(
+        "/api/v1/documents/upload",
+        headers=HEADERS,
+        files={"file": ("scan.pdf", BytesIO(b"%PDF-gone"), "application/pdf")},
+        data={"title": "A jeter"},
+    )
+    doc_id = upload.json()["id"]
+    org_id = identity_repo.rows["kc-docs-1"].stored.organization_id
+    event = MemoryEventLink(
+        event_id=uuid4(),
+        organization_id=org_id,
+        document_id=UUID(doc_id),
+        title="Rendez-vous",
+        start=datetime(2026, 10, 18, 9, 0, tzinfo=UTC),
+    )
+    repo.events.append(event)
+    assert client.delete(f"/api/v1/documents/{doc_id}", headers=HEADERS).status_code == 204
+    purged = client.post(
+        f"/api/v1/documents/{doc_id}/purge",
+        headers=HEADERS,
+        json={
+            "decisions": [
+                DocumentPurgeDecision(
+                    event_id=event.event_id, action="delete"
+                ).model_dump(mode="json")
+            ]
+        },
+    )
+    assert purged.status_code == 204
+    assert event.document_id is None
+    assert event.deleted_at is not None
+
+
+def test_trash_is_isolated_between_workspaces(docs_harness):
+    client, _, _ = docs_harness
+    upload = client.post(
+        "/api/v1/documents/upload",
+        headers=HEADERS,
+        files={"file": ("secret.pdf", BytesIO(b"%PDF-secret"), "application/pdf")},
+        data={"title": "Secret"},
+    )
+    doc_id = upload.json()["id"]
+    assert client.delete(f"/api/v1/documents/{doc_id}", headers=HEADERS).status_code == 204
+    other_claims = {
+        "sub": "kc-docs-3",
+        "email": "third-docs@confidia.local",
+        "given_name": "Third",
+        "family_name": "User",
+        "realm_access": {"roles": ["USER"]},
+        "iss": "http://localhost:8080/realms/confidia",
+        "azp": "confidia-backend",
+    }
+    other = {"Authorization": f"Bearer {jwt.encode(other_claims, key='test', algorithm='HS256')}"}
+    assert client.get("/api/v1/documents/trash", headers=other).json()["total"] == 0
+    forbidden = client.post(
+        f"/api/v1/documents/{doc_id}/purge",
+        headers=other,
+        json={},
+    )
+    assert forbidden.status_code == 404
+    assert client.get("/api/v1/documents/trash", headers=HEADERS).json()["total"] == 1
 
 
 def test_documents_require_auth():

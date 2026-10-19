@@ -142,3 +142,59 @@ def test_calendar_is_isolated_between_workspaces(calendar_harness):
 def test_calendar_requires_auth():
     response = TestClient(app).get("/api/v1/calendar/events")
     assert response.status_code in {401, 403}
+
+
+def test_calendar_rejects_naive_datetime(calendar_harness):
+    client, _repo = calendar_harness
+    response = client.post(
+        "/api/v1/calendar/events",
+        headers=HEADERS,
+        json=_payload(start="2026-10-18T16:00:00", end="2026-10-18T17:00:00"),
+    )
+    assert response.status_code == 400
+    assert "fuseau" in response.json()["detail"]
+
+
+def test_calendar_stores_offset_as_utc_instant(calendar_harness):
+    client, _repo = calendar_harness
+    response = client.post(
+        "/api/v1/calendar/events",
+        headers=HEADERS,
+        json=_payload(
+            start="2026-10-18T00:30:00+02:00",
+            end="2026-10-18T01:30:00+02:00",
+        ),
+    )
+    assert response.status_code == 201, response.text
+    body = response.json()
+    assert body["start"].startswith("2026-10-17T22:30:00")
+    assert body["end"].startswith("2026-10-17T23:30:00")
+
+
+def test_calendar_rejects_partial_update_that_inverts_range(calendar_harness):
+    client, _repo = calendar_harness
+    created = client.post(
+        "/api/v1/calendar/events",
+        headers=HEADERS,
+        json=_payload(
+            start="2026-10-18T10:00:00+02:00",
+            end="2026-10-18T11:00:00+02:00",
+        ),
+    )
+    assert created.status_code == 201, created.text
+    patched = client.patch(
+        f"/api/v1/calendar/events/{created.json()['id']}",
+        headers=HEADERS,
+        json={"end": "2026-10-18T08:00:00+02:00"},
+    )
+    assert patched.status_code == 400
+
+
+def test_calendar_rejects_naive_list_bound(calendar_harness):
+    client, _repo = calendar_harness
+    response = client.get(
+        "/api/v1/calendar/events",
+        headers=HEADERS,
+        params={"start": "2026-10-18T16:00:00"},
+    )
+    assert response.status_code == 400

@@ -163,6 +163,15 @@ class CalendarNotifier extends StateNotifier<CalendarState> {
     }
   }
 
+  void clearDocumentLink(String id) {
+    state = CalendarState(
+      items: [
+        for (final event in state.items)
+          if (event.id == id) event.copyWith(clearDocumentId: true) else event,
+      ],
+    );
+  }
+
   Future<void> delete(String id) async {
     if (_demo) {
       state = CalendarState(items: state.items.where((e) => e.id != id).toList());

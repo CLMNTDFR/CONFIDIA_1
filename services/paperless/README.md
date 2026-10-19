@@ -13,6 +13,6 @@ After first startup, generate an API token in Paperless admin panel and set `PAP
 
 ## Backend Integration
 
-The FastAPI backend communicates with Paperless through `infrastructure/paperless/paperless_client.py`.
+The FastAPI backend can talk to Paperless through `infrastructure/paperless/paperless_client.py`.
 
-Flutter never accesses Paperless directly.
+The Holberton Documents screen does not use it. That path stores the file on the API disk (`var/documents`) and the metadata in PostgreSQL. Flutter never accesses Paperless directly.

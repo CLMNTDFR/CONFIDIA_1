@@ -48,7 +48,10 @@ async def list_events(
     calendar: CalendarService = Depends(get_calendar_service),
 ):
     organization_id, _ = await _workspace(token, identity)
-    return await calendar.list_events(organization_id, start, end)
+    try:
+        return await calendar.list_events(organization_id, start, end)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
 
 
 @router.get("/events/{event_id}", response_model=CalendarEventDTO)

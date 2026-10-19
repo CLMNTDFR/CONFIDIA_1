@@ -46,6 +46,7 @@ class AppTopBar extends ConsumerWidget {
   static (String, String?) routeMeta(String path, {Uri? uri}) {
     if (path.startsWith('/dashboard')) return (ConfidiaRouteLabels.home, 'Widgets personnalisables');
     // /documents/add before /documents/, otherwise the title would wrongly be « Document »
+    if (path.startsWith('/documents/trash')) return ('Corbeille', 'Documents retirés');
     if (path.startsWith('/documents/add')) {
       final mode = uri?.queryParameters['mode'];
       if (mode == 'camera') return ('Scanner', 'Photo ou scan');

@@ -13,6 +13,7 @@ class DocumentModel extends Equatable {
   final String? mimeType;
   final int? fileSize;
   final bool isImportant;
+  final DateTime? deletedAt;
 
   const DocumentModel({
     required this.id,
@@ -27,6 +28,7 @@ class DocumentModel extends Equatable {
     this.mimeType,
     this.fileSize,
     this.isImportant = false,
+    this.deletedAt,
   });
 
   factory DocumentModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,7 @@ class DocumentModel extends Equatable {
       mimeType: json['mime_type'] as String?,
       fileSize: json['file_size'] as int?,
       isImportant: json['is_important'] as bool? ?? false,
+      deletedAt: json['deleted_at'] == null ? null : DateTime.parse(json['deleted_at'] as String),
     );
   }
 
@@ -72,9 +75,11 @@ class DocumentModel extends Equatable {
     List<String>? tags,
     String? category,
     bool? isImportant,
+    DateTime? deletedAt,
     bool clearCorrespondent = false,
     bool clearDocumentType = false,
     bool clearCategory = false,
+    bool clearDeletedAt = false,
   }) {
     return DocumentModel(
       id: id,
@@ -89,6 +94,7 @@ class DocumentModel extends Equatable {
       mimeType: mimeType,
       fileSize: fileSize,
       isImportant: isImportant ?? this.isImportant,
+      deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
     );
   }
 

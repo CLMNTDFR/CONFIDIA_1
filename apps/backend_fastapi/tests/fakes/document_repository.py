@@ -1,9 +1,30 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
-from application.dto.document_dto import DocumentCreateDTO, DocumentDTO, DocumentUpdateDTO
-from domain.interfaces.workspace_document_repository import WorkspaceDocumentRepository
+from application.dto.document_dto import (
+    DocumentCreateDTO,
+    DocumentDTO,
+    DocumentEventLink,
+    DocumentPurgeDecision,
+    DocumentUpdateDTO,
+)
+from domain.interfaces.workspace_document_repository import (
+    WorkspaceDocumentRepository,
+    resolve_purge_decisions,
+)
+
+
+@dataclass
+class MemoryEventLink:
+    event_id: UUID
+    organization_id: UUID
+    document_id: UUID | None
+    title: str
+    start: datetime
+    deleted_at: datetime | None = None
 
 
 class InMemoryDocumentRepository(WorkspaceDocumentRepository):
@@ -11,9 +32,34 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
         self.rows: list[DocumentDTO] = []
         self.payloads: dict[str, bytes] = {}
         self.org_of: dict[str, UUID] = {}
+        self.deleted: dict[str, datetime] = {}
+        self.events: list[MemoryEventLink] = []
 
     def _in_org(self, document_id: str, organization_id: UUID) -> bool:
         return self.org_of.get(document_id) == organization_id
+
+    def _matches(self, row: DocumentDTO, query: str | None) -> bool:
+        if not query:
+            return True
+        q = query.lower()
+        return q in row.title.lower() or q in (row.correspondent or "").lower()
+
+    def _select(
+        self, organization_id: UUID, query: str | None, *, trashed: bool
+    ) -> list[DocumentDTO]:
+        items = []
+        for row in self.rows:
+            if not self._in_org(row.id, organization_id):
+                continue
+            if (row.id in self.deleted) != trashed:
+                continue
+            if not self._matches(row, query):
+                continue
+            if trashed:
+                items.append(row.model_copy(update={"deleted_at": self.deleted[row.id]}))
+            else:
+                items.append(row)
+        return items
 
     async def list_for_org(
         self,
@@ -22,21 +68,26 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
         page_size: int,
         query: str | None,
     ) -> tuple[list[DocumentDTO], int]:
-        items = [row for row in self.rows if self._in_org(row.id, organization_id)]
-        if query:
-            q = query.lower()
-            items = [
-                d
-                for d in items
-                if q in d.title.lower() or q in (d.correspondent or "").lower()
-            ]
+        items = self._select(organization_id, query, trashed=False)
+        total = len(items)
+        start = (page - 1) * page_size
+        return items[start : start + page_size], total
+
+    async def list_deleted_for_org(
+        self,
+        organization_id: UUID,
+        page: int,
+        page_size: int,
+        query: str | None,
+    ) -> tuple[list[DocumentDTO], int]:
+        items = self._select(organization_id, query, trashed=True)
         total = len(items)
         start = (page - 1) * page_size
         return items[start : start + page_size], total
 
     async def get_for_org(self, organization_id: UUID, document_id: UUID) -> DocumentDTO | None:
         key = str(document_id)
-        if not self._in_org(key, organization_id):
+        if not self._in_org(key, organization_id) or key in self.deleted:
             return None
         for row in self.rows:
             if row.id == key:
@@ -53,8 +104,6 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
         mime_type: str | None,
         metadata: DocumentCreateDTO,
     ) -> DocumentDTO:
-        from datetime import UTC, datetime
-
         doc_id = str(uuid4())
         dto = DocumentDTO(
             id=doc_id,
@@ -94,9 +143,7 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
         document_id: UUID,
         data: DocumentUpdateDTO,
     ) -> DocumentDTO | None:
-        from datetime import UTC, datetime
-
-        if not self._in_org(str(document_id), organization_id):
+        if await self.get_for_org(organization_id, document_id) is None:
             return None
         for index, row in enumerate(self.rows):
             if row.id != str(document_id):
@@ -129,10 +176,63 @@ class InMemoryDocumentRepository(WorkspaceDocumentRepository):
 
     async def delete_for_org(self, organization_id: UUID, document_id: UUID) -> bool:
         key = str(document_id)
-        if not self._in_org(key, organization_id):
+        if not self._in_org(key, organization_id) or key in self.deleted:
             return False
-        before = len(self.rows)
+        if not any(row.id == key for row in self.rows):
+            return False
+        self.deleted[key] = datetime.now(UTC)
+        return True
+
+    async def restore_for_org(self, organization_id: UUID, document_id: UUID) -> DocumentDTO | None:
+        key = str(document_id)
+        if not self._in_org(key, organization_id) or key not in self.deleted:
+            return None
+        self.deleted.pop(key, None)
+        for row in self.rows:
+            if row.id == key:
+                return row
+        return None
+
+    def _links(self, organization_id: UUID, document_id: UUID) -> list[DocumentEventLink]:
+        return [
+            DocumentEventLink(
+                event_id=str(event.event_id),
+                title=event.title,
+                start=event.start,
+                deleted=event.deleted_at is not None,
+            )
+            for event in self.events
+            if event.organization_id == organization_id and event.document_id == document_id
+        ]
+
+    async def list_event_links(
+        self, organization_id: UUID, document_id: UUID
+    ) -> list[DocumentEventLink] | None:
+        key = str(document_id)
+        if not self._in_org(key, organization_id) or key not in self.deleted:
+            return None
+        return self._links(organization_id, document_id)
+
+    async def purge_for_org(
+        self,
+        organization_id: UUID,
+        document_id: UUID,
+        decisions: list[DocumentPurgeDecision],
+    ) -> bool:
+        key = str(document_id)
+        if not self._in_org(key, organization_id) or key not in self.deleted:
+            return False
+        links = self._links(organization_id, document_id)
+        chosen = resolve_purge_decisions(links, decisions)
+        now = datetime.now(UTC)
+        for event in self.events:
+            if event.organization_id != organization_id or event.document_id != document_id:
+                continue
+            if chosen.get(event.event_id) == "delete":
+                event.deleted_at = now
+            event.document_id = None
         self.rows = [row for row in self.rows if row.id != key]
         self.payloads.pop(key, None)
         self.org_of.pop(key, None)
-        return len(self.rows) < before
+        self.deleted.pop(key, None)
+        return True

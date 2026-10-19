@@ -21,7 +21,7 @@ async def _workspace_events(
     token: TokenPayload,
     identity: IdentityService,
     calendar: CalendarService,
-) -> list[CalendarEventDTO]:
+) -> tuple[list[CalendarEventDTO], str]:
     stored = await identity.ensure_from_token_claims(token.raw)
     if stored.organization_id is None:
         raise HTTPException(
@@ -29,7 +29,7 @@ async def _workspace_events(
             detail="Aucun espace de travail n'est associé à ce compte",
         )
     listed = await calendar.list_events(stored.organization_id)
-    return listed.items
+    return listed.items, stored.timezone
 
 
 @router.get("/week-overview", response_model=WeekOverviewResponse)
@@ -40,8 +40,8 @@ async def week_overview(
     calendar: CalendarService = Depends(get_calendar_service),
 ):
     """Weekly overview: daily load, meetings, deadlines and tasks."""
-    events = await _workspace_events(token, identity, calendar)
-    return await _dashboard_service.get_week_overview(events, scopes=scopes)
+    events, zone = await _workspace_events(token, identity, calendar)
+    return await _dashboard_service.get_week_overview(events, scopes=scopes, zone=zone)
 
 
 @router.get("/serenity-briefing", response_model=SerenityBriefingResponse)
@@ -51,8 +51,8 @@ async def serenity_briefing(
     calendar: CalendarService = Depends(get_calendar_service),
 ):
     """Serenity briefing: score, calendar load and next actions."""
-    events = await _workspace_events(token, identity, calendar)
-    return await _serenity_service.get_briefing(token=token, events=events)
+    events, zone = await _workspace_events(token, identity, calendar)
+    return await _serenity_service.get_briefing(token=token, events=events, zone=zone)
 
 
 @router.get("/day-briefing", response_model=DayBriefingResponse)
@@ -62,5 +62,5 @@ async def day_briefing(
     calendar: CalendarService = Depends(get_calendar_service),
 ):
     """Day briefing: priorities and real agenda, no invented payments."""
-    events = await _workspace_events(token, identity, calendar)
-    return await _day_briefing_service.get_day_briefing(token=token, events=events)
+    events, zone = await _workspace_events(token, identity, calendar)
+    return await _day_briefing_service.get_day_briefing(token=token, events=events, zone=zone)

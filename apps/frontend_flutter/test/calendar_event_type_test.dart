@@ -35,6 +35,35 @@ void main() {
     expect(event.calendarGroup, 'family');
   });
 
+  test('toJson sends the UTC instant with a Z suffix', () {
+    final local = DateTime(2026, 10, 18, 15);
+    final event = CalendarEventModel(
+      id: 'evt',
+      title: 'Heure',
+      start: local,
+      end: local.add(const Duration(hours: 1)),
+      eventType: EventType.reminder,
+    );
+    final json = event.toJson();
+    expect(json['start'], local.toUtc().toIso8601String());
+    expect(json['end'], local.add(const Duration(hours: 1)).toUtc().toIso8601String());
+    expect((json['start'] as String).endsWith('Z'), isTrue);
+  });
+
+  test('fromJson keeps a UTC instant on the same local clock time', () {
+    final local = DateTime(2026, 10, 18, 15);
+    final event = CalendarEventModel.fromJson({
+      'id': 'evt-offset',
+      'title': 'Offset',
+      'start': local.toUtc().toIso8601String(),
+      'end': local.add(const Duration(hours: 1)).toUtc().toIso8601String(),
+      'event_type': 'reminder',
+    });
+    expect(event.start, local);
+    expect(event.end, local.add(const Duration(hours: 1)));
+    expect(event.start.isUtc, isFalse);
+  });
+
   test('fromJson converts UTC instants to local civil time', () {
     final event = CalendarEventModel.fromJson({
       'id': 'evt-local',

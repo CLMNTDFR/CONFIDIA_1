@@ -6,6 +6,7 @@ from application.dto.dashboard_dto import (
     WeekOverviewResponse,
     WorkloadLevel,
 )
+from core.time import civil_date, civil_now
 
 _DAY_LABELS = ["LUNDI", "MARDI", "MERCREDI", "JEUDI", "VENDREDI", "SAMEDI", "DIMANCHE"]
 _MONTH_LABELS = [
@@ -32,19 +33,20 @@ class DashboardService:
         events: list[CalendarEventDTO],
         scopes: list[WeekCalendarScope] | None = None,
         reference: date | None = None,
+        zone: str | None = None,
     ) -> WeekOverviewResponse:
         active_scopes = scopes or list(WeekCalendarScope)
-        today = reference or date.today()
+        today = reference or civil_now(zone).date()
         week_start = today - timedelta(days=today.weekday())
         week_end = week_start + timedelta(days=6)
         week_events = [
             event
             for event in events
-            if week_start <= event.start.date() <= week_end
+            if week_start <= civil_date(event.start, zone) <= week_end
             and self._matches_scope(event, active_scopes)
         ]
         days = [
-            self._build_day(week_start + timedelta(days=offset), week_events)
+            self._build_day(week_start + timedelta(days=offset), week_events, zone)
             for offset in range(7)
         ]
         return WeekOverviewResponse(
@@ -60,9 +62,9 @@ class DashboardService:
         return event.calendar_scope in scopes
 
     def _build_day(
-        self, day: date, week_events: list[CalendarEventDTO]
+        self, day: date, week_events: list[CalendarEventDTO], zone: str | None
     ) -> WeekDayOverviewDTO:
-        day_events = [e for e in week_events if e.start.date() == day]
+        day_events = [e for e in week_events if civil_date(e.start, zone) == day]
         meetings = sum(1 for e in day_events if e.event_type == EventType.MEETING)
         deadlines = sum(1 for e in day_events if e.event_type == EventType.DEADLINE)
         tasks = sum(

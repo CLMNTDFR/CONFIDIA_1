@@ -1,11 +1,15 @@
-from datetime import UTC, date, datetime, time, timedelta
+import asyncio
+from datetime import date, datetime, time, timedelta
+from zoneinfo import ZoneInfo
 
 from fastapi.testclient import TestClient
 from jose import jwt
 
 from api.deps import get_calendar_service, get_identity_service
 from api.main import app
+from application.dto.calendar_dto import CalendarEventDTO, EventType, WeekCalendarScope
 from application.services.calendar_service import CalendarService
+from application.services.dashboard_service import DashboardService
 from application.services.identity_service import IdentityService
 from tests.fakes.calendar_repository import InMemoryCalendarRepository
 from tests.fakes.identity_repository import InMemoryIdentityRepository
@@ -111,9 +115,10 @@ def test_day_briefing_requires_auth():
 def test_week_overview_counts_created_event():
     client, _calendar = _harness()
     try:
-        today = date.today()
+        zone = ZoneInfo("Europe/Paris")
+        today = datetime.now(zone).date()
         week_start = today - timedelta(days=today.weekday())
-        start = datetime.combine(week_start, time(10, 0), tzinfo=UTC)
+        start = datetime.combine(week_start, time(10, 0), tzinfo=zone)
         created = client.post(
             "/api/v1/calendar/events",
             headers=_auth_headers(),
@@ -132,5 +137,52 @@ def test_week_overview_counts_created_event():
         assert monday["total_appointments"] == 1
         assert monday["meeting_count"] == 1
         assert monday["workload_level"] in {"calm", "medium", "busy"}
+    finally:
+        app.dependency_overrides.clear()
+
+
+def test_week_overview_keeps_paris_civil_day():
+    start = datetime.fromisoformat("2026-10-18T00:30:00+02:00")
+    event = CalendarEventDTO(
+        id="1",
+        title="Nuit",
+        start=start,
+        end=start + timedelta(hours=1),
+        event_type=EventType.MEETING,
+        calendar_scope=WeekCalendarScope.FAMILY,
+    )
+    overview = asyncio.run(
+        DashboardService().get_week_overview(
+            [event],
+            zone="Europe/Paris",
+            reference=date(2026, 10, 18),
+        )
+    )
+    assert overview.days[6].date == date(2026, 10, 18)
+    assert overview.days[6].total_appointments == 1
+    assert overview.days[5].total_appointments == 0
+
+
+def test_briefing_with_event_does_not_crash():
+    client, _calendar = _harness()
+    try:
+        start = datetime.now(ZoneInfo("Europe/Paris")).replace(microsecond=0) + timedelta(days=1)
+        created = client.post(
+            "/api/v1/calendar/events",
+            headers=_auth_headers(),
+            json={
+                "title": "Réunion",
+                "start": start.isoformat(),
+                "end": (start + timedelta(hours=1)).isoformat(),
+                "event_type": "meeting",
+                "calendar_scope": "family",
+            },
+        )
+        assert created.status_code == 201, created.text
+        serenity = client.get("/api/v1/dashboard/serenity-briefing", headers=_auth_headers())
+        assert serenity.status_code == 200, serenity.text
+        day = client.get("/api/v1/dashboard/day-briefing", headers=_auth_headers())
+        assert day.status_code == 200, day.text
+        assert day.json()["todays_appointments"] == []
     finally:
         app.dependency_overrides.clear()

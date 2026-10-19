@@ -13,14 +13,9 @@ from application.dto.calendar_dto import (
     EventType,
     WeekCalendarScope,
 )
+from core.time import as_utc
 from domain.interfaces.calendar_repository import CalendarRepository
 from infrastructure.db.models import Calendar, CalendarEvent
-
-
-def _aware(value: datetime) -> datetime:
-    if value.tzinfo is None:
-        return value.replace(tzinfo=UTC)
-    return value
 
 
 def _parse_document_id(raw: str | None) -> UUID | None:
@@ -43,8 +38,8 @@ def _to_dto(row: CalendarEvent) -> CalendarEventDTO:
         id=str(row.id),
         title=row.title,
         description=row.description,
-        start=row.starts_at,
-        end=row.ends_at,
+        start=as_utc(row.starts_at),
+        end=as_utc(row.ends_at),
         event_type=EventType(row.event_type),
         location=row.location,
         all_day=row.all_day,
@@ -92,9 +87,9 @@ class PostgresCalendarRepository(CalendarRepository):
             CalendarEvent.deleted_at.is_(None),
         ]
         if start is not None:
-            filters.append(CalendarEvent.ends_at >= _aware(start))
+            filters.append(CalendarEvent.ends_at >= as_utc(start))
         if end is not None:
-            filters.append(CalendarEvent.starts_at <= _aware(end))
+            filters.append(CalendarEvent.starts_at <= as_utc(end))
         stmt = select(CalendarEvent).where(*filters).order_by(CalendarEvent.starts_at)
         rows = (await self._session.scalars(stmt)).all()
         return [_to_dto(row) for row in rows]
@@ -126,8 +121,8 @@ class PostgresCalendarRepository(CalendarRepository):
             title=data.title.strip(),
             description=data.description,
             location=data.location,
-            starts_at=_aware(data.start),
-            ends_at=_aware(data.end),
+            starts_at=as_utc(data.start),
+            ends_at=as_utc(data.end),
             all_day=data.all_day,
             event_type=data.event_type.value,
             color=data.color,
@@ -162,9 +157,9 @@ class PostgresCalendarRepository(CalendarRepository):
         if "location" in payload:
             row.location = payload["location"]
         if "start" in payload and payload["start"] is not None:
-            row.starts_at = _aware(payload["start"])
+            row.starts_at = as_utc(payload["start"])
         if "end" in payload and payload["end"] is not None:
-            row.ends_at = _aware(payload["end"])
+            row.ends_at = as_utc(payload["end"])
         if "all_day" in payload and payload["all_day"] is not None:
             row.all_day = payload["all_day"]
         if "event_type" in payload and payload["event_type"] is not None:

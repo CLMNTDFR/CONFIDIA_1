@@ -9,6 +9,7 @@ import '../../features/auth/register_screen.dart';
 import '../../features/auth/welcome_splash_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/documents/documents_screen.dart';
+import '../../features/documents/documents_trash_screen.dart';
 import '../../features/documents/document_detail_screen.dart';
 import '../../features/documents/document_ingest_screen.dart';
 import '../../features/calendar/calendar_screen.dart';
@@ -74,6 +75,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               ),
             ),
             routes: [
+              GoRoute(
+                path: 'trash',
+                pageBuilder: (context, state) => fadeSlidePage(child: const DocumentsTrashScreen()),
+              ),
               GoRoute(
                 path: 'add',
                 pageBuilder: (context, state) => fadeSlidePage(
