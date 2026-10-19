@@ -48,3 +48,7 @@ apps/backend_fastapi/var/
 *.pem
 *.key
 credentials.json
+
+# Documentation
+docs/
+
