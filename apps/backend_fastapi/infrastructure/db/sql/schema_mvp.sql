@@ -1,7 +1,7 @@
 -- CONFIDIA MVP schema (PostgreSQL 15+)
--- Holberton 4-week delivery. Apply on database `confidia`.
--- Later domains (mail, payments, org chart, AI, signatures) are documented
--- in docs/pitch-holberton/SQL_SCHEMA_MVP.md and must not be created here.
+-- Holberton delivery. Apply on database `confidia`.
+-- Mail, payments, signatures and AI analyses stay out of this file.
+-- The organisation chart is memberships.parent_id. Invitations are stored here.
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE EXTENSION IF NOT EXISTS citext;
@@ -24,6 +24,8 @@ CREATE TABLE organizations (
   slug        TEXT NOT NULL,
   kind        TEXT NOT NULL DEFAULT 'family'
                 CHECK (kind IN ('personal', 'family', 'club', 'org')),
+  icon        TEXT NOT NULL DEFAULT 'family',
+  level_labels JSONB NOT NULL DEFAULT '{}'::jsonb,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT now(),
   deleted_at  TIMESTAMPTZ
@@ -57,6 +59,10 @@ CREATE TABLE memberships (
   user_id          TEXT NOT NULL REFERENCES users (id),
   role             TEXT NOT NULL DEFAULT 'member'
                      CHECK (role IN ('owner', 'admin', 'member')),
+  parent_id        UUID REFERENCES memberships (id) ON DELETE SET NULL,
+  permissions      TEXT[] NOT NULL DEFAULT '{}',
+  link_type        TEXT NOT NULL DEFAULT 'reportsTo'
+                     CHECK (link_type IN ('reportsTo', 'dottedLine', 'delegate')),
   is_default       BOOLEAN NOT NULL DEFAULT false,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
@@ -66,6 +72,20 @@ CREATE TABLE memberships (
 
 CREATE INDEX memberships_user_idx ON memberships (user_id)
   WHERE deleted_at IS NULL;
+
+CREATE TABLE invitations (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  organization_id  UUID NOT NULL REFERENCES organizations (id),
+  inviter_id       TEXT NOT NULL REFERENCES users (id),
+  invitee_id       TEXT NOT NULL REFERENCES users (id),
+  status           TEXT NOT NULL DEFAULT 'pending'
+                     CHECK (status IN ('pending', 'accepted', 'refused', 'cancelled')),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+  UNIQUE (organization_id, invitee_id)
+);
+
+CREATE INDEX invitations_invitee_idx ON invitations (invitee_id);
 
 -- ---------------------------------------------------------------------------
 -- Documents
@@ -230,6 +250,10 @@ CREATE TRIGGER memberships_set_updated_at
   BEFORE UPDATE ON memberships
   FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 
+CREATE TRIGGER invitations_set_updated_at
+  BEFORE UPDATE ON invitations
+  FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
+
 CREATE TRIGGER documents_set_updated_at
   BEFORE UPDATE ON documents
   FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
@@ -243,7 +267,7 @@ CREATE TRIGGER calendar_events_set_updated_at
   FOR EACH ROW EXECUTE PROCEDURE set_updated_at();
 
 -- ---------------------------------------------------------------------------
--- Not in MVP (do not CREATE):
+-- Not created here:
 --   roles, permissions, role_permissions, org_nodes, sharing_requests
 --   mailboxes, emails, email_attachments
 --   calendar_sources

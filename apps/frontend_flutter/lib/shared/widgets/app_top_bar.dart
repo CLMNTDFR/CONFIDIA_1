@@ -63,7 +63,9 @@ class AppTopBar extends ConsumerWidget {
     if (path.startsWith('/notifications')) return (ConfidiaRouteLabels.notifications, 'Centre d\'alertes');
     if (path.startsWith('/profile')) return ('Profil', 'Compte et identité');
     if (path.startsWith('/settings')) return (ConfidiaRouteLabels.settings, 'Préférences');
-    if (path.startsWith('/access-control')) return ('Gouvernance', 'Rôles, droits & IA planning');
+    if (path.startsWith('/access-control')) {
+      return ('Gouvernance', 'Rôles, droits et invitations');
+    }
     if (path.startsWith('/admin')) return ('Administration', 'Plateforme');
     return ('CONFIDIA', null);
   }
@@ -89,6 +91,9 @@ class AppTopBar extends ConsumerWidget {
               final w = constraints.maxWidth;
               final showDate = w >= 820;
               final showProfileName = w >= 980;
+              final subtitleText = path.startsWith('/access-control') && auth.isDemoSession
+                  ? 'Rôles, droits & IA planning'
+                  : subtitle;
 
               return Row(
                 children: [
@@ -123,9 +128,9 @@ class AppTopBar extends ConsumerWidget {
                                   ],
                                 ],
                               ),
-                              if (subtitle != null)
+                              if (subtitleText != null)
                                 Text(
-                                  subtitle!,
+                                  subtitleText,
                                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                         color: ConfidiaColors.textSecondary(isDark),
                                       ),
@@ -201,9 +206,10 @@ class _SerenityScoreChip extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final score = ref.watch(serenityBriefingProvider.select((b) => b.score));
     final accent = SerenityPalette.forScore(score, palette: context.palette);
+    final demo = ref.watch(authStateProvider).isDemoSession;
 
     return ConfidiaTooltip(
-      message: 'Briefing du jour · Démo',
+      message: demo ? 'Briefing du jour · Démo' : 'Briefing du jour',
       child: SizedBox(
         width: _size,
         height: _size,

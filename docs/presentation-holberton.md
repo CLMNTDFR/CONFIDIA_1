@@ -6,7 +6,7 @@ Support pour l'oral. Les schémas s'affichent dans la prévisualisation Markdown
 
 La paperasse du quotidien est éparpillée. La facture est dans les mails, le contrat sur un drive, la date dans la tête. CONFIDIA est l'endroit où je dépose tout ça, et où je le retrouve le jour où j'en ai besoin.
 
-J'ouvre l'application, je me connecte, je vois ma semaine. J'importe un document, je lui donne un titre, je le rouvre, je le télécharge. Il est encore là si je reviens plus tard. Le calendrier et le profil sont là aussi. La messagerie, les paiements et l'organigramme se voient à l'écran, mais ce sont des aperçus : ils montrent la suite, ils ne rangent rien pour de vrai.
+J'ouvre l'application, je me connecte, je vois ma semaine. J'importe un document, je lui donne un titre, je le rouvre, je le télécharge. Il est encore là si je reviens plus tard. Le calendrier, le profil et la gouvernance sont là aussi : un espace Famille, son organigramme, ses droits, ses invitations. La messagerie et les paiements se voient à l'écran, mais ce sont des aperçus : ils montrent la suite, ils ne rangent rien pour de vrai.
 
 ## Le projet
 
@@ -19,7 +19,7 @@ Ce que je montre :
 - l'import d'un PDF, son titre, sa fiche, son téléchargement
 - la déconnexion
 
-Le calendrier interne et le profil (téléphone enregistré en base) sont là si j'ai le temps. La messagerie, les paiements et l'organigramme portent un badge Démo. Je ne les ouvre pas : ils ne parlent pas à la base.
+Le calendrier interne, le profil (téléphone enregistré en base) et la gouvernance sont là si j'ai le temps. Au premier login, l'espace s'appelle Famille. Je peux changer son nom, son type et son icône, voir mon organigramme même seul, régler les droits, et inviter un autre profil Confidia. L'invitation et son statut (`pending`, `accepted`, `refused`, `cancelled`) sont en base. La messagerie et les paiements portent un badge Démo. Je ne les ouvre pas : ils ne parlent pas à la base.
 
 ## Démo
 
@@ -120,18 +120,22 @@ L'interface est au milieu pour qu'on puisse changer le stockage plus tard sans r
 
 ## Base de données
 
-PostgreSQL. Dix tables pour le MVP. Les mots de passe n'y sont pas : ils restent dans Keycloak. `users.id` est le `sub` du jeton, en texte.
+PostgreSQL. Onze tables pour le MVP. Les mots de passe n'y sont pas : ils restent dans Keycloak. `users.id` est le `sub` du jeton, en texte.
 
 Un utilisateur est un compte. Sa ligne ne porte pas d'organisation. Il en rejoint une par `memberships`, ou aucune : zéro, une ou plusieurs. Une organisation est un espace de travail, pas un foyer. Le champ `kind` dit lequel : `personal`, `family`, `club` ou `org`.
 
-Le mot foyer vient seulement de la démo. Au premier login, s'il n'y a encore aucune organisation, le code en crée une nommée Famille (`kind = family`), pour avoir où poser un document. Le schéma ne l'oblige pas. Un compte sans ligne dans `memberships` est valide. En revanche, un document, un calendrier ou une notification a toujours une organisation : ces fiches ne vivent pas sur le compte tout seul.
+Le mot foyer vient seulement de la démo. Au premier login, s'il n'y a encore aucune organisation, le code en crée une nommée Famille (`kind = family`, icône `family`), pour avoir où poser un document. Le nom, le type et l'icône se modifient ensuite. Le schéma ne l'oblige pas à s'appeler Famille. Un compte sans ligne dans `memberships` est valide. En revanche, un document, un calendrier ou une notification a toujours une organisation : ces fiches ne vivent pas sur le compte tout seul.
 
-Le rôle Keycloak (`USER`, `MANAGER`, `ADMIN`) est dans le jeton. Le rôle dans une organisation (`owner`, `admin`, `member`) est dans `memberships`. Ce n'est pas le même rôle.
+Le rôle Keycloak (`USER`, `MANAGER`, `ADMIN`) est dans le jeton. Le rôle dans une organisation (`owner`, `admin`, `member`) est dans `memberships`. Ce n'est pas le même rôle. `parent_id` rattache un membre à un autre dans l'organigramme. `permissions` garde la liste des droits affichés. L'accès aux documents et à l'agenda reste celui de l'espace : deux membres du même espace voient les mêmes documents. Les droits disent surtout qui peut inviter et réorganiser.
+
+Une invitation relie un espace, la personne qui invite, et la personne invitée. Une seule ligne par couple espace / invité. Le statut passe de `pending` à `accepted`, `refused` ou `cancelled`. Accepter crée un `membership` `member`, sans changer l'espace par défaut de l'invité : il garde sa propre Famille, et il apparaît dans l'organigramme de celui qui l'a invité.
 
 ```mermaid
 erDiagram
   organizations ||--o{ memberships : regroupe
   users ||--o{ memberships : rejoint
+  organizations ||--o{ invitations : envoie
+  users ||--o{ invitations : recoit
   organizations ||--o{ documents : contient
   users ||--o{ documents : possede
   organizations ||--o{ tags : definit
@@ -150,6 +154,7 @@ erDiagram
     text name
     text slug
     text kind
+    text icon
   }
   users {
     text id PK
@@ -163,6 +168,14 @@ erDiagram
     uuid organization_id FK
     text user_id FK
     text role
+    uuid parent_id FK
+  }
+  invitations {
+    uuid id PK
+    uuid organization_id FK
+    text inviter_id FK
+    text invitee_id FK
+    text status
   }
   documents {
     uuid id PK
@@ -214,7 +227,8 @@ Chaque table :
 
 - `organizations`, un espace de travail
 - `users`, le compte, sans le mot de passe
-- `memberships`, le rattachement d'un compte à un espace, s'il y en a un
+- `memberships`, le rattachement d'un compte à un espace, avec un parent dans l'organigramme s'il y en a un
+- `invitations`, une invitation et son statut
 - `documents`, la fiche du fichier
 - `tags`, une étiquette de l'espace
 - `document_tags`, le lien entre un document et une étiquette
@@ -239,7 +253,7 @@ La liste des documents est filtrée sur l'organisation du compte connecté. Deux
 
 Les horaires sont stockés en UTC. Le jour affiché, dans la semaine et le briefing, suit le fuseau du compte. Sans précision, c'est `Europe/Paris`. Une date sans fuseau est refusée.
 
-Pas dans cette base : mails, paiements, signatures, analyses d'IA. Ces écrans existent dans l'interface, en démo, sans tables.
+Pas dans cette base : mails, paiements, signatures, analyses d'IA. Ces écrans existent dans l'interface, en démo, sans tables. L'organigramme et les invitations, eux, sont en base.
 
 Les suppressions sont logiques (`deleted_at`) pour les organisations, les comptes, les membres, les documents, les calendriers, les événements et les notifications. Les étiquettes n'ont pas ce champ. Le lien document / étiquette ne disparaît qu'au `DELETE` réel, celui de la suppression définitive. Les rappels sont attachés à l'événement, pas au document.
 
@@ -264,7 +278,7 @@ Ce que l'application détient vraiment :
 - l'agenda : titre, lieu, horaires
 - les jetons de session, gardés sur l'appareil, pas dans notre base
 
-Ce qui est déjà là, modestement. On ne crée pas de tables au-delà du MVP. Le mot de passe ne passe pas par notre base. Un document mis à la corbeille disparaît de la bibliothèque. La suppression définitive retire aussi le fichier.
+Ce qui est déjà là, modestement. On ne crée pas de tables pour la messagerie, les paiements ou l'IA. Les invitations, elles, sont une table. Le mot de passe ne passe pas par notre base. Un document mis à la corbeille disparaît de la bibliothèque. La suppression définitive retire aussi le fichier.
 
 Ce qui manque, et qui concerne directement ce projet :
 
@@ -307,4 +321,4 @@ Sur Mac, compiler l'application native demande Xcode complet. Les outils en lign
 
 ## Conclusion
 
-On peut cloner le dépôt, lancer la stack, se connecter, importer un PDF et le retrouver. C'est ça que je viens montrer. Le reste de la vision produit est visible dans l'interface, assumé comme démo, et absent du schéma de base. Je préfère un parcours court et vrai qu'une application qui a l'air finie et qui ne l'est pas.
+On peut cloner le dépôt, lancer la stack, se connecter, importer un PDF et le retrouver. C'est ça que je viens montrer. La gouvernance d'un compte réel est branchée : espace Famille, organigramme, droits, invitations. La messagerie et les paiements restent des aperçus, absents du schéma. Je préfère un parcours court et vrai qu'une application qui a l'air finie et qui ne l'est pas.

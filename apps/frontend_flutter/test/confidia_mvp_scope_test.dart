@@ -19,6 +19,7 @@ void main() {
       '/profile',
       '/settings',
       '/notifications',
+      '/access-control',
     ]) {
       expect(ConfidiaMvpScope.isDemoPath(path), isFalse, reason: path);
     }
@@ -30,8 +31,6 @@ void main() {
       '/messaging/inbox',
       '/payments',
       '/payments/42',
-      '/access-control',
-      '/access-control/roles',
       '/admin',
       '/admin/health',
     ]) {

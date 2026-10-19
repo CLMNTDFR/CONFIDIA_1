@@ -23,6 +23,7 @@ REQUIRED_TABLES = {
     "calendar_events",
     "reminders",
     "notifications",
+    "invitations",
 }
 
 BACKLOG_TABLES = {

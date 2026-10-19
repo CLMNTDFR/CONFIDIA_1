@@ -2,6 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from domain.governance import PERMISSIONS
 from domain.interfaces.identity_repository import IdentityRepository, StoredUser
 from infrastructure.db.models import Calendar, Membership, Organization, User
 
@@ -100,7 +101,12 @@ class PostgresIdentityRepository(IdentityRepository):
         if membership is not None:
             return _to_stored(user, membership)
 
-        org = Organization(name="Famille", slug=_slug_for(user_id), kind="family")
+        org = Organization(
+            name="Famille",
+            slug=_slug_for(user_id),
+            kind="family",
+            icon="family",
+        )
         self._session.add(org)
         await self._session.flush()
 
@@ -109,6 +115,7 @@ class PostgresIdentityRepository(IdentityRepository):
             user_id=user.id,
             role="owner",
             is_default=True,
+            permissions=list(PERMISSIONS),
         )
         self._session.add(membership)
         self._session.add(

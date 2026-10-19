@@ -39,17 +39,18 @@ Say this out loud if useful: the file is stored by CONFIDIA (Postgres metadata +
 | Login spinner, then an error | Keycloak is not ready. Wait, then retry `curl -s -o /dev/null -w '%{http_code}\n' http://localhost:8080/realms/confidia` until `200`. |
 | Flutter cannot reach the API | Nothing is listening on port 8000, or a second API is. `./scripts/start.sh` owns 8000. |
 | **Scanner** does nothing useful on a laptop | Use **Importer**. The camera path is for a phone. |
-| You opened **Messagerie**, **Paiements**, or governance | Those screens wear a **Démo** badge. Go back to **Accueil** or **Documents**. They are not the live path. |
+| You opened **Messagerie** or **Paiements** | Those screens wear a **Démo** badge. Go back to **Accueil** or **Documents**. They are not the live path. Governance is stored: it is safe to open if the jury asks. |
 
 ## Do not show
 
 - **Mode démo** (mock data, no database).
-- **Messagerie**, **Paiements**, advanced access control.
+- **Messagerie**, **Paiements**.
 - Paperless (http://localhost:8001) and Nextcloud (http://localhost:8081). They may be up with the full stack. The Holberton document path does not use them.
 
 ## Only if time remains
 
 - **Calendrier**: press **Événement**, create one event, then glance at **Accueil**. No Google, Outlook, or Apple sync.
+- **Gouvernance**: the first login created **Famille**. Rename it, change the icon, and the chart shows the signed-in member. Invitations search other Confidia profiles and store a status.
 - Profile: edit the phone, then refresh. The value comes back from PostgreSQL.
 
 Rehearsal timing is a later step. This file is the path to follow, not the dry-run log.

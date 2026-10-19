@@ -37,7 +37,7 @@ class SettingsScreen extends ConsumerWidget {
     return ListView(
       padding: ConfidiaInsets.page(context),
       children: [
-        _SectionTitle(label: 'Organisation & accès', demo: true),
+        _SectionTitle(label: 'Organisation & accès', demo: demo),
         const SizedBox(height: 8),
         KeyedSubtree(
           key: OnboardingTargets.gouvernanceTile,
@@ -46,8 +46,10 @@ class SettingsScreen extends ConsumerWidget {
             child: _CompactActionTile(
               icon: Icons.account_tree_rounded,
               title: 'Gouvernance & accès',
-              subtitle: 'Organigramme, rôles, droits et assistant IA',
-              demo: true,
+              subtitle: demo
+                  ? 'Organigramme, rôles, droits et assistant IA'
+                  : 'Organigramme, rôles, droits et invitations',
+              demo: demo,
               onTap: () => context.go('/access-control'),
             ),
           ),

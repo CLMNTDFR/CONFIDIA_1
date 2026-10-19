@@ -47,6 +47,7 @@ class GuidedTourStep {
   final Alignment? wideBubbleAlignment;
   final String? route;
   final GuidedTourDemoAction demoAction;
+  final String? liveMessage;
 
   const GuidedTourStep({
     required this.id,
@@ -57,10 +58,15 @@ class GuidedTourStep {
     this.wideBubbleAlignment,
     this.route,
     this.demoAction = GuidedTourDemoAction.none,
+    this.liveMessage,
   });
 
-  String messageFor(BuildContext context) =>
-      OnboardingTargets.isWideLayout(context) && wideMessage != null ? wideMessage! : message;
+  String messageFor(BuildContext context, {bool live = false}) {
+    final chosen = live && liveMessage != null ? liveMessage! : message;
+    return OnboardingTargets.isWideLayout(context) && wideMessage != null && !(live && liveMessage != null)
+        ? wideMessage!
+        : chosen;
+  }
 
   Alignment bubbleAlignmentFor(BuildContext context) =>
       OnboardingTargets.isWideLayout(context) && wideBubbleAlignment != null
@@ -168,6 +174,8 @@ final List<GuidedTourStep> guidedTourSteps = [
         bubbleAlignment: Alignment.bottomCenter,
         route: '/access-control',
         demoAction: GuidedTourDemoAction.prepareAccess,
+        liveMessage:
+            'Votre espace Famille est créé dès la première connexion. Le nom, le type et l\'icône se modifient ici.',
       ),
       GuidedTourStep(
         id: GuidedTourStepId.orgChart,
@@ -177,6 +185,8 @@ final List<GuidedTourStep> guidedTourSteps = [
         bubbleAlignment: Alignment.topCenter,
         route: '/access-control',
         demoAction: GuidedTourDemoAction.prepareAccess,
+        liveMessage:
+            'Vous apparaissez dans l\'organigramme, même seul. Glissez un membre pour le rattacher à un autre.',
       ),
       GuidedTourStep(
         id: GuidedTourStepId.memberRights,
@@ -186,6 +196,8 @@ final List<GuidedTourStep> guidedTourSteps = [
         bubbleAlignment: Alignment.topCenter,
         route: '/access-control',
         demoAction: GuidedTourDemoAction.prepareMembers,
+        liveMessage:
+            'Pour chaque membre, les droits sont enregistrés : calendrier, documents, paiements, invitations.',
       ),
       const GuidedTourStep(
         id: GuidedTourStepId.homeReturn,

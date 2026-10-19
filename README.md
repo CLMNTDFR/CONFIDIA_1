@@ -56,12 +56,13 @@ Administrative life is split across email, cloud drives, paper scans and calenda
 | Same user | Keep a document and open it later | Upload, list, detail, download and trash, scoped to the organisation |
 | Same user | See what happens this week | Dashboard week overview + merged in-app calendar |
 | Reviewer / peer | Reproduce the stack from a clone | Docker Compose, Alembic, this README, `./scripts/test.sh` |
-| Future club / family admin | Roles and sharing | Keycloak roles exist; advanced org chart is a mock, out of MVP |
+| Future club / family admin | Roles, chart and invites | Default Famille workspace. Name, kind and icon are editable. Members, rights and invitation status are stored in PostgreSQL |
 
 **In the Holberton MVP**
 
 - Authentication (register, login, refresh, logout) and session
 - User profile persisted in PostgreSQL (names, phone, organisation label, avatar)
+- Governance: default Famille workspace, editable name, kind and icon, org chart, stored invitations
 - Dashboard (week overview)
 - Documents: upload, list, detail, file download, trash (restore or permanent delete)
 - Merged in-app calendar (create, list, update, delete; no Google / Outlook sync)
@@ -73,7 +74,6 @@ Administrative life is split across email, cloud drives, paper scans and calenda
 - Multi-mailbox messaging
 - Payments and e-signature
 - External calendar sync
-- Advanced organisation chart and consent workflows
 - Live LLM (the API exposes a `MockAIProvider` to show the port)
 
 ---
@@ -173,12 +173,14 @@ Patterns in use: **repository**, **port / adapter**, **DTO**, **dependency injec
 
 ## Data model
 
-Passwords are **not** stored in CONFIDIA. `users.id` is the Keycloak `sub`. `deleted_at` hides organisations, users, memberships, documents, calendars, events and notifications from lists. For a document, the trash can restore that row or delete it for good, including the file under `var/documents`. Tags, the document/tag link and reminders have no `deleted_at`. Account erasure and a full data export are not implemented. Full DDL: [docs/pitch-holberton/SQL_SCHEMA_MVP.md](docs/pitch-holberton/SQL_SCHEMA_MVP.md).
+Passwords are **not** stored in CONFIDIA. `users.id` is the Keycloak `sub`. `deleted_at` hides organisations, users, memberships, documents, calendars, events and notifications from lists. For a document, the trash can restore that row or delete it for good, including the file under `var/documents`. Tags, the document/tag link and reminders have no `deleted_at`. A first login creates one Famille organisation. `organizations.icon` and `memberships.parent_id` store the chart. `memberships.permissions` stores the rights shown on the governance screen. Document and calendar access stays organisation-wide, so two members of the same space see the same documents. `invitations` stores one row per organisation and invitee, with status `pending`, `accepted`, `refused` or `cancelled`. Account erasure and a full data export are not implemented. Full DDL: [docs/pitch-holberton/SQL_SCHEMA_MVP.md](docs/pitch-holberton/SQL_SCHEMA_MVP.md).
 
 ```mermaid
 erDiagram
   ORGANIZATIONS ||--o{ MEMBERSHIPS : includes
   USERS ||--o{ MEMBERSHIPS : joins
+  ORGANIZATIONS ||--o{ INVITATIONS : sends
+  USERS ||--o{ INVITATIONS : receives
   ORGANIZATIONS ||--o{ DOCUMENTS : owns
   ORGANIZATIONS ||--o{ CALENDARS : owns
   ORGANIZATIONS ||--o{ NOTIFICATIONS : owns
@@ -418,6 +420,13 @@ Base URL: `http://localhost:8000/api/v1`. Interactive contract: http://localhost
 | POST | `/auth/login` | no | Password grant + workspace upsert |
 | POST | `/auth/logout` | no | Revoke refresh token |
 | GET / PUT | `/users/me` | yes | Profile |
+| GET / PATCH | `/governance/workspace` | yes | Organisation name, icon, kind, members, invitations |
+| GET | `/governance/people?q=` | yes | Search other Confidia profiles (at least 2 characters) |
+| POST | `/governance/invitations` | yes | Invite a profile. Status is stored |
+| POST | `/governance/invitations/{id}/accept` | yes | Join that organisation as `member` |
+| POST | `/governance/invitations/{id}/refuse` | yes | Refuse a pending invitation |
+| POST | `/governance/invitations/{id}/cancel` | yes | Cancel a pending invitation |
+| PATCH / DELETE | `/governance/members/{id}` | yes | Move a member, set rights, or remove them |
 | GET / POST | `/documents/` and `/documents/upload` | yes | List and upload |
 | GET | `/documents/{id}` and `/documents/{id}/file` | yes | Detail and bytes (hidden once trashed) |
 | DELETE | `/documents/{id}` | yes | Move to the trash (`deleted_at` only) |
@@ -528,7 +537,6 @@ CONFIDIA_1/
 - [SQL schema](docs/pitch-holberton/SQL_SCHEMA_MVP.md)
 - [Flutter design system](apps/frontend_flutter/README.md)
 - [Full-stack install extras](docs/Installation.md)
-- [Access-control preview](docs/AccessControl.md)
 - [Roadmap](docs/Roadmap.md)
 
 ---
@@ -540,7 +548,7 @@ Kept in the backlog on purpose. They must not leak into the MVP demo.
 - Google / Outlook / Apple calendar sync
 - Multi-mailbox inbox
 - Payments and e-signature
-- Fine-grained organisation roles and consent
+- Per-document consent on top of the stored membership rights
 - Production LLM behind the existing `DocumentAIProvider` port
 - Paperless token and Nextcloud WebDAV as real document backends
 

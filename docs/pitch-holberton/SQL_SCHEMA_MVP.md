@@ -35,14 +35,16 @@ organizations ──┬── memberships ── users
 
 ### `organizations`
 
-Espace de travail. Même en usage perso : une org « Famille » (ou « Personnel ») suffit. Prépare l’organigramme (nœuds, rôles) sans le livrer.
+Espace de travail. Au premier login, une org « Famille » est créée. Le nom, le `kind` et l'icône se modifient. L'organigramme est le `parent_id` des memberships, pas une table `org_nodes`.
 
 | Colonne | Type | Notes |
 |---------|------|--------|
 | `id` | `UUID` PK | |
 | `name` | `TEXT` | |
-| `slug` | `TEXT` UNIQUE | `famille`, `club`… |
+| `slug` | `TEXT` UNIQUE | `famille-{user}` |
 | `kind` | `TEXT` | `personal` \| `family` \| `club` \| `org` |
+| `icon` | `TEXT` | identifiant d'icône, défaut `family` |
+| `level_labels` | `JSONB` | libellés des niveaux, `{}` par défaut |
 | `created_at` / `updated_at` / `deleted_at` | timestamptz | |
 
 ### `users`
@@ -64,7 +66,7 @@ Le champ Flutter `organization` (libellé libre) n’est **pas** dupliqué ici :
 
 ### `memberships`
 
-Lien user ↔ org. MVP : un rôle simple. Plus tard : `role_id` vers `roles`.
+Lien user ↔ org. Le rôle reste une chaîne (`owner`, `admin`, `member`). Les droits affichés sont un tableau d'identifiants, pas une table `permissions`.
 
 | Colonne | Type | Notes |
 |---------|------|--------|
@@ -72,10 +74,29 @@ Lien user ↔ org. MVP : un rôle simple. Plus tard : `role_id` vers `roles`.
 | `organization_id` | `UUID` FK | |
 | `user_id` | `TEXT` FK | |
 | `role` | `TEXT` | `owner` \| `admin` \| `member` |
+| `parent_id` | `UUID` FK NULL | autre membership du même espace, `ON DELETE SET NULL` |
+| `permissions` | `TEXT[]` | droits enregistrés, `{}` par défaut |
+| `link_type` | `TEXT` | `reportsTo` \| `dottedLine` \| `delegate` |
 | `is_default` | `BOOLEAN` | org ouverte au login |
 | UNIQUE `(organization_id, user_id)` | | |
 
-Les rôles plateforme Keycloak (`ADMIN`, `MANAGER`, `USER`) restent dans le JWT (écran `/admin`, hors MVP).
+Les rôles plateforme Keycloak (`ADMIN`, `MANAGER`, `USER`) restent dans le JWT (écran `/admin`, hors MVP). L'accès aux documents et à l'agenda reste celui de l'organisation, même si `permissions` liste des droits plus fins.
+
+### `invitations`
+
+Une ligne par espace et par personne invitée. Le statut est le dernier état connu.
+
+| Colonne | Type | Notes |
+|---------|------|--------|
+| `id` | `UUID` PK | |
+| `organization_id` | `UUID` FK | espace qui invite |
+| `inviter_id` | `TEXT` FK | |
+| `invitee_id` | `TEXT` FK | profil Confidia déjà créé |
+| `status` | `TEXT` | `pending` \| `accepted` \| `refused` \| `cancelled` |
+| `created_at` / `updated_at` | timestamptz | |
+| UNIQUE `(organization_id, invitee_id)` | | |
+
+Accepter crée ou réactive un membership `member`. L'espace par défaut de l'invité ne change pas.
 
 ### `documents`
 
@@ -175,7 +196,7 @@ Documenté pour ne pas peindre dans un coin. Quand une table arrive, on **ajoute
 
 | Domaine | Tables prévues | Accroches déjà dans le MVP |
 |---------|----------------|----------------------------|
-| Gouvernance | `roles`, `permissions`, `role_permissions`, `org_nodes`, `sharing_requests` | `memberships.role` (string) → `role_id` |
+| Gouvernance avancée | `roles`, `permissions`, `role_permissions`, `org_nodes`, `sharing_requests` | le chart réel est `memberships.parent_id` + `invitations` |
 | Messagerie | `mailboxes`, `emails`, `email_attachments` | `calendar_events.email_id` |
 | Sync calendrier | `calendar_sources` (tokens OAuth, `provider`) | `calendar_events.source` ≠ `confidia` |
 | Paiements | `payments` (`document_id`, `due_date`, `amount`, `status`) | `calendar_events.payment_id` |
@@ -192,6 +213,7 @@ Documenté pour ne pas peindre dans un coin. Quand une table arrive, on **ajoute
 - `calendar_events (calendar_id, starts_at)` et `(organization_id, starts_at)`
 - `notifications (user_id, created_at DESC)` où `deleted_at IS NULL`
 - `memberships (user_id)` pour résoudre l’org courante
+- `invitations (invitee_id)` pour les invitations reçues
 
 ---
 

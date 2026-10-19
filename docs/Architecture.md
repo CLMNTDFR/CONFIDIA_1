@@ -120,7 +120,7 @@ Rose brand colors in `palette.dart`: `#d20050`, `#af73f7`, `#4b96b4`. Blue is th
 
 `lib/shared/` holds models, widgets, and mock data. `lib/core/` holds the API client, auth, router, and theme.
 
-Messaging, payments, and the organisation chart are demo screens. They are not the Holberton document path.
+Messaging and payments are demo screens. They are not the Holberton document path. A live account stores its organisation chart and invitations in PostgreSQL.
 
 ### API client (Dio)
 
