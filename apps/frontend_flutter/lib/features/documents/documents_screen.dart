@@ -109,7 +109,20 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                   }).toList(),
                 ),
                 const SizedBox(height: ConfidiaSpacing.sm),
-                Text('${docs.length} résultat${docs.length > 1 ? 's' : ''}', style: Theme.of(context).textTheme.bodySmall),
+                Row(
+                  children: [
+                    Text(
+                      '${docs.length} résultat${docs.length > 1 ? 's' : ''}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: () => context.go('/documents/trash'),
+                      icon: const Icon(Icons.delete_outline_rounded, size: 18),
+                      label: const Text('Corbeille'),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -146,7 +159,7 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
                 return ConfidiaPageReveal(
                   index: index,
                   staggerCount: stagger,
-                  child: _DocumentListTile(doc: docs[index], isDark: isDark),
+                  child: DocumentListTile(doc: docs[index], isDark: isDark),
                 );
               },
             ),
@@ -157,20 +170,31 @@ class _DocumentsScreenState extends ConsumerState<DocumentsScreen> {
   }
 }
 
-class _DocumentListTile extends StatelessWidget {
+class DocumentListTile extends StatelessWidget {
   final DocumentModel doc;
   final bool isDark;
+  final VoidCallback? onTap;
+  final String? whenLabel;
+  final Widget? actions;
 
-  const _DocumentListTile({required this.doc, required this.isDark});
+  const DocumentListTile({
+    super.key,
+    required this.doc,
+    required this.isDark,
+    this.onTap,
+    this.whenLabel,
+    this.actions,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final muted = ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark);
     return Material(
       color: isDark ? ConfidiaColors.darkSurfaceElevated : Colors.white,
       borderRadius: BorderRadius.circular(12),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () => context.go('/documents/${doc.id}'),
+        onTap: actions == null ? (onTap ?? () => context.go('/documents/${doc.id}')) : null,
         borderRadius: BorderRadius.circular(12),
         child: Container(
           padding: const EdgeInsets.all(16),
@@ -178,50 +202,54 @@ class _DocumentListTile extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: ConfidiaColors.border(isDark)),
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark)
-                      .withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  Icons.picture_as_pdf_rounded,
-                  color: ConfidiaColors.textSecondary(Theme.of(context).brightness == Brightness.dark),
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(doc.title, style: Theme.of(context).textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${doc.category ?? 'Non classé'} · ${doc.correspondent ?? 'Sans correspondant'} · ${doc.fileSizeFormatted}',
-                      style: Theme.of(context).textTheme.bodySmall,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: muted.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    const SizedBox(height: 4),
-                    Text(DateFormat('d MMM yyyy', 'fr_FR').format(doc.modified), style: Theme.of(context).textTheme.labelSmall),
-                  ],
-                ),
-              ),
-              if (doc.isImportant)
-                Padding(
-                  padding: const EdgeInsets.only(left: 8),
-                  child: Icon(
-                    Icons.star_rounded,
-                    color: ConfidiaColors.warning,
-                    size: 18,
+                    child: Icon(Icons.picture_as_pdf_rounded, color: muted, size: 22),
                   ),
-                ),
-              const Icon(Icons.chevron_right_rounded, color: ConfidiaColors.darkTextTertiary),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(doc.title, style: Theme.of(context).textTheme.titleSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${doc.category ?? 'Non classé'} · ${doc.correspondent ?? 'Sans correspondant'} · ${doc.fileSizeFormatted}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          whenLabel ?? DateFormat('d MMM yyyy', 'fr_FR').format(doc.modified),
+                          style: Theme.of(context).textTheme.labelSmall,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (doc.isImportant)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: Icon(Icons.star_rounded, color: ConfidiaColors.warning, size: 18),
+                    ),
+                  if (actions == null)
+                    const Icon(Icons.chevron_right_rounded, color: ConfidiaColors.darkTextTertiary),
+                ],
+              ),
+              if (actions != null) ...[
+                const SizedBox(height: 8),
+                actions!,
+              ],
             ],
           ),
         ),

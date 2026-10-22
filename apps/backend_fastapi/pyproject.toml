@@ -42,6 +42,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 markers = [
     "integration: needs a running PostgreSQL with the MVP schema applied",
+    "load: concurrent reads on the in-process API",
 ]
 
 [tool.ruff]

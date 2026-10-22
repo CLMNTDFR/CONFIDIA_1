@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Text, UniqueConstraint, func, text
-from sqlalchemy.dialects.postgresql import CITEXT, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, CITEXT, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
 
@@ -19,6 +19,10 @@ class Organization(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
     slug: Mapped[str] = mapped_column(Text, nullable=False)
     kind: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'family'"))
+    icon: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'family'"))
+    level_labels: Mapped[dict] = mapped_column(
+        JSONB, nullable=False, server_default=text("'{}'::jsonb")
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
@@ -65,6 +69,13 @@ class Membership(Base):
     )
     user_id: Mapped[str] = mapped_column(Text, ForeignKey("users.id"), nullable=False)
     role: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'member'"))
+    parent_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("memberships.id", ondelete="SET NULL")
+    )
+    permissions: Mapped[list[str]] = mapped_column(
+        ARRAY(Text), nullable=False, server_default=text("'{}'")
+    )
+    link_type: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'reportsTo'"))
     is_default: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=text("false"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
@@ -74,6 +85,27 @@ class Membership(Base):
         back_populates="memberships", lazy="selectin"
     )
     user: Mapped[User] = relationship(back_populates="memberships", lazy="selectin")
+
+
+class Invitation(Base):
+    __tablename__ = "invitations"
+    __table_args__ = (UniqueConstraint("organization_id", "invitee_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, server_default=text("gen_random_uuid()")
+    )
+    organization_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("organizations.id"), nullable=False
+    )
+    inviter_id: Mapped[str] = mapped_column(Text, ForeignKey("users.id"), nullable=False)
+    invitee_id: Mapped[str] = mapped_column(Text, ForeignKey("users.id"), nullable=False)
+    status: Mapped[str] = mapped_column(Text, nullable=False, server_default=text("'pending'"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    organization: Mapped[Organization] = relationship(lazy="selectin")
+    inviter: Mapped[User] = relationship(foreign_keys=[inviter_id], lazy="selectin")
+    invitee: Mapped[User] = relationship(foreign_keys=[invitee_id], lazy="selectin")
 
 
 class Calendar(Base):

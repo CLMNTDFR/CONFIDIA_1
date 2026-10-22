@@ -44,6 +44,8 @@ class FakeKeycloakAsyncClient:
                 "family_name": user["last_name"],
                 "preferred_username": user["username"],
                 "realm_access": {"roles": ["USER"]},
+                "iss": "http://localhost:8080/realms/confidia",
+                "azp": "confidia-backend",
             },
             key="test",
             algorithm="HS256",

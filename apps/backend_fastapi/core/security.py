@@ -62,16 +62,36 @@ def _unauthorized(detail: str = "Invalid token") -> HTTPException:
     )
 
 
+def _expected_issuer(settings: Settings) -> str:
+    return f"{settings.keycloak_url.rstrip('/')}/realms/{settings.keycloak_realm}"
+
+
+def _bind_token(payload: dict[str, Any], settings: Settings) -> dict[str, Any]:
+    # Keycloak puts the API client id in azp. aud stays "account", so checking
+    # audience would reject a real login token.
+    if payload.get("iss") != _expected_issuer(settings):
+        raise JWTError("Invalid issuer")
+    if payload.get("azp") != settings.keycloak_client_id:
+        raise JWTError("Invalid authorized party")
+    return payload
+
+
 def _decode_hs256(token: str, settings: Settings) -> dict[str, Any]:
-    return jwt.decode(
+    payload = jwt.decode(
         token,
         settings.jwt_test_secret,
         algorithms=["HS256"],
         options={"verify_aud": False},
     )
+    return _bind_token(payload, settings)
 
 
-def _decode_rs256(token: str, jwks: dict[str, Any], kid: str | None) -> dict[str, Any]:
+def _decode_rs256(
+    token: str,
+    jwks: dict[str, Any],
+    kid: str | None,
+    settings: Settings,
+) -> dict[str, Any]:
     keys = [k for k in (jwks.get("keys") or []) if isinstance(k, dict)]
     if kid:
         keys = [k for k in keys if k.get("kid") == kid]
@@ -80,12 +100,13 @@ def _decode_rs256(token: str, jwks: dict[str, Any], kid: str | None) -> dict[str
     last_error: JWTError | None = None
     for key in keys:
         try:
-            return jwt.decode(
+            payload = jwt.decode(
                 token,
                 key,
                 algorithms=["RS256"],
                 options={"verify_aud": False},
             )
+            return _bind_token(payload, settings)
         except JWTError as exc:
             last_error = exc
     raise last_error or JWTError("Invalid token")
@@ -119,10 +140,10 @@ async def verified_claims(token: str, settings: Settings) -> dict[str, Any]:
         jwks = await _load_jwks(settings)
         kid = header.get("kid") if isinstance(header.get("kid"), str) else None
         try:
-            return _decode_rs256(token, jwks, kid)
+            return _decode_rs256(token, jwks, kid, settings)
         except JWTError:
             jwks = await _load_jwks(settings, force=True)
-            return _decode_rs256(token, jwks, kid)
+            return _decode_rs256(token, jwks, kid, settings)
     except HTTPException:
         raise
     except Exception as exc:

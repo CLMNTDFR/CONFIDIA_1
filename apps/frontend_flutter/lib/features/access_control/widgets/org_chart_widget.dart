@@ -29,6 +29,7 @@ class OrgChartWidget extends StatefulWidget {
   final bool Function(String roleId) isBuiltInRole;
   final bool enablePinchZoom;
   final bool showFullscreenAction;
+  final bool showRoleManager;
 
   const OrgChartWidget({
     super.key,
@@ -47,6 +48,7 @@ class OrgChartWidget extends StatefulWidget {
     required this.isBuiltInRole,
     this.enablePinchZoom = false,
     this.showFullscreenAction = true,
+    this.showRoleManager = true,
   });
 
   @override
@@ -191,6 +193,7 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
                 isBuiltInRole: widget.isBuiltInRole,
                 enablePinchZoom: true,
                 showFullscreenAction: false,
+                showRoleManager: widget.showRoleManager,
                   ),
                 ),
               ),
@@ -384,6 +387,7 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
             const SizedBox(height: 8),
           ],
           _OrgToolbar(
+            showRoleManager: widget.showRoleManager,
             onEditLink: () => OrgChartSheets.showEditLink(
               context: context,
               nodes: widget.nodes,
@@ -413,7 +417,7 @@ class _OrgChartWidgetState extends State<OrgChartWidget> {
   }
 
   Color _roleColor(String roleId, ConfidiaPalette palette) => switch (roleId) {
-        'admin' || 'director' || 'ceo' => palette.primary,
+        'admin' || 'director' || 'ceo' || 'owner' => palette.primary,
         'parent' || 'manager' => palette.secondary,
         'coach' || 'treasurer' || 'secretary' => palette.accent,
         _ => palette.primary.withValues(alpha: 0.75),
@@ -424,11 +428,13 @@ class _OrgToolbar extends StatelessWidget {
   final VoidCallback onEditLink;
   final VoidCallback onManageLevels;
   final VoidCallback onManageRoles;
+  final bool showRoleManager;
 
   const _OrgToolbar({
     required this.onEditLink,
     required this.onManageLevels,
     required this.onManageRoles,
+    required this.showRoleManager,
   });
 
   @override
@@ -453,8 +459,10 @@ class _OrgToolbar extends StatelessWidget {
           chip(icon: Icons.link_rounded, label: 'Lien', onTap: onEditLink),
           const SizedBox(width: 8),
           chip(icon: Icons.layers_rounded, label: 'Niveaux', onTap: onManageLevels),
-          const SizedBox(width: 8),
-          chip(icon: Icons.badge_outlined, label: 'Rôles', onTap: onManageRoles),
+          if (showRoleManager) ...[
+            const SizedBox(width: 8),
+            chip(icon: Icons.badge_outlined, label: 'Rôles', onTap: onManageRoles),
+          ],
         ],
       ),
     );

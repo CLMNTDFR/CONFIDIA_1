@@ -1,4 +1,6 @@
 from datetime import datetime
+from typing import Literal
+from uuid import UUID
 
 from pydantic import BaseModel, Field
 
@@ -16,6 +18,7 @@ class DocumentDTO(BaseModel):
     mime_type: str | None = None
     file_size: int | None = None
     is_important: bool = False
+    deleted_at: datetime | None = None
 
 
 class DocumentCreateDTO(BaseModel):
@@ -48,3 +51,19 @@ class DocumentListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+
+
+class DocumentEventLink(BaseModel):
+    event_id: str
+    title: str
+    start: datetime
+    deleted: bool = False
+
+
+class DocumentPurgeDecision(BaseModel):
+    event_id: UUID
+    action: Literal["keep", "delete"]
+
+
+class DocumentPurgeRequest(BaseModel):
+    decisions: list[DocumentPurgeDecision] = Field(default_factory=list)

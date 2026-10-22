@@ -11,34 +11,52 @@ import '../../shared/widgets/confidia_text_field.dart';
 import '../../shared/models/access_control_models.dart';
 import 'access_control_provider.dart';
 
-/// Icons offered for custom structures.
+/// Icons offered when an organisation is created or renamed.
+class StructureIconOption {
+  final String id;
+  final IconData icon;
+
+  const StructureIconOption(this.id, this.icon);
+}
+
 abstract final class StructureIconOptions {
-  static const icons = <IconData>[
-    Icons.apartment_rounded,
-    Icons.business_rounded,
-    Icons.family_restroom_rounded,
-    Icons.groups_rounded,
-    Icons.diversity_3_rounded,
-    Icons.sports_soccer_rounded,
-    Icons.school_rounded,
-    Icons.volunteer_activism_rounded,
-    Icons.church_rounded,
-    Icons.local_hospital_rounded,
-    Icons.account_balance_rounded,
-    Icons.handshake_rounded,
-    Icons.home_work_rounded,
-    Icons.hiking_rounded,
-    Icons.theater_comedy_rounded,
-    Icons.pets_rounded,
-    Icons.emoji_people_rounded,
-    Icons.workspace_premium_rounded,
-    Icons.hub_rounded,
-    Icons.interests_rounded,
-    Icons.castle_rounded,
-    Icons.forest_rounded,
-    Icons.music_note_rounded,
-    Icons.science_rounded,
+  static const options = <StructureIconOption>[
+    StructureIconOption('apartment', Icons.apartment_rounded),
+    StructureIconOption('business', Icons.business_rounded),
+    StructureIconOption('family', Icons.family_restroom_rounded),
+    StructureIconOption('groups', Icons.groups_rounded),
+    StructureIconOption('diversity', Icons.diversity_3_rounded),
+    StructureIconOption('soccer', Icons.sports_soccer_rounded),
+    StructureIconOption('school', Icons.school_rounded),
+    StructureIconOption('volunteer', Icons.volunteer_activism_rounded),
+    StructureIconOption('church', Icons.church_rounded),
+    StructureIconOption('hospital', Icons.local_hospital_rounded),
+    StructureIconOption('account', Icons.account_balance_rounded),
+    StructureIconOption('handshake', Icons.handshake_rounded),
+    StructureIconOption('home', Icons.home_work_rounded),
+    StructureIconOption('hiking', Icons.hiking_rounded),
+    StructureIconOption('theater', Icons.theater_comedy_rounded),
+    StructureIconOption('pets', Icons.pets_rounded),
+    StructureIconOption('people', Icons.emoji_people_rounded),
+    StructureIconOption('premium', Icons.workspace_premium_rounded),
+    StructureIconOption('hub', Icons.hub_rounded),
+    StructureIconOption('interests', Icons.interests_rounded),
+    StructureIconOption('castle', Icons.castle_rounded),
+    StructureIconOption('forest', Icons.forest_rounded),
+    StructureIconOption('music', Icons.music_note_rounded),
+    StructureIconOption('science', Icons.science_rounded),
   ];
+
+  static final icons = <IconData>[
+    for (final option in options) option.icon,
+  ];
+
+  static IconData iconFor(String? id) {
+    for (final option in options) {
+      if (option.id == id) return option.icon;
+    }
+    return Icons.family_restroom_rounded;
+  }
 }
 
 Future<void> showStructureFormSheet(BuildContext context) {

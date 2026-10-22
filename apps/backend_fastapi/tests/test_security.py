@@ -30,6 +30,8 @@ CLAIMS = {
     "email": "sec@confidia.local",
     "preferred_username": "secuser",
     "realm_access": {"roles": ["USER"]},
+    "iss": "http://localhost:8080/realms/confidia",
+    "azp": "confidia-backend",
 }
 
 
@@ -136,6 +138,26 @@ async def test_rs256_is_verified_against_jwks(monkeypatch: pytest.MonkeyPatch):
     token = jwt.encode(CLAIMS, private_pem, algorithm="RS256", headers={"kid": "test-rsa"})
     payload = await verified_claims(token, get_settings())
     assert payload["sub"] == "kc-sec-1"
+
+
+@pytest.mark.asyncio
+async def test_rs256_for_another_client_is_rejected(monkeypatch: pytest.MonkeyPatch):
+    private_pem, jwks = _rsa_material()
+
+    async def _jwks(settings, force: bool = False):
+        del settings, force
+        return jwks
+
+    monkeypatch.setattr("core.security._load_jwks", _jwks)
+    token = jwt.encode(
+        {**CLAIMS, "aud": "account", "azp": "confidia-frontend"},
+        private_pem,
+        algorithm="RS256",
+        headers={"kid": "test-rsa"},
+    )
+    with pytest.raises(HTTPException) as exc:
+        await verified_claims(token, get_settings())
+    assert exc.value.status_code == 401
 
 
 @pytest.mark.asyncio

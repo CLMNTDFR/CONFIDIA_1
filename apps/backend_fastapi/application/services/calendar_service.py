@@ -7,6 +7,7 @@ from application.dto.calendar_dto import (
     CalendarEventListResponse,
     CalendarEventUpdateDTO,
 )
+from core.time import as_utc
 from domain.interfaces.calendar_repository import CalendarRepository
 
 
@@ -20,6 +21,10 @@ class CalendarService:
         start: datetime | None = None,
         end: datetime | None = None,
     ) -> CalendarEventListResponse:
+        if start is not None:
+            start = as_utc(start)
+        if end is not None:
+            end = as_utc(end)
         items = await self._repository.list_events(organization_id, start, end)
         return CalendarEventListResponse(items=items, total=len(items))
 
@@ -37,9 +42,11 @@ class CalendarService:
         title = data.title.strip()
         if not title:
             raise ValueError("Le titre est requis")
-        if data.end < data.start:
+        start = as_utc(data.start)
+        end = as_utc(data.end)
+        if end < start:
             raise ValueError("La fin doit être après le début")
-        payload = data.model_copy(update={"title": title})
+        payload = data.model_copy(update={"title": title, "start": start, "end": end})
         return await self._repository.create_event(
             organization_id=organization_id,
             owner_id=owner_id,
@@ -58,8 +65,20 @@ class CalendarService:
             if not title:
                 raise ValueError("Le titre est requis")
             payload = data.model_copy(update={"title": title})
-        if payload.start is not None and payload.end is not None and payload.end < payload.start:
-            raise ValueError("La fin doit être après le début")
+        times: dict[str, datetime] = {}
+        if payload.start is not None:
+            times["start"] = as_utc(payload.start)
+        if payload.end is not None:
+            times["end"] = as_utc(payload.end)
+        if times:
+            payload = payload.model_copy(update=times)
+            current = await self._repository.get_event(organization_id, event_id)
+            if current is None:
+                return None
+            start = payload.start if payload.start is not None else as_utc(current.start)
+            end = payload.end if payload.end is not None else as_utc(current.end)
+            if end < start:
+                raise ValueError("La fin doit être après le début")
         return await self._repository.update_event(organization_id, event_id, payload)
 
     async def delete_event(self, organization_id: UUID, event_id: UUID) -> bool:

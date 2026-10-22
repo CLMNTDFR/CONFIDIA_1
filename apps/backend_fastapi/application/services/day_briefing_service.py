@@ -1,4 +1,4 @@
-from datetime import date, datetime
+from datetime import date
 
 from application.dto.calendar_dto import CalendarEventDTO, EventType
 from application.dto.serenity_dto import (
@@ -10,6 +10,7 @@ from application.dto.serenity_dto import (
 )
 from application.services.serenity_service import SerenityService, first_name_from_token, greet
 from core.security import TokenPayload
+from core.time import civil_date, civil_now
 
 
 class DayBriefingService:
@@ -22,12 +23,13 @@ class DayBriefingService:
         self,
         token: TokenPayload | None = None,
         events: list[CalendarEventDTO] | None = None,
+        zone: str | None = None,
     ) -> DayBriefingResponse:
         items = events or []
-        briefing = await self._serenity.get_briefing(token=token, events=items)
+        briefing = await self._serenity.get_briefing(token=token, events=items, zone=zone)
         first_name = first_name_from_token(token)
-        now = datetime.now()
-        appointments = self._todays_appointments(items, now.date())
+        now = civil_now(zone)
+        appointments = self._todays_appointments(items, now.date(), zone)
         priorities = self._priorities_from_actions(briefing.actions)
         summary = self._narrative(
             first_name=first_name,
@@ -49,11 +51,11 @@ class DayBriefingService:
         )
 
     def _todays_appointments(
-        self, events: list[CalendarEventDTO], today: date
+        self, events: list[CalendarEventDTO], today: date, zone: str | None
     ) -> list[DayAppointmentDTO]:
         appointments: list[DayAppointmentDTO] = []
         for event in events:
-            if event.start.date() != today:
+            if civil_date(event.start, zone) != today:
                 continue
             if event.event_type not in (EventType.APPOINTMENT, EventType.MEETING):
                 continue

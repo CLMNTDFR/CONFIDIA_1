@@ -72,6 +72,8 @@ void main() {
     final sent = jsonDecode(adapter.bodySent!) as Map<String, dynamic>;
     expect(sent.containsKey('id'), isFalse);
     expect(sent['title'], 'Dentiste');
+    expect(sent['start'], DateTime.utc(2026, 9, 11, 8).toIso8601String());
+    expect(sent['end'], DateTime.utc(2026, 9, 11, 9).toIso8601String());
     expect(sent['calendar_scope'], 'family');
     expect(created.id, '22222222-2222-2222-2222-222222222222');
   });

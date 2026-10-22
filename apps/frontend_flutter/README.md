@@ -199,7 +199,7 @@ Le `MaterialApp` injecte `ConfidiaPaletteTheme` dans `ThemeData.extensions` à c
 
 Logos des services connectés : `assets/brands/` + `BrandIcon` / `BrandLabel`.
 
-Les couleurs des providers externes (Gmail, Google Calendar, etc.) restent fixes : seule la marque CONFIDIA suit la palette active.
+Les couleurs des providers externes (Gmail, Google Calendar, etc.) restent fixes : seule la marque CONFIDIA suit la palette active. Ces logos servent au mode démo. Une session réelle ne les affiche pas comme des comptes connectés.
 
 ---
 

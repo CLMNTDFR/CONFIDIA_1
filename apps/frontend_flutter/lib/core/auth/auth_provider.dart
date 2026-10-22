@@ -91,7 +91,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         'password': password,
       });
       await _storeTokens(response.data as Map<String, dynamic>);
-      state = state.copyWith(isAuthenticated: true);
+      state = const AuthState(isAuthenticated: true, isLoading: true);
       await _loadUser();
       state = state.copyWith(isLoading: false);
     } on DioException catch (e) {
@@ -125,7 +125,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
       });
       await _storeTokens(response.data as Map<String, dynamic>);
       await _storage.write(key: _firstLoginKey, value: '1');
-      state = state.copyWith(isAuthenticated: true);
+      state = const AuthState(isAuthenticated: true, isLoading: true);
       await _loadUser();
       state = state.copyWith(isLoading: false);
     } on DioException catch (e) {

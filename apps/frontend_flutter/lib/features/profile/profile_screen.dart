@@ -118,7 +118,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: ConfidiaSpacing.md),
-        const _SectionTitle(label: 'Accès & services', demo: true),
+        _SectionTitle(label: 'Accès & services', demo: auth.isDemoSession),
         const SizedBox(height: 8),
         GlassCard(
           padding: EdgeInsets.zero,
@@ -127,8 +127,10 @@ class ProfileScreen extends ConsumerWidget {
               _InfoTile(
                 icon: Icons.account_tree_rounded,
                 title: 'Gouvernance & accès',
-                subtitle: 'Structures, rôles et droits',
-                demo: true,
+                subtitle: auth.isDemoSession
+                    ? 'Structures, rôles et droits'
+                    : 'Organigramme, droits et invitations',
+                demo: auth.isDemoSession,
                 onTap: () => context.go('/access-control'),
               ),
               Divider(height: 1, color: ConfidiaColors.border(isDark)),

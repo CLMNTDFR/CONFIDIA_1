@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../shared/models/access_control_models.dart';
@@ -17,6 +18,7 @@ import '../../shared/widgets/status_badge.dart';
 import '../onboarding/guided_tour_access_bridge.dart';
 import '../onboarding/onboarding_targets.dart';
 import 'access_control_provider.dart';
+import 'live_governance_view.dart';
 import 'structure_form_sheet.dart';
 import 'widgets/org_chart_widget.dart';
 
@@ -69,6 +71,11 @@ class _AccessControlScreenState extends ConsumerState<AccessControlScreen> with 
         _tabs.animateTo(next);
       }
     });
+
+    final demo = ref.watch(authStateProvider).isDemoSession;
+    if (!demo) {
+      return const LiveGovernanceView();
+    }
 
     return Column(
       children: [

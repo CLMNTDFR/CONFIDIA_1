@@ -30,6 +30,7 @@ def downgrade() -> None:
     op.execute("DROP TABLE IF EXISTS document_tags CASCADE")
     op.execute("DROP TABLE IF EXISTS tags CASCADE")
     op.execute("DROP TABLE IF EXISTS documents CASCADE")
+    op.execute("DROP TABLE IF EXISTS invitations CASCADE")
     op.execute("DROP TABLE IF EXISTS memberships CASCADE")
     op.execute("DROP TABLE IF EXISTS users CASCADE")
     op.execute("DROP TABLE IF EXISTS organizations CASCADE")

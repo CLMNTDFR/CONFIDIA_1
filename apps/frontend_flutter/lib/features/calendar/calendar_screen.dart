@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 
 import '../../core/api/api_error_message.dart';
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/theme_context.dart';
 import '../../core/theme/spacing.dart';
@@ -481,6 +482,7 @@ class _CalendarFiltersPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final demo = ref.watch(authStateProvider).isDemoSession;
     final active = ref.watch(activeCalendarGroupsProvider);
     final secondary = AppColors.textSecondary(isDark);
     final typeLabel = selectedType == null
@@ -562,6 +564,7 @@ class _CalendarFiltersPanel extends ConsumerWidget {
                   demo: true,
                 ),
               ),
+              if (demo)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -768,12 +771,13 @@ class _AgendaSelector extends ConsumerWidget {
   }
 }
 
-class _ConnectedSourcesRow extends StatelessWidget {
+class _ConnectedSourcesRow extends ConsumerWidget {
   const _ConnectedSourcesRow();
 
   @override
-  Widget build(BuildContext context) {
-    final sources = MockEcosystem.connectedCalendars;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final demo = ref.watch(authStateProvider).isDemoSession;
+    final sources = demo ? MockEcosystem.connectedCalendars : <(CalendarSource, bool, int)>[];
 
     if (sources.isEmpty) {
       return Text(

@@ -1,4 +1,4 @@
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, timedelta
 
 from application.dto.calendar_dto import CalendarEventDTO, EventType
 from application.dto.serenity_dto import (
@@ -12,6 +12,7 @@ from application.dto.serenity_dto import (
 )
 from application.services.identity_service import names_from_claims
 from core.security import TokenPayload
+from core.time import as_utc, civil_date, civil_now
 
 
 def first_name_from_token(token: TokenPayload | None) -> str:
@@ -35,17 +36,20 @@ class SerenityService:
         self,
         token: TokenPayload | None = None,
         events: list[CalendarEventDTO] | None = None,
+        zone: str | None = None,
     ) -> SerenityBriefingResponse:
         first_name = first_name_from_token(token)
-        now = datetime.now()
-        horizon_end = now + timedelta(days=30)
+        now = civil_now(zone)
+        now_utc = now.astimezone(UTC)
+        horizon_end = now_utc + timedelta(days=30)
         items = events or []
-        upcoming = [e for e in items if now <= e.start <= horizon_end]
-        busy_days = self._count_busy_days(upcoming, now.date(), horizon_end.date())
+        upcoming = [e for e in items if now_utc <= as_utc(e.start) <= horizon_end]
+        horizon_day = civil_date(horizon_end, zone)
+        busy_days = self._count_busy_days(upcoming, now.date(), horizon_day, zone)
         deadlines_7d = sum(
             1
             for e in upcoming
-            if e.event_type == EventType.DEADLINE and e.start <= now + timedelta(days=7)
+            if e.event_type == EventType.DEADLINE and as_utc(e.start) <= now_utc + timedelta(days=7)
         )
 
         factors: list[SerenityFactorDTO] = []
@@ -117,10 +121,10 @@ class SerenityService:
             generated_at=now,
         )
 
-    def _count_busy_days(self, events, start: date, end: date) -> int:
+    def _count_busy_days(self, events, start: date, end: date, zone: str | None) -> int:
         by_day: dict[date, int] = {}
         for event in events:
-            day = event.start.date()
+            day = civil_date(event.start, zone)
             if start <= day <= end:
                 weight = 2 if event.event_type in (EventType.MEETING, EventType.DEADLINE) else 1
                 by_day[day] = by_day.get(day, 0) + weight

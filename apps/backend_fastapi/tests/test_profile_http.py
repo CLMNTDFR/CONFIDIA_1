@@ -22,6 +22,8 @@ CLAIMS = {
     "family_name": "Dupont",
     "preferred_username": "user",
     "realm_access": {"roles": ["USER"]},
+    "iss": "http://localhost:8080/realms/confidia",
+    "azp": "confidia-backend",
 }
 
 ACCESS_TOKEN = jwt.encode(CLAIMS, key="test", algorithm="HS256")

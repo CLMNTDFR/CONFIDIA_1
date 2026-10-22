@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import datetime
 from uuid import UUID, uuid4
 
 from application.dto.calendar_dto import (
@@ -9,13 +9,8 @@ from application.dto.calendar_dto import (
     CalendarEventUpdateDTO,
     WeekCalendarScope,
 )
+from core.time import as_utc
 from domain.interfaces.calendar_repository import CalendarRepository
-
-
-def _aware(value: datetime) -> datetime:
-    if value.tzinfo is None:
-        return value.replace(tzinfo=UTC)
-    return value
 
 
 class InMemoryCalendarRepository(CalendarRepository):
@@ -33,12 +28,12 @@ class InMemoryCalendarRepository(CalendarRepository):
     ) -> list[CalendarEventDTO]:
         events = list(self._bucket(organization_id))
         if start is not None:
-            start_aware = _aware(start)
-            events = [e for e in events if _aware(e.end) >= start_aware]
+            start_utc = as_utc(start)
+            events = [e for e in events if as_utc(e.end) >= start_utc]
         if end is not None:
-            end_aware = _aware(end)
-            events = [e for e in events if _aware(e.start) <= end_aware]
-        events.sort(key=lambda e: e.start)
+            end_utc = as_utc(end)
+            events = [e for e in events if as_utc(e.start) <= end_utc]
+        events.sort(key=lambda e: as_utc(e.start))
         return events
 
     async def get_event(
@@ -61,8 +56,8 @@ class InMemoryCalendarRepository(CalendarRepository):
             id=str(uuid4()),
             title=data.title.strip(),
             description=data.description,
-            start=_aware(data.start),
-            end=_aware(data.end),
+            start=as_utc(data.start),
+            end=as_utc(data.end),
             event_type=data.event_type,
             location=data.location,
             all_day=data.all_day,
@@ -83,7 +78,12 @@ class InMemoryCalendarRepository(CalendarRepository):
         existing = await self.get_event(organization_id, event_id)
         if existing is None:
             return None
-        updated = existing.model_copy(update=data.model_dump(exclude_unset=True))
+        updates = data.model_dump(exclude_unset=True)
+        if updates.get("start") is not None:
+            updates["start"] = as_utc(updates["start"])
+        if updates.get("end") is not None:
+            updates["end"] = as_utc(updates["end"])
+        updated = existing.model_copy(update=updates)
         bucket = self._bucket(organization_id)
         self.rows[organization_id] = [
             updated if item.id == existing.id else item for item in bucket

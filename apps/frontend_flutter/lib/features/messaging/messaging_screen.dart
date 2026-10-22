@@ -25,6 +25,7 @@ class MessagingScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(mailFilterProvider);
+    final demo = ref.watch(authStateProvider).isDemoSession;
     final emails = ref.watch(messagingProvider.notifier).inbox;
     final filtered = filter == null ? emails : emails.where((e) => e.provider == filter).toList();
     final isWide = MediaQuery.sizeOf(context).width >= 900;
@@ -48,6 +49,7 @@ class MessagingScreen extends ConsumerWidget {
                       selected: filter == null,
                       onTap: () => ref.read(mailFilterProvider.notifier).state = null,
                     ),
+                    if (demo)
                     ...MailProvider.values.map(
                       (p) => ConfidiaGlowChip(
                         label: p.label,

@@ -3,7 +3,9 @@ from uuid import UUID
 from application.dto.document_dto import (
     DocumentCreateDTO,
     DocumentDTO,
+    DocumentEventLink,
     DocumentListResponse,
+    DocumentPurgeDecision,
     DocumentUpdateDTO,
 )
 from core.uploads import inspect_document
@@ -65,3 +67,33 @@ class WorkspaceDocumentService:
 
     async def delete_document(self, organization_id: UUID, document_id: UUID) -> bool:
         return await self._repository.delete_for_org(organization_id, document_id)
+
+    async def list_trash(
+        self,
+        organization_id: UUID,
+        page: int = 1,
+        page_size: int = 25,
+        query: str | None = None,
+    ) -> DocumentListResponse:
+        items, total = await self._repository.list_deleted_for_org(
+            organization_id, page, page_size, query
+        )
+        return DocumentListResponse(items=items, total=total, page=page, page_size=page_size)
+
+    async def restore_document(
+        self, organization_id: UUID, document_id: UUID
+    ) -> DocumentDTO | None:
+        return await self._repository.restore_for_org(organization_id, document_id)
+
+    async def list_document_links(
+        self, organization_id: UUID, document_id: UUID
+    ) -> list[DocumentEventLink] | None:
+        return await self._repository.list_event_links(organization_id, document_id)
+
+    async def purge_document(
+        self,
+        organization_id: UUID,
+        document_id: UUID,
+        decisions: list[DocumentPurgeDecision],
+    ) -> bool:
+        return await self._repository.purge_for_org(organization_id, document_id, decisions)

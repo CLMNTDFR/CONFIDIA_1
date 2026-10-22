@@ -32,11 +32,12 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final isDark = ref.watch(themeModeProvider);
     final paletteId = ref.watch(colorPaletteProvider);
+    final demo = ref.watch(authStateProvider).isDemoSession;
 
     return ListView(
       padding: ConfidiaInsets.page(context),
       children: [
-        _SectionTitle(label: 'Organisation & accès', demo: true),
+        _SectionTitle(label: 'Organisation & accès', demo: demo),
         const SizedBox(height: 8),
         KeyedSubtree(
           key: OnboardingTargets.gouvernanceTile,
@@ -45,8 +46,10 @@ class SettingsScreen extends ConsumerWidget {
             child: _CompactActionTile(
               icon: Icons.account_tree_rounded,
               title: 'Gouvernance & accès',
-              subtitle: 'Organigramme, rôles, droits et assistant IA',
-              demo: true,
+              subtitle: demo
+                  ? 'Organigramme, rôles, droits et assistant IA'
+                  : 'Organigramme, rôles, droits et invitations',
+              demo: demo,
               onTap: () => context.go('/access-control'),
             ),
           ),
@@ -97,11 +100,11 @@ class SettingsScreen extends ConsumerWidget {
           padding: EdgeInsets.zero,
           child: Column(
             children: [
-              ConfidiaSwitchTile(title: 'Notifications push', value: true, onChanged: _noop),
+              ConfidiaSwitchTile(title: 'Notifications push', value: demo, onChanged: _noop),
               Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
-              ConfidiaSwitchTile(title: 'Rappels d\'échéances', value: true, onChanged: _noop),
+              ConfidiaSwitchTile(title: 'Rappels d\'échéances', value: demo, onChanged: _noop),
               Divider(height: 1, color: ConfidiaColors.border(Theme.of(context).brightness == Brightness.dark)),
-              ConfidiaSwitchTile(title: 'Alertes documents', value: true, onChanged: _noop),
+              ConfidiaSwitchTile(title: 'Alertes documents', value: demo, onChanged: _noop),
             ],
           ),
         ),
@@ -141,8 +144,17 @@ class SettingsScreen extends ConsumerWidget {
           },
         ),
         const SizedBox(height: ConfidiaSpacing.md),
-        _SectionTitle(label: 'Stockage documentaire'),
+        _SectionTitle(label: 'Stockage documentaire', demo: true),
         const SizedBox(height: 8),
+        if (!demo)
+          GlassCard(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              'Aucun stockage externe n\'est rattaché à cet espace.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+        if (demo)
         ...MockEcosystem.storageServices.map((svc) {
               final svcColor = svc.id == 'paperless' ? context.palette.primary : svc.color;
               return Padding(

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../core/auth/auth_provider.dart';
 import '../../core/theme/colors.dart';
 import '../../core/theme/spacing.dart';
 import '../../core/theme/theme_context.dart';
@@ -335,7 +336,10 @@ class _GuidedTourOverlayState extends ConsumerState<GuidedTourOverlay>
           alignment: Alignment.center,
           child: _TourSpeechBubble(
             key: ValueKey('${step.id}_${OnboardingTargets.isWideLayout(context)}'),
-            message: step.messageFor(context),
+            message: step.messageFor(
+              context,
+              live: !ref.watch(authStateProvider).isDemoSession,
+            ),
             stepIndex: tour.stepIndex,
             totalSteps: tour.totalSteps,
             isLast: tour.isLastStep,
